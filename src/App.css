@@ -1,0 +1,17 @@
+/* Reset CSS bawaan Vite/React agar penuh layar (Edge-to-Edge) */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#root {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
