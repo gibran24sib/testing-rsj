@@ -1,4 +1,49 @@
-/* Reset CSS bawaan Vite/React agar penuh layar (Edge-to-Edge) */
+/* ========================================================
+   RSJ TAMPAN - MODERN MINIMALIST DESIGN SYSTEM & TOKENS
+   ======================================================== */
+
+:root {
+  --font-main: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  /* Color Palette - Light Mode */
+  --bg-app-light: #f8fafc;
+  --bg-surface-light: #ffffff;
+  --bg-subtle-light: #f1f5f9;
+  --border-light: #e2e8f0;
+  --border-subtle-light: #edf2f7;
+  --text-main-light: #0f172a;
+  --text-muted-light: #64748b;
+  --text-dim-light: #94a3b8;
+
+  /* Color Palette - Dark Mode */
+  --bg-app-dark: #080a10;
+  --bg-surface-dark: #0f131f;
+  --bg-subtle-dark: #161b2c;
+  --border-dark: #1e2538;
+  --border-subtle-dark: #181e2e;
+  --text-main-dark: #f8fafc;
+  --text-muted-dark: #94a3b8;
+  --text-dim-dark: #64748b;
+
+  /* Brand Accents */
+  --color-primary: #10b981;
+  --color-primary-hover: #059669;
+  --color-primary-subtle: rgba(16, 185, 129, 0.12);
+  --color-secondary: #6366f1;
+  --color-accent: #06b6d4;
+  --color-warning: #f59e0b;
+  --color-danger: #f43f5e;
+  --color-info: #0ea5e9;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.06), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.07), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+  --shadow-glow: 0 0 20px rgba(16, 185, 129, 0.2);
+}
+
+/* Global Reset */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -10,8 +55,321 @@ body,
 #root {
   width: 100% !important;
   max-width: 100% !important;
+  min-height: 100vh;
   margin: 0 !important;
   padding: 0 !important;
-  min-height: 100vh;
   overflow-x: hidden;
+  font-family: var(--font-main);
+  letter-spacing: -0.015em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom Minimalist Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.25);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.45);
+}
+
+/* Modern Card & Glassmorphism Surfaces */
+.bg-dark-card {
+  background-color: var(--bg-surface-dark) !important;
+  color: var(--text-main-dark) !important;
+  border: 1px solid var(--border-dark) !important;
+}
+
+.clean-card {
+  border-radius: 14px !important;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.clean-card:hover {
+  transform: translateY(-2px);
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 16px;
+}
+
+.glass-card-dark {
+  background: rgba(15, 19, 31, 0.85);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(30, 37, 56, 0.8);
+  border-radius: 16px;
+}
+
+/* Live Pulse Animation */
+.pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #10b981;
+  display: inline-block;
+  box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  animation: pulse-ring 1.8s infinite cubic-bezier(0.66, 0, 0, 1);
+}
+
+@keyframes pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+/* High-Contrast Soft Badges */
+.badge {
+  font-weight: 600 !important;
+  letter-spacing: 0.02em;
+  padding: 0.35rem 0.65rem !important;
+  border-radius: 6px !important;
+}
+
+.badge-soft-success {
+  background-color: rgba(16, 185, 129, 0.12) !important;
+  color: #10b981 !important;
+  border: 1px solid rgba(16, 185, 129, 0.24) !important;
+}
+
+.badge-soft-danger {
+  background-color: rgba(244, 63, 94, 0.12) !important;
+  color: #f43f5e !important;
+  border: 1px solid rgba(244, 63, 94, 0.24) !important;
+}
+
+.badge-soft-warning {
+  background-color: rgba(245, 158, 11, 0.12) !important;
+  color: #d97706 !important;
+  border: 1px solid rgba(245, 158, 11, 0.28) !important;
+}
+
+.bg-dark .badge-soft-warning,
+.bg-dark-card .badge-soft-warning,
+.table-dark .badge-soft-warning {
+  color: #fbbf24 !important;
+}
+
+.badge-soft-primary {
+  background-color: rgba(99, 102, 241, 0.12) !important;
+  color: #6366f1 !important;
+  border: 1px solid rgba(99, 102, 241, 0.24) !important;
+}
+
+.bg-dark .badge-soft-primary,
+.bg-dark-card .badge-soft-primary {
+  color: #818cf8 !important;
+}
+
+.badge-soft-info {
+  background-color: rgba(6, 182, 212, 0.12) !important;
+  color: #0891b2 !important;
+  border: 1px solid rgba(6, 182, 212, 0.24) !important;
+}
+
+.bg-dark .badge-soft-info,
+.bg-dark-card .badge-soft-info {
+  color: #38bdf8 !important;
+}
+
+.badge-soft-secondary {
+  background-color: rgba(100, 116, 139, 0.12) !important;
+  color: #475569 !important;
+  border: 1px solid rgba(100, 116, 139, 0.2) !important;
+}
+
+.bg-dark .badge-soft-secondary,
+.bg-dark-card .badge-soft-secondary {
+  color: #94a3b8 !important;
+}
+
+/* Interactive Buttons */
+.btn {
+  font-family: var(--font-main);
+  border-radius: 9px !important;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  padding: 0.5rem 1rem !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn:active {
+  transform: scale(0.97);
+}
+
+.btn-success {
+  background-color: #10b981 !important;
+  border-color: #10b981 !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+}
+
+.btn-success:hover {
+  background-color: #059669 !important;
+  border-color: #059669 !important;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35);
+}
+
+.btn-outline-success {
+  border-color: #10b981 !important;
+  color: #10b981 !important;
+}
+
+.btn-outline-success:hover {
+  background-color: #10b981 !important;
+  color: #ffffff !important;
+}
+
+/* Form Controls */
+.form-control,
+.form-select {
+  border-radius: 9px !important;
+  padding: 0.55rem 0.9rem !important;
+  font-size: 0.88rem !important;
+  box-shadow: none !important;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  font-family: var(--font-main);
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: #10b981 !important;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15) !important;
+}
+
+.bg-dark .form-control,
+.bg-dark .form-select,
+.bg-dark-card .form-control,
+.bg-dark-card .form-select {
+  background-color: #131726 !important;
+  border-color: #242c42 !important;
+  color: #f8fafc !important;
+}
+
+.bg-dark .form-control::placeholder,
+.bg-dark-card .form-control::placeholder {
+  color: #64748b !important;
+}
+
+/* Modern Monospace Code Badges */
+code {
+  font-family: var(--font-mono) !important;
+  font-size: 0.82em !important;
+  color: #0284c7 !important;
+  background-color: rgba(2, 132, 199, 0.08) !important;
+  padding: 0.2rem 0.45rem !important;
+  border-radius: 6px !important;
+}
+
+.table-dark code,
+.bg-dark code,
+.bg-dark-card code {
+  color: #38bdf8 !important;
+  background-color: rgba(56, 189, 248, 0.12) !important;
+}
+
+/* Smooth Table Design */
+.table {
+  font-size: 0.88rem;
+  letter-spacing: -0.01em;
+}
+
+.table th {
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  letter-spacing: 0.05em;
+  padding: 0.9rem 1rem !important;
+  opacity: 0.8;
+}
+
+.table td {
+  padding: 0.9rem 1rem !important;
+  vertical-align: middle;
+}
+
+/* Modern Modal Styling */
+.modal-content {
+  border-radius: 16px !important;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35) !important;
+}
+
+.modal-backdrop.show {
+  opacity: 0.6;
+  backdrop-filter: blur(4px);
+}
+
+/* Micro-animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Subtle glowing border for active tabs */
+.active-glow {
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.25);
+}
+
+/* Minimalist Step Pill */
+.step-pill {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+  transition: all 0.3s ease;
+}
+
+/* Command Palette Overlay */
+.cmd-palette-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(6px);
+  z-index: 9999;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 12vh;
+}
+
+.cmd-palette-box {
+  width: 100%;
+  max-width: 580px;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  animation: fadeIn 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }

@@ -1,0 +1,48 @@
+// Data Dokter Spesialis Kejiwaan (Sp.KJ) & Psikolog Klinis RSJ Tampan Riau
+export const doctorsList = [
+  {
+    id: "DOC-001",
+    nama: "dr. Faisal Anwar, Sp.KJ (K)",
+    spesialisasi: "Psikiatri Dewasa & Konsultasi Psikosomatis",
+    sip: "SIP.446/DS/RSJ-TPN/2023",
+    jadwal: "Senin, Rabu, Jumat (08.30 - 13.00 WIB)",
+    ruangan: "Poli Jiwa 1 - Gedung Rawat Jalan",
+    status: "Praktik Hari Ini",
+  },
+  {
+    id: "DOC-002",
+    nama: "dr. Mutia Rahmadani, Sp.KJ",
+    spesialisasi: "Psikiatri Anak & Remaja (Child & Adolescent)",
+    sip: "SIP.446/DS/RSJ-TPN/2024",
+    jadwal: "Selasa & Kamis (09.00 - 14.00 WIB)",
+    ruangan: "Poli Tumbuh Kembang Anak - Gedung B",
+    status: "Praktik Hari Ini",
+  },
+  {
+    id: "DOC-003",
+    nama: "dr. Andi Pratama, Sp.KJ",
+    spesialisasi: "Adiksi & Rehabilitasi Medis NAPZA",
+    sip: "SIP.446/DS/RSJ-TPN/2022",
+    jadwal: "Senin s/d Kamis (08.00 - 12.00 WIB)",
+    ruangan: "Poli Adiksi NAPZA - Gedung C",
+    status: "Tersedia",
+  },
+  {
+    id: "DOC-004",
+    nama: "dr. Hj. Ratna Juwita, Sp.KJ (K)",
+    spesialisasi: "Psikogeriatri (Kesehatan Jiwa Lansia/Demensia)",
+    sip: "SIP.446/DS/RSJ-TPN/2021",
+    jadwal: "Rabu & Sabtu (08.30 - 12.30 WIB)",
+    ruangan: "Poli Geriatri - Gedung B",
+    status: "Tersedia",
+  },
+  {
+    id: "DOC-005",
+    nama: "Zulkifli, M.Psi., Psikolog Klinis",
+    spesialisasi: "Psikoterapi, Tes MMPI, & Konseling Keluarga",
+    sip: "SIPP.552/PK/RSJ-TPN/2023",
+    jadwal: "Senin s/d Jumat (08.00 - 14.30 WIB)",
+    ruangan: "Klinik Psikologi Terpadu - Gedung Utama",
+    status: "Praktik Hari Ini",
+  },
+];
