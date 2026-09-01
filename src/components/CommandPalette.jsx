@@ -19,74 +19,53 @@ export default function CommandPalette({
 
   const commands = [
     {
+      id: "direktori",
+      label: "Buka Direktori & Master Pegawai Medis",
+      category: "Modul SDM",
+      icon: "👥",
+      action: () => onSelectAction({ type: "navigate_tab", tab: "direktori" }),
+    },
+    {
+      id: "roster",
+      label: "Buka Roster Shift Jaga Bangsal 24/7",
+      category: "Modul SDM",
+      icon: "📅",
+      action: () => onSelectAction({ type: "navigate_tab", tab: "roster" }),
+    },
+    {
+      id: "legalitas",
+      label: "Audit Masa Berlaku STR & SIP Nakes",
+      category: "Modul SDM",
+      icon: "📜",
+      action: () => onSelectAction({ type: "navigate_tab", tab: "legalitas" }),
+    },
+    {
+      id: "cuti",
+      label: "Manajemen Pengajuan & Approval Cuti",
+      category: "Modul SDM",
+      icon: "🏖️",
+      action: () => onSelectAction({ type: "navigate_tab", tab: "cuti" }),
+    },
+    {
+      id: "diklat",
+      label: "Program Diklat & Kredensialing Khusus Jiwa",
+      category: "Modul SDM",
+      icon: "🎓",
+      action: () => onSelectAction({ type: "navigate_tab", tab: "diklat" }),
+    },
+    {
       id: "analitik",
-      label: "Buka Analitik & Dashboard SIM-RS",
-      category: "Navigasi Admin",
-      icon: "📈",
+      label: "Dashboard Analitik Kinerja SDM (SKP)",
+      category: "Modul SDM",
+      icon: "📊",
       action: () => onSelectAction({ type: "navigate_tab", tab: "analitik" }),
     },
     {
-      id: "inventaris",
-      label: "Buka Manajemen Inventaris & Stok Logistik",
-      category: "Navigasi Admin",
-      icon: "📦",
-      action: () => onSelectAction({ type: "navigate_tab", tab: "inventaris" }),
-    },
-    {
-      id: "bangsal",
-      label: "Monitoring Ketersediaan Bed & Bangsal Rawat Jiwa",
-      category: "Navigasi Admin",
+      id: "portal_publik",
+      label: "Lihat Portal Informasi SDM Publik",
+      category: "Navigasi Umum",
       icon: "🏥",
-      action: () => onSelectAction({ type: "navigate_tab", tab: "bangsal" }),
-    },
-    {
-      id: "coldchain",
-      label: "Monitoring Sensor Suhu Cold-Chain Farmasi",
-      category: "Navigasi Admin",
-      icon: "❄️",
-      action: () => onSelectAction({ type: "navigate_tab", tab: "coldchain" }),
-    },
-    {
-      id: "supplier",
-      label: "Direktori Rekanan Vendor PBF & Alkes",
-      category: "Navigasi Admin",
-      icon: "🏢",
-      action: () => onSelectAction({ type: "navigate_tab", tab: "supplier" }),
-    },
-    {
-      id: "laporan",
-      label: "Laporan Riwayat Mutasi Logistik",
-      category: "Navigasi Admin",
-      icon: "📊",
-      action: () => onSelectAction({ type: "navigate_tab", tab: "laporan" }),
-    },
-    {
-      id: "skrining",
-      label: "Mulai Skrining Mandiri Kesehatan Jiwa Online",
-      category: "Layanan Publik",
-      icon: "🧠",
-      action: () => onSelectAction({ type: "open_screening" }),
-    },
-    {
-      id: "cek_obat",
-      label: "Cek Ketersediaan Obat Farmasi & Bed Publik",
-      category: "Layanan Publik",
-      icon: "💊",
-      action: () => onSelectAction({ type: "open_med_checker" }),
-    },
-    {
-      id: "booking_dokter",
-      label: "Reservasi Antrean Poliklinik Dokter Spesialis",
-      category: "Layanan Publik",
-      icon: "👨‍⚕️",
-      action: () => onSelectAction({ type: "open_booking" }),
-    },
-    {
-      id: "tambah_barang",
-      label: "Tambah Data Logistik / Obat Baru",
-      category: "Aksi Cepat",
-      icon: "➕",
-      action: () => onSelectAction({ type: "add_item" }),
+      action: () => onSelectAction({ type: "navigate_view", view: "guest" }),
     },
     {
       id: "toggle_theme",
@@ -111,98 +90,103 @@ export default function CommandPalette({
         }`}
         onClick={(e) => e.stopPropagation()}
         style={{
-          boxShadow: darkMode
-            ? "0 20px 40px rgba(0,0,0,0.8)"
-            : "0 20px 40px rgba(0,0,0,0.15)",
+          backgroundColor: darkMode ? "#0c101d" : "#ffffff",
+          borderColor: darkMode ? "#222c45" : "#cbd5e1",
+          borderRadius: "16px",
+          overflow: "hidden",
+          maxWidth: "580px",
+          width: "90%",
+          boxShadow: "0 20px 40px rgba(0, 0, 0, 0.4)",
         }}
       >
         {/* INPUT BOX */}
         <div
-          className="p-3 d-flex align-items-center gap-2 border-bottom"
-          style={{ borderColor: darkMode ? "#242c42" : "#e2e8f0" }}
+          className="d-flex align-items-center px-3 py-3 border-bottom"
+          style={{ borderColor: darkMode ? "#1a2238" : "#e2e8f0" }}
         >
-          <span className="fs-5 opacity-50">🔍</span>
+          <span className="fs-5 me-2 text-muted">🔍</span>
           <input
             ref={inputRef}
             type="text"
-            className="form-control border-0 shadow-none px-1 py-1"
+            className="form-control border-0 shadow-none bg-transparent"
             style={{
-              backgroundColor: "transparent",
               color: darkMode ? "#ffffff" : "#0f172a",
               fontSize: "1rem",
             }}
-            placeholder="Ketik perintah atau cari fitur (cth: obat, dokter, bangsal, suhu)..."
+            placeholder="Cari modul SDM, nakes, roster shift, cuti (Ctrl+K)..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Escape") onClose();
-              if (e.key === "Enter" && filteredCommands.length > 0) {
-                filteredCommands[0].action();
-                onClose();
-              }
-            }}
           />
           <kbd
-            className="badge badge-soft-secondary"
-            style={{ fontSize: "0.7rem", cursor: "pointer" }}
-            onClick={onClose}
+            className="px-2 py-1 rounded"
+            style={{
+              fontSize: "0.7rem",
+              backgroundColor: darkMode ? "#1a2238" : "#f1f5f9",
+              color: darkMode ? "#8e94a4" : "#64748b",
+            }}
           >
             ESC
           </kbd>
         </div>
 
-        {/* LIST PERINTAH */}
-        <div style={{ maxHeight: "380px", overflowY: "auto" }} className="p-2">
-          {filteredCommands.length > 0 ? (
+        {/* COMMAND LIST */}
+        <div className="p-2" style={{ maxHeight: "350px", overflowY: "auto" }}>
+          {filteredCommands.length === 0 ? (
+            <div className="text-center py-4 text-muted small">
+              Tidak ada modul SDM yang sesuai dengan "<strong>{query}</strong>"
+            </div>
+          ) : (
             filteredCommands.map((cmd) => (
               <button
                 key={cmd.id}
-                onClick={() => {
-                  cmd.action();
-                  onClose();
-                }}
-                className="btn w-100 text-start d-flex align-items-center justify-content-between p-2 rounded-3 border-0 transition-all mb-1"
+                className="w-100 btn text-start d-flex align-items-center justify-content-between p-2 rounded-3 border-0 mb-1"
                 style={{
                   backgroundColor: "transparent",
-                  color: darkMode ? "#f8fafc" : "#1e293b",
+                  color: darkMode ? "#cbd5e1" : "#334155",
+                  fontSize: "0.88rem",
+                  transition: "background-color 0.15s ease",
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = darkMode
-                    ? "#1a2133"
-                    : "#f1f5f9";
+                  e.currentTarget.style.backgroundColor = darkMode ? "#182035" : "#f1f5f9";
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.backgroundColor = "transparent";
                 }}
+                onClick={() => {
+                  cmd.action();
+                  onClose();
+                }}
               >
                 <div className="d-flex align-items-center gap-3">
-                  <span className="fs-5">{cmd.icon}</span>
-                  <div>
-                    <span className="fw-medium d-block small">{cmd.label}</span>
-                    <small className="opacity-50" style={{ fontSize: "0.72rem" }}>
-                      {cmd.category}
-                    </small>
-                  </div>
+                  <span style={{ fontSize: "1.1rem" }}>{cmd.icon}</span>
+                  <span className="fw-medium">{cmd.label}</span>
                 </div>
-                <span className="opacity-25">&rarr;</span>
+                <span
+                  className="badge rounded-pill"
+                  style={{
+                    fontSize: "0.68rem",
+                    backgroundColor: darkMode ? "#1a2238" : "#e2e8f0",
+                    color: darkMode ? "#8e94a4" : "#64748b",
+                  }}
+                >
+                  {cmd.category}
+                </span>
               </button>
             ))
-          ) : (
-            <div className="text-center py-4 opacity-50 small">
-              Tidak ada perintah atau fitur yang sesuai "{query}".
-            </div>
           )}
         </div>
 
+        {/* FOOTER */}
         <div
-          className="p-2 px-3 border-top d-flex justify-content-between align-items-center opacity-50 small"
+          className="d-flex align-items-center justify-content-between px-3 py-2 border-top text-muted"
           style={{
-            borderColor: darkMode ? "#242c42" : "#e2e8f0",
+            borderColor: darkMode ? "#1a2238" : "#e2e8f0",
+            backgroundColor: darkMode ? "#080c18" : "#f8fafc",
             fontSize: "0.72rem",
           }}
         >
-          <span>Pencarian Cepat SIM-RS Tampan</span>
-          <span>Tekan <b>ESC</b> untuk menutup</span>
+          <span>SIM-SDM RS Jiwa Tampan</span>
+          <span>Tekan ↵ untuk memilih &bull; ESC untuk batal</span>
         </div>
       </div>
     </div>

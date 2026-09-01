@@ -1,17 +1,17 @@
 import React, { useState } from "react";
-import DoctorsModal from "./DoctorsModal";
-import MentalHealthScreening from "../components/MentalHealthScreening";
-import PublicMedAvailability from "../components/PublicMedAvailability";
-import AppointmentBookingModal from "../components/AppointmentBookingModal";
+import { initialEmployees, initialTrainings, sdmStats } from "../data/sdmData";
 
 export default function GuestPage({ setCurrentView, darkMode, cardBg }) {
-  const [activeFeatureTab, setActiveFeatureTab] = useState("layanan"); // 'layanan' | 'skrining' | 'ketersediaan' | 'ikm'
-  const [showDoctorModal, setShowDoctorModal] = useState(false);
-  const [showBookingModal, setShowBookingModal] = useState(false);
+  const [activePortalTab, setActivePortalTab] = useState("tenaga_medis"); // 'tenaga_medis' | 'rekrutmen' | 'diklat' | 'layanan_sdm'
+
+  // Doctors & Key Nakes for public view
+  const doctorsList = initialEmployees.filter(
+    (e) => e.profesi.includes("Dokter") || e.profesi.includes("Psikolog")
+  );
 
   return (
     <div className="pb-5 animate-fade-in">
-      {/* HERO SECTION - MODERN MINIMALIST */}
+      {/* HERO SECTION */}
       <section
         className={`py-5 px-3 px-md-4 mb-4 border-bottom position-relative overflow-hidden ${
           darkMode ? "bg-black text-light" : "bg-white text-dark"
@@ -20,16 +20,16 @@ export default function GuestPage({ setCurrentView, darkMode, cardBg }) {
           borderColor: darkMode ? "#181d2e" : "#e2e8f0",
         }}
       >
-        {/* Subtle Background Glow Accent */}
+        {/* Glow Accent */}
         <div
           style={{
             position: "absolute",
             top: "-120px",
             right: "-100px",
-            width: "400px",
-            height: "400px",
+            width: "420px",
+            height: "420px",
             borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0) 70%)",
+            background: "radial-gradient(circle, rgba(16, 185, 129, 0.18) 0%, rgba(16, 185, 129, 0) 70%)",
             pointerEvents: "none",
             zIndex: 0,
           }}
@@ -40,7 +40,7 @@ export default function GuestPage({ setCurrentView, darkMode, cardBg }) {
             <div className="col-lg-7">
               <div className="d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill mb-3 badge-soft-success">
                 <span className="pulse-dot"></span>
-                <span className="small fw-semibold">Rumah Sakit Jiwa Rujukan Utama Provinsi Riau</span>
+                <span className="small fw-semibold">Portal Informasi SDM & Kepegawaian RSJ Tampan Riau</span>
               </div>
 
               <h1
@@ -51,100 +51,107 @@ export default function GuestPage({ setCurrentView, darkMode, cardBg }) {
                   color: darkMode ? "#ffffff" : "#0f172a",
                 }}
               >
-                Kesehatan Mental Terpadu, <br className="d-none d-md-block" />
-                <span style={{ color: "#10b981" }}>Melayani dengan Empati & Profesionalisme</span>
+                Ketenagaan Profesional, <br className="d-none d-md-block" />
+                <span style={{ color: "#10b981" }}>Pelayanan Kesehatan Jiwa Berkualitas</span>
               </h1>
 
               <p
                 className="lead fs-6 mb-4"
                 style={{
                   color: darkMode ? "#94a3b8" : "#64748b",
-                  maxWidth: "540px",
+                  maxWidth: "560px",
                   lineHeight: "1.6",
                 }}
               >
-                Pusat perawatan kedokteran jiwa, klinik psikologi anak-dewasa, rehabilitasi medis NAPZA, dan sistem pemantauan logistik farmasi terintegrasi 24 jam.
+                Pusat data kepegawaian terpadu, informasi profil dokter spesialis kedokteran jiwa, perawat jiwa kompeten, jadwal dinas 24/7, dan pelatihan kredensialing penanganan krisis kejiwaan.
               </p>
 
               {/* QUICK ACTION BUTTONS */}
               <div className="d-flex flex-wrap gap-2 pt-1">
                 <button
                   className="btn btn-success px-4 py-2 fw-semibold d-flex align-items-center gap-2 shadow-sm"
-                  onClick={() => setShowBookingModal(true)}
+                  onClick={() => setCurrentView("login")}
                 >
-                  <span>🎟️ Reservasi Poliklinik Dokter</span>
+                  <span>🔐 Masuk Portal SIM-SDM</span>
                 </button>
                 <button
                   className="btn btn-outline-secondary px-3 py-2 fw-medium d-flex align-items-center gap-2"
-                  onClick={() => setActiveFeatureTab("skrining")}
+                  onClick={() => setActivePortalTab("tenaga_medis")}
                 >
-                  <span>🧠 Skrining Mandiri Jiwa</span>
-                </button>
-                <button
-                  className="btn btn-outline-success px-3 py-2 fw-medium"
-                  onClick={() => setCurrentView("login")}
-                >
-                  🔐 Portal Petugas SIM-RS
+                  <span>👨‍⚕️ Direktori Tenaga Medis</span>
                 </button>
               </div>
             </div>
 
-            {/* HIGHLIGHT STATS & EMERGENCY BOX */}
+            {/* HERO STATS OVERVIEW */}
             <div className="col-lg-5">
               <div
-                className="p-4 rounded-4 shadow-sm"
+                className="p-4 rounded-4 shadow-sm border"
                 style={{
-                  backgroundColor: darkMode ? "#0c101a" : "#f8fafc",
-                  border: darkMode ? "1px solid #1c2438" : "1px solid #e2e8f0",
+                  backgroundColor: darkMode ? "#0e1322" : "#f8fafc",
+                  borderColor: darkMode ? "#1c2339" : "#e2e8f0",
                 }}
               >
-                <div className="d-flex align-items-center justify-content-between mb-3">
-                  <div className="d-flex align-items-center gap-2">
-                    <span className="fs-4">🏥</span>
-                    <div>
-                      <h6 className="fw-bold mb-0">RSJ Tampan Pekanbaru</h6>
-                      <small className="opacity-75">Akreditasi Paripurna KARS</small>
-                    </div>
-                  </div>
-                  <span className="badge badge-soft-success">24 Jam Siaga</span>
-                </div>
+                <h6 className="fw-bold mb-3 d-flex align-items-center gap-2 text-success">
+                  <span>📊</span> Profil Ketenagaan SDM
+                </h6>
 
-                <div className="row g-2 mb-3 text-start small">
+                <div className="row g-3">
                   <div className="col-6">
-                    <div className="p-2 rounded-3" style={{ backgroundColor: darkMode ? "#141a29" : "#ffffff", border: darkMode ? "1px solid #1e273d" : "1px solid #e2e8f0" }}>
-                      <span className="opacity-75 d-block" style={{ fontSize: "0.72rem" }}>Layanan IGD:</span>
-                      <strong className="text-success">24 Jam Nonstop</strong>
+                    <div
+                      className="p-3 rounded-3 border"
+                      style={{
+                        backgroundColor: darkMode ? "#141a2c" : "#ffffff",
+                        borderColor: darkMode ? "#222c45" : "#e2e8f0",
+                      }}
+                    >
+                      <span className="small text-muted d-block">Total SDM RSJ</span>
+                      <h3 className="fw-bold mb-0 text-success">{sdmStats.totalPegawai}</h3>
+                      <small className="text-muted" style={{ fontSize: "0.72rem" }}>Pegawai ASN & BLUD</small>
                     </div>
                   </div>
-                  <div className="col-6">
-                    <div className="p-2 rounded-3" style={{ backgroundColor: darkMode ? "#141a29" : "#ffffff", border: darkMode ? "1px solid #1e273d" : "1px solid #e2e8f0" }}>
-                      <span className="opacity-75 d-block" style={{ fontSize: "0.72rem" }}>Rawat Jalan:</span>
-                      <strong>Senin &ndash; Sabtu</strong>
-                    </div>
-                  </div>
-                </div>
 
-                <div
-                  className="p-3 rounded-3 d-flex align-items-center justify-content-between"
-                  style={{
-                    backgroundColor: darkMode ? "rgba(244, 63, 94, 0.1)" : "#fff1f2",
-                    border: "1px solid rgba(244, 63, 94, 0.25)",
-                    color: "#f43f5e",
-                  }}
-                >
-                  <div>
-                    <small className="d-block fw-semibold" style={{ fontSize: "0.72rem" }}>
-                      HOTLINE DARURAT / KONSULTASI KRISIS:
-                    </small>
-                    <strong className="fs-6">☎️ (0761) 63238 / 0812-3456-7890</strong>
+                  <div className="col-6">
+                    <div
+                      className="p-3 rounded-3 border"
+                      style={{
+                        backgroundColor: darkMode ? "#141a2c" : "#ffffff",
+                        borderColor: darkMode ? "#222c45" : "#e2e8f0",
+                      }}
+                    >
+                      <span className="small text-muted d-block">Ners & Perawat Jiwa</span>
+                      <h3 className="fw-bold mb-0 text-primary">{sdmStats.tenagaKeperawatan}</h3>
+                      <small className="text-muted" style={{ fontSize: "0.72rem" }}>Bersertifikasi Asuhan Jiwa</small>
+                    </div>
                   </div>
-                  <a
-                    href="tel:076163238"
-                    className="btn btn-sm btn-danger fw-semibold px-2 py-1"
-                    style={{ fontSize: "0.75rem" }}
-                  >
-                    Hubungi
-                  </a>
+
+                  <div className="col-6">
+                    <div
+                      className="p-3 rounded-3 border"
+                      style={{
+                        backgroundColor: darkMode ? "#141a2c" : "#ffffff",
+                        borderColor: darkMode ? "#222c45" : "#e2e8f0",
+                      }}
+                    >
+                      <span className="small text-muted d-block">Dokter & Psikolog</span>
+                      <h3 className="fw-bold mb-0 text-info">{sdmStats.tenagaMedis}</h3>
+                      <small className="text-muted" style={{ fontSize: "0.72rem" }}>Sp.KJ & Subspesialis</small>
+                    </div>
+                  </div>
+
+                  <div className="col-6">
+                    <div
+                      className="p-3 rounded-3 border"
+                      style={{
+                        backgroundColor: darkMode ? "#141a2c" : "#ffffff",
+                        borderColor: darkMode ? "#222c45" : "#e2e8f0",
+                      }}
+                    >
+                      <span className="small text-muted d-block">Tingkat Presensi</span>
+                      <h3 className="fw-bold mb-0 text-warning">{sdmStats.tingkatKehadiranBulanIni}%</h3>
+                      <small className="text-muted" style={{ fontSize: "0.72rem" }}>Disiplin Shift 24/7</small>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -152,375 +159,325 @@ export default function GuestPage({ setCurrentView, darkMode, cardBg }) {
         </div>
       </section>
 
-      {/* CONTAINER FITUR UTAMA & TAB INTERAKTIF */}
+      {/* PORTAL FEATURES TABS */}
       <div className="container">
-        {/* STATISTIK MINIMALIS 4-KOLOM */}
-        <div className="row g-3 mb-4">
-          <div className="col-6 col-md-3">
-            <div
-              className={`p-3 rounded-4 text-center shadow-sm clean-card ${cardBg}`}
-              style={{ border: darkMode ? "1px solid #1c2236" : "1px solid #e2e8f0" }}
-            >
-              <h3 className="fw-bold mb-0 text-success">250+</h3>
-              <small className="opacity-75" style={{ fontSize: "0.76rem" }}>Kapasitas Tempat Tidur</small>
-            </div>
-          </div>
-          <div className="col-6 col-md-3">
-            <div
-              className={`p-3 rounded-4 text-center shadow-sm clean-card ${cardBg}`}
-              style={{ border: darkMode ? "1px solid #1c2236" : "1px solid #e2e8f0" }}
-            >
-              <h3 className="fw-bold mb-0 text-primary">18+</h3>
-              <small className="opacity-75" style={{ fontSize: "0.76rem" }}>Dokter Spesialis & Psikolog</small>
-            </div>
-          </div>
-          <div className="col-6 col-md-3">
-            <div
-              className={`p-3 rounded-4 text-center shadow-sm clean-card ${cardBg}`}
-              style={{ border: darkMode ? "1px solid #1c2236" : "1px solid #e2e8f0" }}
-            >
-              <h3 className="fw-bold mb-0 text-warning">24/7</h3>
-              <small className="opacity-75" style={{ fontSize: "0.76rem" }}>IGD Psikiatri & Farmasi</small>
-            </div>
-          </div>
-          <div className="col-6 col-md-3">
-            <div
-              className={`p-3 rounded-4 text-center shadow-sm clean-card ${cardBg}`}
-              style={{ border: darkMode ? "1px solid #1c2236" : "1px solid #e2e8f0" }}
-            >
-              <h3 className="fw-bold mb-0 text-info">94.8%</h3>
-              <small className="opacity-75" style={{ fontSize: "0.76rem" }}>Indeks Kepuasan Pasien (IKM)</small>
-            </div>
-          </div>
+        {/* NAV PILLS */}
+        <div
+          className="d-flex flex-wrap gap-2 p-2 rounded-4 mb-4 border shadow-sm"
+          style={{
+            backgroundColor: darkMode ? "#111624" : "#ffffff",
+            borderColor: darkMode ? "#1d253b" : "#e2e8f0",
+          }}
+        >
+          {[
+            { id: "tenaga_medis", label: "Profil Tenaga Medis & Dokter", icon: "👨‍⚕️" },
+            { id: "rekrutmen", label: "Informasi Rekrutmen & Formasi Nakes", icon: "📢" },
+            { id: "diklat", label: "Program Diklat & Kredensialing Jiwa", icon: "🎓" },
+            { id: "layanan_sdm", label: "Panduan Layanan Kepegawaian", icon: "📋" },
+          ].map((tab) => {
+            const isActive = activePortalTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActivePortalTab(tab.id)}
+                className={`btn btn-sm d-flex align-items-center gap-2 px-3 py-2 rounded-3 border-0 transition-all ${
+                  isActive ? "btn-success fw-semibold shadow-sm" : "btn-light text-dark"
+                }`}
+                style={{
+                  backgroundColor: isActive ? "#10b981" : darkMode ? "#181f33" : "#f1f5f9",
+                  color: isActive ? "#ffffff" : darkMode ? "#cbd5e1" : "#334155",
+                  fontSize: "0.85rem",
+                }}
+              >
+                <span>{tab.icon}</span>
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
         </div>
 
-        {/* TAB SELECTOR FITUR UTAMA */}
-        <div className="d-flex flex-wrap align-items-center justify-content-center gap-2 mb-4">
-          <button
-            onClick={() => setActiveFeatureTab("layanan")}
-            className={`btn rounded-pill px-3 py-2 fw-medium ${
-              activeFeatureTab === "layanan"
-                ? "btn-success shadow-sm"
-                : "btn-outline-secondary"
-            }`}
+        {/* TAB 1: PROFIL DOKTER & TENAGA MEDIS */}
+        {activePortalTab === "tenaga_medis" && (
+          <div
+            className="p-4 rounded-4 border shadow-sm"
+            style={{
+              backgroundColor: darkMode ? "#111624" : "#ffffff",
+              borderColor: darkMode ? "#1d253b" : "#e2e8f0",
+            }}
           >
-            🏥 Layanan Unggulan
-          </button>
-          <button
-            onClick={() => setActiveFeatureTab("skrining")}
-            className={`btn rounded-pill px-3 py-2 fw-medium ${
-              activeFeatureTab === "skrining"
-                ? "btn-success shadow-sm"
-                : "btn-outline-secondary"
-            }`}
-          >
-            🧠 Skrining Mandiri Jiwa
-          </button>
-          <button
-            onClick={() => setActiveFeatureTab("ketersediaan")}
-            className={`btn rounded-pill px-3 py-2 fw-medium ${
-              activeFeatureTab === "ketersediaan"
-                ? "btn-success shadow-sm"
-                : "btn-outline-secondary"
-            }`}
-          >
-            💊 Cek Obat & Bed Publik
-          </button>
-          <button
-            onClick={() => setActiveFeatureTab("ikm")}
-            className={`btn rounded-pill px-3 py-2 fw-medium ${
-              activeFeatureTab === "ikm"
-                ? "btn-success shadow-sm"
-                : "btn-outline-secondary"
-            }`}
-          >
-            ⭐ Kepuasan Pasien (IKM)
-          </button>
-          <button
-            onClick={() => setShowDoctorModal(true)}
-            className="btn btn-outline-secondary rounded-pill px-3 py-2 fw-medium"
-          >
-            👨‍⚕️ Jadwal Dokter (Sp.KJ)
-          </button>
-        </div>
-
-        {/* KONTEN TAB: LAYANAN */}
-        {activeFeatureTab === "layanan" && (
-          <div className="animate-fade-in mb-5">
-            <div className="row g-3">
-              <div className="col-md-4">
-                <div
-                  className={`card h-100 p-4 rounded-4 shadow-sm clean-card ${cardBg}`}
-                  style={{ border: darkMode ? "1px solid #1c2236" : "1px solid #e2e8f0" }}
-                >
-                  <div
-                    className="p-3 rounded-3 d-inline-flex align-items-center justify-content-center fs-3 mb-3 text-primary"
-                    style={{ backgroundColor: "rgba(99, 102, 241, 0.12)", width: "52px", height: "52px" }}
-                  >
-                    🧠
-                  </div>
-                  <h5 className="fw-bold">Psikiatri & Tumbuh Kembang</h5>
-                  <p className="small opacity-75 mb-3">
-                    Konsultasi kesehatan jiwa dewasa, remaja, gangguan kecemasan, bipolar, depresi, hingga asesmen tumbuh kembang anak.
-                  </p>
-                  <button
-                    className="btn btn-sm btn-link text-decoration-none fw-semibold p-0 text-start text-primary mt-auto"
-                    onClick={() => setShowDoctorModal(true)}
-                  >
-                    Lihat Dokter &rarr;
-                  </button>
-                </div>
-              </div>
-
-              <div className="col-md-4">
-                <div
-                  className={`card h-100 p-4 rounded-4 shadow-sm clean-card ${cardBg}`}
-                  style={{ border: darkMode ? "1px solid #1c2236" : "1px solid #e2e8f0" }}
-                >
-                  <div
-                    className="p-3 rounded-3 d-inline-flex align-items-center justify-content-center fs-3 mb-3 text-success"
-                    style={{ backgroundColor: "rgba(16, 185, 129, 0.12)", width: "52px", height: "52px" }}
-                  >
-                    🗣️
-                  </div>
-                  <h5 className="fw-bold">Klinik Psikologi Terpadu</h5>
-                  <p className="small opacity-75 mb-3">
-                    Layanan psikotes, uji minat bakat, asesmen MMPI, psikoterapi kognitif (CBT), serta konseling keluarga dan pranikah.
-                  </p>
-                  <button
-                    className="btn btn-sm btn-link text-decoration-none fw-semibold p-0 text-start text-success mt-auto"
-                    onClick={() => setShowBookingModal(true)}
-                  >
-                    Daftar Konseling &rarr;
-                  </button>
-                </div>
-              </div>
-
-              <div className="col-md-4">
-                <div
-                  className={`card h-100 p-4 rounded-4 shadow-sm clean-card ${cardBg}`}
-                  style={{ border: darkMode ? "1px solid #1c2236" : "1px solid #e2e8f0" }}
-                >
-                  <div
-                    className="p-3 rounded-3 d-inline-flex align-items-center justify-content-center fs-3 mb-3 text-danger"
-                    style={{ backgroundColor: "rgba(244, 63, 94, 0.12)", width: "52px", height: "52px" }}
-                  >
-                    🚑
-                  </div>
-                  <h5 className="fw-bold">Rehabilitasi Medis NAPZA</h5>
-                  <p className="small opacity-75 mb-3">
-                    Program detoksifikasi medis dan terapi sosial pemulihan adiksi zat adiktif dengan pendampingan dokter spesialis adiksi.
-                  </p>
-                  <button
-                    className="btn btn-sm btn-link text-decoration-none fw-semibold p-0 text-start text-danger mt-auto"
-                    onClick={() =>
-                      alert("Alur Rawat Inap & Rehabilitasi NAPZA RSJ Tampan:\n1. Skrining Awal di IGD / Poli Adiksi\n2. Evaluasi Medis & Toksikologi\n3. Program Rawat Inap Komprehensif")
-                    }
-                  >
-                    Alur Rehabilitasi &rarr;
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* KONTEN TAB: SKRINING */}
-        {activeFeatureTab === "skrining" && (
-          <div className="mb-5">
-            <MentalHealthScreening
-              darkMode={darkMode}
-              cardBg={cardBg}
-              onConsultClick={() => setShowBookingModal(true)}
-            />
-          </div>
-        )}
-
-        {/* KONTEN TAB: KETERSEDIAAN OBAT & BED */}
-        {activeFeatureTab === "ketersediaan" && (
-          <div className="mb-5">
-            <PublicMedAvailability
-              darkMode={darkMode}
-              cardBg={cardBg}
-            />
-          </div>
-        )}
-
-        {/* KONTEN TAB: INDEKS KEPUASAN MASYARAKAT (IKM) */}
-        {activeFeatureTab === "ikm" && (
-          <div className="animate-fade-in mb-5">
-            <div
-              className={`p-4 rounded-4 shadow-sm border ${
-                darkMode ? "bg-dark-card border-secondary border-opacity-25" : "bg-white"
-              }`}
-            >
-              <div className="row align-items-center g-4 mb-4">
-                <div className="col-lg-4 text-center border-end border-opacity-10">
-                  <span className="badge badge-soft-success mb-2 px-3 py-1">Kemenkes RI Standar Mutu</span>
-                  <h1 className="fw-bold display-4 text-success mb-0">94.8%</h1>
-                  <h6 className="fw-bold mb-1">Mutu Pelayanan: Kategori A (Sangat Baik)</h6>
-                  <small className="opacity-75">Survei Kepuasan Pasien Triwulan II 2026</small>
-                </div>
-
-                <div className="col-lg-8">
-                  <h6 className="fw-bold mb-3">Indikator Penilaian Layanan:</h6>
-                  <div className="mb-2">
-                    <div className="d-flex justify-content-between small mb-1">
-                      <span>Kecepatan & Kesiapan Depo Farmasi Obat Jiwa</span>
-                      <strong className="text-success">96%</strong>
-                    </div>
-                    <div className="progress" style={{ height: "6px" }}>
-                      <div className="progress-bar bg-success" style={{ width: "96%" }}></div>
-                    </div>
-                  </div>
-
-                  <div className="mb-2">
-                    <div className="d-flex justify-content-between small mb-1">
-                      <span>Keramahan & Empati Dokter Sp.KJ & Psikolog</span>
-                      <strong className="text-primary">95%</strong>
-                    </div>
-                    <div className="progress" style={{ height: "6px" }}>
-                      <div className="progress-bar bg-primary" style={{ width: "95%" }}></div>
-                    </div>
-                  </div>
-
-                  <div className="mb-2">
-                    <div className="d-flex justify-content-between small mb-1">
-                      <span>Kebersihan & Keamanan Bangsal Rawat Jiwa</span>
-                      <strong className="text-info">94%</strong>
-                    </div>
-                    <div className="progress" style={{ height: "6px" }}>
-                      <div className="progress-bar bg-info" style={{ width: "94%" }}></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* TESTIMONI PASIEN */}
-              <div className="row g-3">
-                <div className="col-md-4">
-                  <div className="p-3 rounded-3" style={{ backgroundColor: darkMode ? "#141828" : "#f8fafc", border: darkMode ? "1px solid #1e263d" : "1px solid #e2e8f0" }}>
-                    <div className="text-warning mb-1">⭐⭐⭐⭐⭐</div>
-                    <p className="small opacity-75 mb-2" style={{ lineHeight: "1.4" }}>
-                      "Pelayanan dokter psikiatri sangat ramah dan mendengarkan keluhan dengan teliti. Pengambilan obat di apotek juga sangat cepat."
-                    </p>
-                    <small className="fw-semibold d-block">Ibu Suryani (Keluarga Pasien Rawat Jalan)</small>
-                  </div>
-                </div>
-
-                <div className="col-md-4">
-                  <div className="p-3 rounded-3" style={{ backgroundColor: darkMode ? "#141828" : "#f8fafc", border: darkMode ? "1px solid #1e263d" : "1px solid #e2e8f0" }}>
-                    <div className="text-warning mb-1">⭐⭐⭐⭐⭐</div>
-                    <p className="small opacity-75 mb-2" style={{ lineHeight: "1.4" }}>
-                      "Program rehabilitasi medis NAPZA di RSJ Tampan sangat membantu adik saya pulih kembali. Fasilitasnya sangat bersih dan aman."
-                    </p>
-                    <small className="fw-semibold d-block">Bpk. Rahmat Siregar</small>
-                  </div>
-                </div>
-
-                <div className="col-md-4">
-                  <div className="p-3 rounded-3" style={{ backgroundColor: darkMode ? "#141828" : "#f8fafc", border: darkMode ? "1px solid #1e263d" : "1px solid #e2e8f0" }}>
-                    <div className="text-warning mb-1">⭐⭐⭐⭐⭐</div>
-                    <p className="small opacity-75 mb-2" style={{ lineHeight: "1.4" }}>
-                      "Poli tumbuh kembang anak sangat membantu evaluasi anak kami. Sistem antrean digitalnya rapi dan tidak berdesakan."
-                    </p>
-                    <small className="fw-semibold d-block">dr. Fitriani (Pekanbaru)</small>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* EDUKASI & LOKASI RSJ (BERSIH & TERORGANISIR) */}
-        <div className="row g-4 mb-4">
-          <div className="col-lg-7">
-            <div
-              className={`p-4 rounded-4 shadow-sm h-100 ${cardBg}`}
-              style={{ border: darkMode ? "1px solid #1c2236" : "1px solid #e2e8f0" }}
-            >
-              <div className="d-flex align-items-center justify-content-between mb-3">
-                <h5 className="fw-bold mb-0">📰 Edukasi Kesehatan Jiwa RSJ Tampan</h5>
-                <span className="badge badge-soft-secondary">Promkes RSJ</span>
-              </div>
-
-              <div className="border-bottom border-opacity-10 pb-3 mb-3">
-                <div className="d-flex align-items-center gap-2 mb-1">
-                  <span className="badge badge-soft-primary" style={{ fontSize: "0.68rem" }}>Edukasi Mental</span>
-                  <small className="opacity-50">28 Agustus 2026</small>
-                </div>
-                <h6 className="fw-bold mb-1">Mengelola Stres & Mencegah Burnout di Era Digital</h6>
-                <p className="small opacity-75 mb-0">
-                  Praktik mindfulness, regulasi emosi, dan mengenali batasan diri saat beban pekerjaan menumpuk.
-                </p>
-              </div>
-
+            <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
               <div>
-                <div className="d-flex align-items-center gap-2 mb-1">
-                  <span className="badge badge-soft-success" style={{ fontSize: "0.68rem" }}>Farmasi Terpadu</span>
-                  <small className="opacity-50">24 Agustus 2026</small>
+                <h5 className="fw-bold mb-1">👨‍⚕️ Dokter Spesialis Kedokteran Jiwa & Psikolog Klinis</h5>
+                <p className="small text-muted mb-0">
+                  Tenaga ahli kejiwaan terakreditasi melayani poliklinik rawat jalan, bangsal rawat inap, dan krisis NAPZA
+                </p>
+              </div>
+              <span className="badge bg-success rounded-pill px-3 py-2">
+                ✅ Terdaftar Resmi di Kemenkes RI & HIMPSI
+              </span>
+            </div>
+
+            <div className="row g-4">
+              {doctorsList.map((doc) => (
+                <div key={doc.id} className="col-12 col-md-6 col-lg-4">
+                  <div
+                    className="p-3 rounded-3 h-100 border d-flex flex-column justify-content-between transition-all"
+                    style={{
+                      backgroundColor: darkMode ? "#141a2c" : "#f8fafc",
+                      borderColor: darkMode ? "#222c45" : "#e2e8f0",
+                    }}
+                  >
+                    <div>
+                      <div className="d-flex align-items-center gap-3 mb-3">
+                        <img
+                          src={doc.foto}
+                          alt={doc.nama}
+                          className="rounded-circle shadow-sm"
+                          style={{
+                            width: "56px",
+                            height: "56px",
+                            objectFit: "cover",
+                            border: "2px solid #10b981",
+                          }}
+                        />
+                        <div>
+                          <h6 className="fw-bold mb-0" style={{ fontSize: "0.95rem" }}>
+                            {doc.nama}
+                          </h6>
+                          <small className="text-success fw-medium d-block">
+                            {doc.profesi}
+                          </small>
+                          <span className="badge bg-primary rounded-pill px-2 py-0" style={{ fontSize: "0.68rem" }}>
+                            {doc.statusKepegawaian}
+                          </span>
+                        </div>
+                      </div>
+
+                      <ul className="list-unstyled small d-flex flex-column gap-1 mb-3 text-muted">
+                        <li>
+                          <strong>Subspesialisasi:</strong> {doc.jabatan}
+                        </li>
+                        <li>
+                          <strong>Unit Layanan:</strong> {doc.unitPenempatan}
+                        </li>
+                        <li>
+                          <strong>Pendidikan:</strong> {doc.pendidikan}
+                        </li>
+                        <li>
+                          <strong>No. STR / SIP:</strong> {doc.sip?.nomor}
+                        </li>
+                      </ul>
+                    </div>
+
+                    <div
+                      className="p-2 rounded-2 d-flex align-items-center justify-content-between border"
+                      style={{
+                        backgroundColor: darkMode ? "#1a2238" : "#ecfdf5",
+                        borderColor: darkMode ? "#2a375a" : "#d1fae5",
+                        fontSize: "0.78rem",
+                      }}
+                    >
+                      <span className="text-muted">Legalitas Izin:</span>
+                      <strong className="text-success">✅ SIP Aktif</strong>
+                    </div>
+                  </div>
                 </div>
-                <h6 className="fw-bold mb-1">Pentingnya Kepatuhan Minum Obat Psikiatri Sesuai Resep</h6>
-                <p className="small opacity-75 mb-0">
-                  Panduan bagi keluarga dalam mendampingi terapi obat psikotropika secara aman dan efektif.
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* TAB 2: REKRUTMEN & FORMASI */}
+        {activePortalTab === "rekrutmen" && (
+          <div
+            className="p-4 rounded-4 border shadow-sm"
+            style={{
+              backgroundColor: darkMode ? "#111624" : "#ffffff",
+              borderColor: darkMode ? "#1d253b" : "#e2e8f0",
+            }}
+          >
+            <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+              <div>
+                <h5 className="fw-bold mb-1">📢 Pengumuman Rekrutmen & Formasi Nakes Jiwa RSJ Tampan</h5>
+                <p className="small text-muted mb-0">
+                  Informasi penerimaan Pegawai Pemerintah dengan Perjanjian Kerja (PPPK) & Pegawai Tetap BLUD
+                </p>
+              </div>
+              <span className="badge bg-primary rounded-pill px-3 py-2">Tahun Anggaran 2026</span>
+            </div>
+
+            <div className="row g-3">
+              {[
+                {
+                  posisi: "Perawat Spesialis Keperawatan Jiwa (Sp.Kep.J)",
+                  kuota: "4 Formasi",
+                  kualifikasi: "Ners + Spesialis Keperawatan Jiwa / STR Aktif",
+                  tenggat: "25 September 2026",
+                  status: "Pendaftaran Dibuka",
+                },
+                {
+                  posisi: "Dokter Spesialis Kedokteran Jiwa (Sp.KJ)",
+                  kuota: "2 Formasi",
+                  kualifikasi: "Dokter Spesialis Psikiatri / STR KKI Aktif",
+                  tenggat: "30 September 2026",
+                  status: "Pendaftaran Dibuka",
+                },
+                {
+                  posisi: "Petugas Tim De-eskalasi & Pengamanan Krisis (Security)",
+                  kuota: "6 Formasi",
+                  kualifikasi: "SMA/SMK Sederajat / Sertifikat Gada Pratama & Pelatihan Fisik",
+                  tenggat: "15 September 2026",
+                  status: "Pendaftaran Dibuka",
+                },
+                {
+                  posisi: "Fisioterapis & Terapis Okupasi Jiwa",
+                  kuota: "3 Formasi",
+                  kualifikasi: "D4/S1 Terapi Okupasi / STR Aktif",
+                  tenggat: "20 September 2026",
+                  status: "Segera Dibuka",
+                },
+              ].map((job, idx) => (
+                <div key={idx} className="col-12 col-md-6">
+                  <div
+                    className="p-3 rounded-3 border h-100 d-flex flex-column justify-content-between"
+                    style={{
+                      backgroundColor: darkMode ? "#141a2c" : "#f8fafc",
+                      borderColor: darkMode ? "#222c45" : "#e2e8f0",
+                    }}
+                  >
+                    <div>
+                      <div className="d-flex justify-content-between align-items-center mb-2">
+                        <span className="badge bg-success-subtle text-success fw-bold">{job.kuota}</span>
+                        <span className="badge bg-warning text-dark">{job.status}</span>
+                      </div>
+                      <h6 className="fw-bold mb-1">{job.posisi}</h6>
+                      <p className="small text-muted mb-2">
+                        <strong>Persyaratan:</strong> {job.kualifikasi}
+                      </p>
+                      <small className="d-block text-muted">
+                        📅 Batas Pengiriman Berkas: <strong>{job.tenggat}</strong>
+                      </small>
+                    </div>
+
+                    <div className="pt-3 border-top mt-3 d-flex justify-content-between align-items-center">
+                      <span className="small text-muted">Subbag Kepegawaian</span>
+                      <button
+                        className="btn btn-sm btn-outline-success"
+                        onClick={() => alert(`Informasi pendaftaran untuk posisi ${job.posisi} dapat diajukan ke Subbag Kepegawaian RSJ Tampan.`)}
+                      >
+                        Lihat Persyaratan Lengkap
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* TAB 3: PROGRAM DIKLAT */}
+        {activePortalTab === "diklat" && (
+          <div
+            className="p-4 rounded-4 border shadow-sm"
+            style={{
+              backgroundColor: darkMode ? "#111624" : "#ffffff",
+              borderColor: darkMode ? "#1d253b" : "#e2e8f0",
+            }}
+          >
+            <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+              <div>
+                <h5 className="fw-bold mb-1">🎓 Kalender Pelatihan & Workshop Kejiwaan RSJ Tampan</h5>
+                <p className="small text-muted mb-0">
+                  Pengembangan kompetensi berkelanjutan (CPD) nakes kejiwaan ber-SKP resmi Kemenkes & PPNI
                 </p>
               </div>
             </div>
+
+            <div className="row g-3">
+              {initialTrainings.map((trn) => (
+                <div key={trn.id} className="col-12 col-md-6">
+                  <div
+                    className="p-3 rounded-3 border h-100"
+                    style={{
+                      backgroundColor: darkMode ? "#141a2c" : "#f8fafc",
+                      borderColor: darkMode ? "#222c45" : "#e2e8f0",
+                    }}
+                  >
+                    <div className="d-flex justify-content-between align-items-center mb-2">
+                      <span className="badge bg-info-subtle text-info fw-semibold">{trn.kategori}</span>
+                      <span className="badge bg-success rounded-pill">{trn.status}</span>
+                    </div>
+                    <h6 className="fw-bold mb-2">{trn.namaPelatihan}</h6>
+                    <ul className="list-unstyled small mb-3 text-muted d-flex flex-column gap-1">
+                      <li>
+                        <strong>Penyelenggara:</strong> {trn.penyelenggara}
+                      </li>
+                      <li>
+                        <strong>Target Profesi:</strong> {trn.targetProfesi}
+                      </li>
+                      <li>
+                        <strong>Jadwal:</strong> {trn.jadwalMulai} s/d {trn.jadwalSelesai}
+                      </li>
+                      <li>
+                        <strong>Akreditasi:</strong> {trn.standarAkreditasi}
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
+        )}
 
-          <div className="col-lg-5">
-            <div
-              className={`p-4 rounded-4 shadow-sm h-100 ${cardBg}`}
-              style={{ border: darkMode ? "1px solid #1c2236" : "1px solid #e2e8f0" }}
-            >
-              <h5 className="fw-bold mb-2">📍 Lokasi & Rujukan</h5>
-              <p className="small opacity-75 mb-3">
-                <b>RSJ Tampan Provinsi Riau</b><br />
-                Jl. HR. Soebrantas Km. 12.5, Simpang Baru, Kec. Tampan, Kota Pekanbaru, Riau 28293.
-              </p>
-
-              <div className="rounded-3 overflow-hidden border mb-3 shadow-sm" style={{ height: "160px" }}>
-                <iframe
-                  title="Lokasi RSJ Tampan"
-                  src="https://maps.google.com/maps?q=0.470439,101.378942&hl=id&z=16&output=embed"
-                  width="100%"
-                  height="100%"
-                  style={{ border: 0 }}
-                  allowFullScreen=""
-                  loading="lazy"
-                ></iframe>
+        {/* TAB 4: PANDUAN LAYANAN SDM */}
+        {activePortalTab === "layanan_sdm" && (
+          <div
+            className="p-4 rounded-4 border shadow-sm"
+            style={{
+              backgroundColor: darkMode ? "#111624" : "#ffffff",
+              borderColor: darkMode ? "#1d253b" : "#e2e8f0",
+            }}
+          >
+            <h5 className="fw-bold mb-3">📋 Panduan Prosedur Standar & Hak Kepegawaian RSJ Tampan</h5>
+            <div className="row g-3">
+              <div className="col-md-6">
+                <div
+                  className="p-3 rounded-3 border h-100"
+                  style={{
+                    backgroundColor: darkMode ? "#141a2c" : "#f8fafc",
+                    borderColor: darkMode ? "#222c45" : "#e2e8f0",
+                  }}
+                >
+                  <h6 className="fw-bold text-success mb-2">🏖️ Tata Cara Pengajuan Cuti ASN & BLUD</h6>
+                  <ol className="small text-muted ps-3 mb-0 d-flex flex-column gap-1">
+                    <li>Pengajuan dilakukan H-3 sebelum tanggal cuti melalui sistem SIM-SDM.</li>
+                    <li>Wajib menunjuk petugas pengganti (*handover*) demi keamanan bangsal jiwa.</li>
+                    <li>Persetujuan berjenjang: Kepala Ruangan &bull; Kasubbag Kepegawaian.</li>
+                    <li>Sisa kuota cuti tahunan maksimal 12 hari kerja per tahun.</li>
+                  </ol>
+                </div>
               </div>
 
-              <div className="d-flex justify-content-between align-items-center small">
-                <span>IGD Darurat: <b className="text-danger">(0761) 63238</b></span>
-                <a
-                  href="https://maps.google.com/?q=RSJ+Tampan+Pekanbaru"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn btn-sm btn-outline-secondary"
+              <div className="col-md-6">
+                <div
+                  className="p-3 rounded-3 border h-100"
+                  style={{
+                    backgroundColor: darkMode ? "#141a2c" : "#f8fafc",
+                    borderColor: darkMode ? "#222c45" : "#e2e8f0",
+                  }}
                 >
-                  Buka Google Maps &rarr;
-                </a>
+                  <h6 className="fw-bold text-primary mb-2">📜 Kewajiban STR & Rekredensialing</h6>
+                  <ol className="small text-muted ps-3 mb-0 d-flex flex-column gap-1">
+                    <li>Seluruh nakes wajib memperbarui STR 3 bulan sebelum masa berlaku habis.</li>
+                    <li>Pengajuan SIP Dinkes didukung oleh rekomendasi Direktur RSJ Tampan.</li>
+                    <li>Pelaksanaan audit kredensialing oleh Komite Medik & Komite Keperawatan.</li>
+                  </ol>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
-
-      {/* DOCTORS SCHEDULE MODAL */}
-      <DoctorsModal
-        show={showDoctorModal}
-        onClose={() => setShowDoctorModal(false)}
-        darkMode={darkMode}
-        cardBg={cardBg}
-      />
-
-      {/* APPOINTMENT BOOKING MODAL */}
-      <AppointmentBookingModal
-        show={showBookingModal}
-        onClose={() => setShowBookingModal(false)}
-        darkMode={darkMode}
-      />
     </div>
   );
 }

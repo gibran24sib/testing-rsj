@@ -8,45 +8,45 @@ export default function Sidebar({
   toggleTheme,
   handleLogout,
   setCurrentView,
-  inventoryCount = 0,
   onOpenCommandPalette,
+  employeeCount = 0,
 }) {
   const menuItems = [
     {
+      id: "direktori",
+      label: "Direktori Pegawai",
+      icon: "👥",
+      badge: `${employeeCount || 12} Nakes`,
+    },
+    {
+      id: "roster",
+      label: "Roster Shift 24/7",
+      icon: "📅",
+      badge: "Duty Shift",
+    },
+    {
+      id: "legalitas",
+      label: "Legalitas STR & SIP",
+      icon: "📜",
+      badge: "Audit Izin",
+    },
+    {
+      id: "cuti",
+      label: "Manajemen Cuti",
+      icon: "🏖️",
+      badge: "Izin & Approval",
+    },
+    {
+      id: "diklat",
+      label: "Diklat & Kredensialing",
+      icon: "🎓",
+      badge: "Keahlian Jiwa",
+    },
+    {
       id: "analitik",
-      label: "Analitik SIM-RS",
-      icon: "📈",
-      badge: "Live",
-    },
-    {
-      id: "inventaris",
-      label: "Inventaris Barang",
-      icon: "📦",
-      badge: `${inventoryCount}`,
-    },
-    {
-      id: "bangsal",
-      label: "Bangsal Rawat Jiwa",
-      icon: "🏥",
-      badge: "6 Unit",
-    },
-    {
-      id: "coldchain",
-      label: "Cold Chain Suhu",
-      icon: "❄️",
-      badge: "3 Sensor",
-    },
-    {
-      id: "supplier",
-      label: "Rekanan Vendor PBF",
-      icon: "🏢",
-      badge: "5 Vendor",
-    },
-    {
-      id: "laporan",
-      label: "Laporan Mutasi",
+      label: "Analitik Kinerja SDM",
       icon: "📊",
-      badge: "Rekap",
+      badge: "SKP Kinerja",
     },
   ];
 
@@ -74,7 +74,7 @@ export default function Sidebar({
             border: darkMode ? "1px solid #1d253b" : "1px solid #e2e8f0",
           }}
           onClick={() => setCurrentView("guest")}
-          title="Kembali ke Beranda Publik"
+          title="Kembali ke Portal SDM Publik"
         >
           <div
             className="rounded-3 fs-5 d-flex align-items-center justify-content-center"
@@ -98,7 +98,7 @@ export default function Sidebar({
                 color: darkMode ? "#7e8699" : "#64748b",
               }}
             >
-              SIM-RS LOGISTIK MEDIS
+              SIM-SDM & KEPEGAWAIAN
             </small>
           </div>
         </div>
@@ -116,7 +116,7 @@ export default function Sidebar({
         >
           <div className="d-flex align-items-center gap-2">
             <span>🔍</span>
-            <span>Cari cepat fitur...</span>
+            <span>Cari modul SDM...</span>
           </div>
           <kbd
             className="px-1 py-0 rounded"
@@ -130,7 +130,7 @@ export default function Sidebar({
           </kbd>
         </button>
 
-        {/* SECTION HEADER: MENU UTAMA */}
+        {/* SECTION HEADER: MODUL SDM */}
         <div className="mb-2 px-2">
           <small
             className="text-uppercase fw-semibold"
@@ -140,7 +140,7 @@ export default function Sidebar({
               color: darkMode ? "#505769" : "#94a3b8",
             }}
           >
-            Menu Navigasi
+            Modul Kepegawaian & Nakes
           </small>
         </div>
 
@@ -180,13 +180,13 @@ export default function Sidebar({
                     backgroundColor: isActive
                       ? "rgba(16, 185, 129, 0.2)"
                       : darkMode
-                    ? "#1b2133"
-                    : "#f1f5f9",
+                      ? "#1b2133"
+                      : "#f1f5f9",
                     color: isActive
                       ? "#10b981"
                       : darkMode
-                    ? "#8e94a4"
-                    : "#64748b",
+                      ? "#8e94a4"
+                      : "#64748b",
                   }}
                 >
                   {item.badge}
@@ -195,65 +195,37 @@ export default function Sidebar({
             );
           })}
         </nav>
-
-        {/* SHORTCUT BERANDA PUBLIK */}
-        <div className="px-2 mb-1">
-          <small
-            className="text-uppercase fw-semibold"
-            style={{
-              fontSize: "0.65rem",
-              letterSpacing: "0.8px",
-              color: darkMode ? "#505769" : "#94a3b8",
-            }}
-          >
-            Tampilan Publik
-          </small>
-        </div>
-
-        <button
-          className="btn text-start d-flex align-items-center gap-2 px-3 py-2 rounded-3 border-0 w-100 mb-3 transition-all"
-          style={{
-            backgroundColor: "transparent",
-            color: darkMode ? "#7e8699" : "#64748b",
-            fontSize: "0.84rem",
-          }}
-          onClick={() => setCurrentView("guest")}
-        >
-          <span>🌐</span>
-          <span>Buka Beranda Publik</span>
-        </button>
       </div>
 
-      {/* FOOTER SIDEBAR (PROFIL USER, THEME & LOGOUT) */}
-      <div
-        className="p-3 rounded-3 mt-auto"
-        style={{
-          backgroundColor: darkMode ? "#111624" : "#f8fafc",
-          border: darkMode ? "1px solid #1d253b" : "1px solid #e2e8f0",
-        }}
-      >
-        <div className="d-flex align-items-center justify-content-between mb-3">
+      {/* FOOTER USER CARD */}
+      <div>
+        <div
+          className="p-3 rounded-3 mb-2 d-flex align-items-center justify-content-between"
+          style={{
+            backgroundColor: darkMode ? "#111624" : "#f8fafc",
+            border: darkMode ? "1px solid #1d253b" : "1px solid #e2e8f0",
+          }}
+        >
           <div className="d-flex align-items-center gap-2 overflow-hidden">
             <div
-              className="rounded-circle d-flex align-items-center justify-content-center fw-bold"
+              className="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold shadow-sm"
               style={{
-                width: "32px",
-                height: "32px",
-                minWidth: "32px",
+                width: "34px",
+                height: "34px",
                 backgroundColor: "#10b981",
-                color: "#ffffff",
-                fontSize: "0.8rem",
+                fontSize: "0.85rem",
+                flexShrink: 0,
               }}
             >
-              {currentUser?.nama?.charAt(0) || "A"}
+              {currentUser?.nama ? currentUser.nama.charAt(0).toUpperCase() : "A"}
             </div>
             <div className="overflow-hidden">
-              <span
-                className="fw-semibold d-block text-truncate"
+              <div
+                className="fw-semibold text-truncate"
                 style={{ fontSize: "0.82rem" }}
               >
-                {currentUser?.nama || "Petugas SIM-RS"}
-              </span>
+                {currentUser?.nama || "Kasubbag SDM"}
+              </div>
               <small
                 className="d-block text-truncate"
                 style={{
@@ -261,19 +233,18 @@ export default function Sidebar({
                   color: darkMode ? "#7e8699" : "#64748b",
                 }}
               >
-                {currentUser?.role || "Petugas Logistik"}
+                {currentUser?.role || "Administrator SDM"}
               </small>
             </div>
           </div>
 
           <button
-            className="btn btn-sm rounded-circle p-1 border-0"
             onClick={toggleTheme}
-            title="Ganti Tema Dark/Light"
+            className="btn btn-sm p-1 rounded-2"
+            title="Ganti Tema (Dark/Light)"
             style={{
-              width: "30px",
-              height: "30px",
-              backgroundColor: darkMode ? "#1e263d" : "#e2e8f0",
+              color: darkMode ? "#f59e0b" : "#64748b",
+              backgroundColor: darkMode ? "#182035" : "#e2e8f0",
             }}
           >
             {darkMode ? "☀️" : "🌙"}
@@ -281,12 +252,17 @@ export default function Sidebar({
         </div>
 
         <button
-          className="btn btn-sm btn-outline-danger w-100 fw-medium d-flex align-items-center justify-content-center gap-2 py-1"
-          style={{ fontSize: "0.8rem" }}
           onClick={handleLogout}
+          className="btn btn-sm w-100 d-flex align-items-center justify-content-center gap-2 py-2 rounded-3 border-0"
+          style={{
+            backgroundColor: darkMode ? "#221319" : "#fee2e2",
+            color: "#ef4444",
+            fontSize: "0.82rem",
+            fontWeight: 600,
+          }}
         >
           <span>🚪</span>
-          <span>Logout Petugas</span>
+          <span>Keluar Sistem</span>
         </button>
       </div>
     </aside>

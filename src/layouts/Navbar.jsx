@@ -48,7 +48,7 @@ export default function Navbar({
                 color: darkMode ? "#8e94a4" : "#64748b",
               }}
             >
-              PROVINSI RIAU
+              SIM-SDM & KEPEGAWAIAN
             </small>
           </div>
         </div>
@@ -64,10 +64,10 @@ export default function Navbar({
               fontSize: "0.8rem",
             }}
             onClick={onOpenCommandPalette}
-            title="Cari Cepat (Ctrl+K)"
+            title="Cari Cepat SDM (Ctrl+K)"
           >
             <span>🔍</span>
-            <span className="d-none d-sm-inline">Pencarian Cepat</span>
+            <span className="d-none d-sm-inline">Pencarian SDM</span>
             <kbd
               className="px-1 py-0 rounded d-none d-md-inline"
               style={{
@@ -105,7 +105,7 @@ export default function Navbar({
               }`}
               onClick={() => setCurrentView("guest")}
             >
-              Beranda
+              Portal Publik
             </button>
             <button
               className={`btn btn-sm rounded-pill px-3 fw-medium ${
@@ -115,7 +115,7 @@ export default function Navbar({
               }`}
               onClick={() => setCurrentView("login")}
             >
-              Portal Petugas
+              Masuk SIM-SDM
             </button>
           </div>
         </div>

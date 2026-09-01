@@ -31,15 +31,15 @@ export default function BannerSub({ currentView, darkMode }) {
         ></span>
         <span className="fw-semibold">
           {currentView === "admin"
-            ? "SIM-RS Logistik Terpadu • RSJ Tampan Pekanbaru"
-            : "Layanan Terakreditasi Paripurna KARS • RSJ Tampan"}
+            ? "SIM-SDM Kepegawaian & Ketenagaan Nakes • RSJ Tampan Pekanbaru"
+            : "Portal Informasi Ketenagaan & Pelayanan SDM Terakreditasi • RSJ Tampan"}
         </span>
       </div>
 
       <div className="d-none d-md-flex align-items-center gap-3">
         <span>📅 {todayFormatted}</span>
         <span className="badge badge-soft-success fw-normal px-2 py-1">
-          Sistem Online
+          Server SDM Online
         </span>
       </div>
     </div>

@@ -1,76 +1,70 @@
 import React from "react";
-import InventoryTab from "./InventoryTab";
-import ReportTab from "./ReportTab";
-import BangsalTab from "./BangsalTab";
-import SupplierTab from "./SupplierTab";
-import AnalyticsTab from "./AnalyticsTab";
-import ColdChainTab from "./ColdChainTab";
-import LowStockAlert from "../components/LowStockAlert";
+import SdmTab from "./SdmTab";
 
 export default function AdminPage({
   activeTab,
-  inventory,
-  filteredInventory,
-  searchQuery,
-  setSearchQuery,
-  conditionFilter,
-  setConditionFilter,
-  totalJenisBarang,
-  barangBagusCount,
-  barangRusakCount,
-  setShowAddModal,
-  handleOpenOutModal,
-  handleOpenEdit,
-  handleDelete,
-  mutations,
-  onOpenBarcodeScanner,
-  onOpenBufferCalculator,
-  onOpenDeliverySlip,
-  onOpenCommandPalette,
+  setActiveTab,
+  employees,
+  shiftRoster,
+  leaveRequests,
+  trainings,
+  onAddEmployee,
+  onUpdateEmployee,
+  onDeleteEmployee,
+  onSubmitLeave,
+  onApproveLeave,
+  onRejectLeave,
+  onRenewStrSip,
+  showToast,
   darkMode,
   cardBg,
   tableTheme,
+  onOpenCommandPalette,
 }) {
   const getTabTitleInfo = () => {
     switch (activeTab) {
+      case "direktori":
+        return {
+          title: "Direktori Pegawai & Nakes Medis",
+          subtitle: "Master data seluruh tenaga dokter spesialis Sp.KJ, psikolog klinis, ners jiwa, dan staf RSJ Tampan",
+          badge: `${employees?.length || 0} Pegawai Aktif`,
+        };
+      case "roster":
+        return {
+          title: "Roster Shift Jaga Bangsal Jiwa 24 Jam",
+          subtitle: "Penjadwalan dinas 24/7 di bangsal Kampar, Siak, Rokan NAPZA, dan IGD Jiwa",
+          badge: "4 Bangsal 24/7",
+        };
+      case "legalitas":
+        return {
+          title: "Audit Legalitas STR & SIP Izin Praktik",
+          subtitle: "Monitoring masa berlaku Surat Tanda Registrasi dan Surat Izin Praktik tenaga kesehatan",
+          badge: "Kepatuhan Kemenkes",
+        };
+      case "cuti":
+        return {
+          title: "Manajemen Pengajuan & Approval Cuti",
+          subtitle: "Pengelolaan cuti tahunan, sakit, tugas belajar, dan pelimpahan tugas perawat jiwa",
+          badge: `${leaveRequests?.filter((l) => l.status === "Menunggu Persetujuan").length || 0} Menunggu Approval`,
+        };
+      case "diklat":
+        return {
+          title: "Diklat & Kredensialing Khusus Jiwa",
+          subtitle: "Sertifikasi de-eskalasi agresi, restrain fisik aman, BTCLS, dan asuhan keperawatan jiwa akut",
+          badge: "Standar Akreditasi KARS",
+        };
       case "analitik":
         return {
-          title: "Analitik SIM-RS & Logistik",
-          subtitle: "Executive dashboard monitoring alur obat, kapasitas bangsal, dan efisiensi logistik",
-          badge: "Live Data",
-        };
-      case "inventaris":
-        return {
-          title: "Manajemen Inventaris Logistik",
-          subtitle: "Katalog obat-obatan kejiwaan, jarum suntik, BHP bangsal, dan alat kesehatan",
-          badge: `${totalJenisBarang} Item Terdata`,
-        };
-      case "bangsal":
-        return {
-          title: "Monitoring Bangsal Rawat Inap Jiwa",
-          subtitle: "Pemantauan hunian ranjang pasien kejiwaan & distribusi perbekalan tiap ruangan",
-          badge: "6 Bangsal Rawat",
-        };
-      case "coldchain":
-        return {
-          title: "Monitoring Suhu & Cold-Chain Farmasi",
-          subtitle: "Sensor IoT real-time lemari pendingin obat injeksi, vaksin, & psikotropika (2°C - 8°C)",
-          badge: "3 Sensor Aktif",
-        };
-      case "supplier":
-        return {
-          title: "Direktori Rekanan Vendor PBF & Alkes",
-          subtitle: "Daftar distributor resmi penyedia pasokan farmasi dan alat kesehatan RSJ Tampan",
-          badge: "5 Vendor PBF",
-        };
-      case "laporan":
-        return {
-          title: "Laporan Mutasi & Sirkulasi Logistik",
-          subtitle: "Riwayat pencatatan barang masuk dari rekanan dan pengeluaran ke bangsal",
-          badge: "Audit Ready",
+          title: "Analitik Ketenagaan & Kinerja SDM",
+          subtitle: "Executive dashboard rasio nakes-pasien, disiplin presensi shift, dan evaluasi SKP",
+          badge: "Live KPI",
         };
       default:
-        return { title: "Dashboard SIM-RS", subtitle: "Sistem Informasi Manajemen Logistik RSJ", badge: "" };
+        return {
+          title: "Sistem Informasi SDM & Kepegawaian Nakes",
+          subtitle: "Portal Manajemen Sumber Daya Manusia Terpadu RSJ Tampan Provinsi Riau",
+          badge: `${employees?.length || 0} Pegawai`,
+        };
     }
   };
 
@@ -110,116 +104,37 @@ export default function AdminPage({
           </p>
         </div>
 
-        {/* QUICK ACTIONS ACCORDING TO TAB */}
+        {/* QUICK SEARCH BUTTON */}
         <div className="d-flex align-items-center gap-2">
-          {activeTab === "inventaris" && (
-            <>
-              <button
-                className="btn btn-sm btn-outline-success fw-medium px-3 d-flex align-items-center gap-1"
-                onClick={onOpenBarcodeScanner}
-              >
-                <span>📷</span> Scan Barcode
-              </button>
-              <button
-                className="btn btn-sm btn-success fw-medium px-3 shadow-sm d-flex align-items-center gap-1"
-                onClick={() => setShowAddModal(true)}
-              >
-                <span>+</span> Tambah Logistik
-              </button>
-            </>
-          )}
-
           <button
-            className="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1"
+            className="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1 px-3 py-1 rounded-3"
             onClick={onOpenCommandPalette}
-            title="Cari fitur (Ctrl+K)"
+            title="Cari fitur SDM (Ctrl+K)"
           >
             <span>🔍</span>
-            <span className="d-none d-sm-inline">Cari</span>
+            <span className="d-none d-sm-inline">Pencarian SDM (Ctrl+K)</span>
           </button>
         </div>
       </div>
 
-      {/* NOTIFIKASI STOK KRITIS (HANYA DITAMPILKAN DI TAB INVENTARIS AGAR TAB LAIN BERSIH) */}
-      {activeTab === "inventaris" && (
-        <LowStockAlert
-          inventory={inventory}
-          handleOpenAddModal={() => setShowAddModal(true)}
-          darkMode={darkMode}
-        />
-      )}
-
-      {/* TAB 1: ANALITIK */}
-      {activeTab === "analitik" && (
-        <AnalyticsTab
-          darkMode={darkMode}
-          cardBg={cardBg}
-          tableTheme={tableTheme}
-        />
-      )}
-
-      {/* TAB 2: INVENTARIS */}
-      {activeTab === "inventaris" && (
-        <InventoryTab
-          inventory={inventory}
-          filteredInventory={filteredInventory}
-          searchQuery={searchQuery}
-          setSearchQuery={setSearchQuery}
-          conditionFilter={conditionFilter}
-          setConditionFilter={setConditionFilter}
-          totalJenisBarang={totalJenisBarang}
-          barangBagusCount={barangBagusCount}
-          barangRusakCount={barangRusakCount}
-          setShowAddModal={setShowAddModal}
-          handleOpenOutModal={handleOpenOutModal}
-          handleOpenEdit={handleOpenEdit}
-          handleDelete={handleDelete}
-          onOpenBarcodeScanner={onOpenBarcodeScanner}
-          onOpenBufferCalculator={onOpenBufferCalculator}
-          onOpenDeliverySlip={onOpenDeliverySlip}
-          darkMode={darkMode}
-          cardBg={cardBg}
-          tableTheme={tableTheme}
-        />
-      )}
-
-      {/* TAB 3: BANGSAL */}
-      {activeTab === "bangsal" && (
-        <BangsalTab
-          darkMode={darkMode}
-          cardBg={cardBg}
-          tableTheme={tableTheme}
-        />
-      )}
-
-      {/* TAB 4: COLD CHAIN & SUHU FARMASI */}
-      {activeTab === "coldchain" && (
-        <ColdChainTab
-          darkMode={darkMode}
-          cardBg={cardBg}
-          tableTheme={tableTheme}
-        />
-      )}
-
-      {/* TAB 5: REKANAN VENDOR */}
-      {activeTab === "supplier" && (
-        <SupplierTab
-          darkMode={darkMode}
-          cardBg={cardBg}
-          tableTheme={tableTheme}
-        />
-      )}
-
-      {/* TAB 6: LAPORAN MUTASI */}
-      {activeTab === "laporan" && (
-        <ReportTab
-          mutations={mutations}
-          onOpenDeliverySlip={onOpenDeliverySlip}
-          darkMode={darkMode}
-          cardBg={cardBg}
-          tableTheme={tableTheme}
-        />
-      )}
+      {/* RENDER SDM TAB */}
+      <SdmTab
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        employees={employees}
+        shiftRoster={shiftRoster}
+        leaveRequests={leaveRequests}
+        trainings={trainings}
+        onAddEmployee={onAddEmployee}
+        onUpdateEmployee={onUpdateEmployee}
+        onDeleteEmployee={onDeleteEmployee}
+        onSubmitLeave={onSubmitLeave}
+        onApproveLeave={onApproveLeave}
+        onRejectLeave={onRejectLeave}
+        onRenewStrSip={onRenewStrSip}
+        darkMode={darkMode}
+        showToast={showToast}
+      />
     </div>
   );
 }

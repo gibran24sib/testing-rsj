@@ -14,21 +14,17 @@ import RegisterPage from "./pages/RegisterPage";
 import AdminPage from "./pages/AdminPage";
 
 // Modals / Components
-import AddModal from "./components/AddModal";
-import EditModal from "./components/EditModal";
-import OutModal from "./components/OutModal";
 import CommandPalette from "./components/CommandPalette";
-import BarcodeScannerModal from "./components/BarcodeScannerModal";
-import BufferStockCalculatorModal from "./components/BufferStockCalculatorModal";
-import DeliverySlipModal from "./components/DeliverySlipModal";
 import ToastNotification from "./components/ToastNotification";
 
 // Data
+import { initialUsers } from "./data/initialData";
 import {
-  initialUsers,
-  initialInventory,
-  initialMutations,
-} from "./data/initialData";
+  initialEmployees,
+  initialShiftRoster,
+  initialLeaveRequests,
+  initialTrainings,
+} from "./data/sdmData";
 
 function App() {
   const [currentView, setCurrentView] = useState("guest");
@@ -74,7 +70,7 @@ function App() {
     nama: "",
     username: "",
     password: "",
-    role: "Petugas Bangsal",
+    role: "Perawat Pelaksana",
   });
   const [authError, setAuthError] = useState("");
   const [authSuccess, setAuthSuccess] = useState("");
@@ -91,46 +87,118 @@ function App() {
   }, [users]);
 
   // STATE TAMPILAN ADMIN TAB
-  const [activeTab, setActiveTab] = useState("analitik");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [conditionFilter, setConditionFilter] = useState("semua");
+  const [activeTab, setActiveTab] = useState("direktori"); // "direktori" | "roster" | "legalitas" | "cuti" | "diklat" | "analitik"
 
-  // STATE INVENTARIS
-  const [inventory, setInventory] = useState(initialInventory);
-
-  // STATE LAPORAN MUTASI
-  const [mutations, setMutations] = useState(initialMutations);
-
-  // MODAL STATES
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [newItem, setNewItem] = useState({
-    nama: "",
-    kategori: "Alat Medis",
-    stok: "",
-    satuan: "Pcs",
-    kondisi: "Bagus",
+  // STATE SDM & KEPEGAWAIAN NAKES
+  const [employees, setEmployees] = useState(() => {
+    const saved = localStorage.getItem("rsj_employees");
+    return saved ? JSON.parse(saved) : initialEmployees;
   });
 
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [editingItem, setEditingItem] = useState(null);
-
-  const [showOutModal, setShowOutModal] = useState(false);
-  const [outItem, setOutItem] = useState({
-    item: null,
-    jumlahOut: "",
-    tujuan: "Bangsal Psychiatric Akut",
+  const [shiftRoster, setShiftRoster] = useState(() => {
+    const saved = localStorage.getItem("rsj_roster");
+    return saved ? JSON.parse(saved) : initialShiftRoster;
   });
 
-  // NEW FEATURE MODALS
-  const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
-  const [showBufferCalculator, setShowBufferCalculator] = useState(false);
-  const [showDeliverySlip, setShowDeliverySlip] = useState(false);
-  const [deliverySlipData, setDeliverySlipData] = useState(null);
+  const [leaveRequests, setLeaveRequests] = useState(() => {
+    const saved = localStorage.getItem("rsj_leaves");
+    return saved ? JSON.parse(saved) : initialLeaveRequests;
+  });
 
-  const handleOpenDeliverySlip = (data) => {
-    setDeliverySlipData(data);
-    setShowDeliverySlip(true);
-  };
+  const [trainings, setTrainings] = useState(() => {
+    const saved = localStorage.getItem("rsj_trainings");
+    return saved ? JSON.parse(saved) : initialTrainings;
+  });
+
+  useEffect(() => {
+    localStorage.setItem("rsj_employees", JSON.stringify(employees));
+  }, [employees]);
+
+  useEffect(() => {
+    localStorage.setItem("rsj_roster", JSON.stringify(shiftRoster));
+  }, [shiftRoster]);
+
+  useEffect(() => {
+    localStorage.setItem("rsj_leaves", JSON.stringify(leaveRequests));
+  }, [leaveRequests]);
+
+  useEffect(() => {
+    localStorage.setItem("rsj_trainings", JSON.stringify(trainings));
+  }, [trainings]);
+
+  // SDM HANDLERS
+  const handleAddEmployee = useCallback((newEmp) => {
+    setEmployees((prev) => [newEmp, ...prev]);
+  }, []);
+
+  const handleUpdateEmployee = useCallback((updatedEmp) => {
+    setEmployees((prev) =>
+      prev.map((emp) => (emp.id === updatedEmp.id ? updatedEmp : emp))
+    );
+  }, []);
+
+  const handleDeleteEmployee = useCallback((empId) => {
+    setEmployees((prev) => prev.filter((emp) => emp.id !== empId));
+  }, []);
+
+  const handleSubmitLeave = useCallback((newLeave) => {
+    setLeaveRequests((prev) => [newLeave, ...prev]);
+  }, []);
+
+  const handleApproveLeave = useCallback((leaveId) => {
+    setLeaveRequests((prev) =>
+      prev.map((leave) =>
+        leave.id === leaveId
+          ? {
+              ...leave,
+              status: "Disetujui",
+              disetujuiOleh: "Agus Pratondo, S.Sos (Kasubbag Kepegawaian)",
+              catatan: "Disetujui oleh Kepala Subbagian Kepegawaian RSJ Tampan.",
+            }
+          : leave
+      )
+    );
+  }, []);
+
+  const handleRejectLeave = useCallback((leaveId) => {
+    setLeaveRequests((prev) =>
+      prev.map((leave) =>
+        leave.id === leaveId
+          ? {
+              ...leave,
+              status: "Ditolak",
+              disetujuiOleh: "Kasubbag Kepegawaian",
+              catatan: "Penyesuaian kuota shift bangsal.",
+            }
+          : leave
+      )
+    );
+  }, []);
+
+  const handleRenewStrSip = useCallback((empId) => {
+    setEmployees((prev) =>
+      prev.map((emp) => {
+        if (emp.id === empId) {
+          const currentYear = new Date().getFullYear();
+          return {
+            ...emp,
+            statusAktif: "Aktif",
+            str: {
+              ...emp.str,
+              masaBerlaku: `${currentYear + 5}-12-31`,
+              status: "Aktif",
+            },
+            sip: {
+              ...emp.sip,
+              masaBerlaku: `${currentYear + 5}-12-31`,
+              status: "Aktif",
+            },
+          };
+        }
+        return emp;
+      })
+    );
+  }, []);
 
   // COMMAND PALETTE ACTIONS
   const handleCommandAction = useCallback(
@@ -141,28 +209,19 @@ function App() {
             setCurrentView("admin");
             if (!currentUser) {
               setCurrentUser({
-                nama: "Petugas SIM-RS",
-                role: "Admin Logistik",
+                nama: "Agus Pratondo, S.Sos",
+                role: "Kasubbag Kepegawaian & SDM",
                 username: "admin",
               });
             }
           }
           setActiveTab(action.tab);
           break;
-        case "add_item":
-          if (currentView !== "admin") {
-            setCurrentView("admin");
-          }
-          setActiveTab("inventaris");
-          setShowAddModal(true);
+        case "navigate_view":
+          setCurrentView(action.view);
           break;
         case "toggle_theme":
           toggleTheme();
-          break;
-        case "open_screening":
-        case "open_med_checker":
-        case "open_booking":
-          setCurrentView("guest");
           break;
         default:
           break;
@@ -188,9 +247,9 @@ function App() {
         nama: "",
         username: "",
         password: "",
-        role: "Petugas Bangsal",
+        role: "Perawat Pelaksana",
       });
-      showToast("Login Berhasil", `Selamat bertugas, ${foundUser.nama}!`, "success");
+      showToast("Login Berhasil", `Selamat bertugas di SIM-SDM, ${foundUser.nama}!`, "success");
     } else {
       setAuthError("Username atau Password salah! (Default demo: admin / 123)");
     }
@@ -221,7 +280,7 @@ function App() {
     setUsers(updatedUsers);
     localStorage.setItem("rsj_users", JSON.stringify(updatedUsers));
 
-    setAuthSuccess("Pendaftaran berhasil! Silakan Login.");
+    setAuthSuccess("Pendaftaran akun berhasil! Silakan Login.");
     showToast("Registrasi Berhasil", "Akun petugas Anda telah terdaftar.", "success");
     setTimeout(() => {
       setCurrentView("login");
@@ -230,7 +289,7 @@ function App() {
         nama: "",
         username: "",
         password: "",
-        role: "Petugas Bangsal",
+        role: "Perawat Pelaksana",
       });
     }, 1500);
   };
@@ -238,140 +297,8 @@ function App() {
   const handleLogout = () => {
     setCurrentUser(null);
     setCurrentView("guest");
-    showToast("Logout Berhasil", "Anda telah keluar dari sesi SIM-RS.", "info");
+    showToast("Logout Berhasil", "Anda telah keluar dari sesi SIM-SDM.", "info");
   };
-
-  // INVENTARIS HANDLERS
-  const handleAddSubmit = (e) => {
-    e.preventDefault();
-    if (!newItem.nama || !newItem.stok) return;
-
-    const newKode = `B00${inventory.length + 1}`;
-    const qtyStok = parseInt(newItem.stok);
-
-    const newBarang = {
-      id: newKode,
-      nama: newItem.nama,
-      kategori: newItem.kategori,
-      stok: qtyStok,
-      satuan: newItem.satuan,
-      kondisi: newItem.kondisi,
-    };
-    setInventory([...inventory, newBarang]);
-
-    const today = new Date().toISOString().split("T")[0];
-    const newLogMutasi = {
-      id: Date.now(),
-      tanggal: today,
-      kode: newKode,
-      nama: newItem.nama,
-      jenis: "Masuk",
-      jumlah: qtyStok,
-      satuan: newItem.satuan,
-      asalTujuan: "Pengadaan Logistik Baru",
-      kondisi: newItem.kondisi,
-      petugas: currentUser?.nama || "Admin Logistik",
-    };
-    setMutations([newLogMutasi, ...mutations]);
-
-    setShowAddModal(false);
-    setNewItem({
-      nama: "",
-      kategori: "Alat Medis",
-      stok: "",
-      satuan: "Pcs",
-      kondisi: "Bagus",
-    });
-    showToast("Logistik Ditambahkan", `${newBarang.nama} (${qtyStok} ${newBarang.satuan}) berhasil disimpan.`, "success");
-  };
-
-  const handleOpenOutModal = (item) => {
-    setOutItem({ item: item, jumlahOut: "", tujuan: "Bangsal Psychiatric Akut" });
-    setShowOutModal(true);
-  };
-
-  const handleOutSubmit = (e) => {
-    e.preventDefault();
-    const qtyOut = parseInt(outItem.jumlahOut);
-
-    if (qtyOut > outItem.item.stok) {
-      alert("Gagal! Jumlah barang keluar melebihi stok yang tersedia.");
-      return;
-    }
-
-    setInventory(
-      inventory.map((item) => {
-        if (item.id === outItem.item.id) {
-          return { ...item, stok: item.stok - qtyOut };
-        }
-        return item;
-      })
-    );
-
-    const today = new Date().toISOString().split("T")[0];
-    const newOutLog = {
-      id: Date.now(),
-      tanggal: today,
-      kode: outItem.item.id,
-      nama: outItem.item.nama,
-      jenis: "Keluar",
-      jumlah: qtyOut,
-      satuan: outItem.item.satuan,
-      asalTujuan: outItem.tujuan,
-      kondisi: outItem.item.kondisi,
-      petugas: currentUser?.nama || "Admin Logistik",
-    };
-    setMutations([newOutLog, ...mutations]);
-
-    setShowOutModal(false);
-    showToast("Distribusi Berhasil", `${qtyOut} ${outItem.item.satuan} ${outItem.item.nama} dikirim ke ${outItem.tujuan}.`, "success");
-
-    // Open delivery slip automatically for convenience
-    handleOpenDeliverySlip(newOutLog);
-  };
-
-  const handleOpenEdit = (item) => {
-    setEditingItem({ ...item });
-    setShowEditModal(true);
-  };
-
-  const handleEditSubmit = (e) => {
-    e.preventDefault();
-    setInventory(
-      inventory.map((item) =>
-        item.id === editingItem.id ? editingItem : item
-      )
-    );
-    setShowEditModal(false);
-    setEditingItem(null);
-    showToast("Data Diperbarui", `Informasi ${editingItem.nama} berhasil diperbarui.`, "success");
-  };
-
-  const handleDelete = (id, nama) => {
-    if (window.confirm(`Hapus ${nama} dari inventaris?`)) {
-      setInventory(inventory.filter((item) => item.id !== id));
-      showToast("Data Dihapus", `${nama} telah dihapus dari inventaris.`, "danger");
-    }
-  };
-
-  // FILTERING & STATISTIK
-  const filteredInventory = inventory.filter((item) => {
-    const matchesSearch =
-      item.nama.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.kategori.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.id.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCondition =
-      conditionFilter === "semua" || item.kondisi === conditionFilter;
-    return matchesSearch && matchesCondition;
-  });
-
-  const totalJenisBarang = inventory.length;
-  const barangBagusCount = inventory.filter(
-    (item) => item.kondisi === "Bagus"
-  ).length;
-  const barangRusakCount = inventory.filter(
-    (item) => item.kondisi === "Rusak"
-  ).length;
 
   // THEME CLASSES
   const themeBg = darkMode ? "bg-dark text-light" : "bg-light text-dark";
@@ -404,7 +331,7 @@ function App() {
             toggleTheme={toggleTheme}
             handleLogout={handleLogout}
             setCurrentView={setCurrentView}
-            inventoryCount={totalJenisBarang}
+            employeeCount={employees.length}
             onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
           />
 
@@ -414,27 +341,22 @@ function App() {
               <AdminPage
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}
-                inventory={inventory}
-                filteredInventory={filteredInventory}
-                searchQuery={searchQuery}
-                setSearchQuery={setSearchQuery}
-                conditionFilter={conditionFilter}
-                setConditionFilter={setConditionFilter}
-                totalJenisBarang={totalJenisBarang}
-                barangBagusCount={barangBagusCount}
-                barangRusakCount={barangRusakCount}
-                setShowAddModal={setShowAddModal}
-                handleOpenOutModal={handleOpenOutModal}
-                handleOpenEdit={handleOpenEdit}
-                handleDelete={handleDelete}
-                mutations={mutations}
-                onOpenBarcodeScanner={() => setShowBarcodeScanner(true)}
-                onOpenBufferCalculator={() => setShowBufferCalculator(true)}
-                onOpenDeliverySlip={handleOpenDeliverySlip}
-                onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
+                employees={employees}
+                shiftRoster={shiftRoster}
+                leaveRequests={leaveRequests}
+                trainings={trainings}
+                onAddEmployee={handleAddEmployee}
+                onUpdateEmployee={handleUpdateEmployee}
+                onDeleteEmployee={handleDeleteEmployee}
+                onSubmitLeave={handleSubmitLeave}
+                onApproveLeave={handleApproveLeave}
+                onRejectLeave={handleRejectLeave}
+                onRenewStrSip={handleRenewStrSip}
+                showToast={showToast}
                 darkMode={darkMode}
                 cardBg={cardBg}
                 tableTheme={tableTheme}
+                onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
               />
             </div>
             <Footer isAdmin={true} darkMode={darkMode} />
@@ -495,59 +417,6 @@ function App() {
           <Footer darkMode={darkMode} />
         </div>
       )}
-
-      {/* MODAL DIALOGS */}
-      <AddModal
-        showAddModal={showAddModal}
-        setShowAddModal={setShowAddModal}
-        newItem={newItem}
-        setNewItem={setNewItem}
-        handleAddSubmit={handleAddSubmit}
-        darkMode={darkMode}
-        cardBg={cardBg}
-      />
-
-      <EditModal
-        showEditModal={showEditModal}
-        setShowEditModal={setShowEditModal}
-        editingItem={editingItem}
-        setEditingItem={setEditingItem}
-        handleEditSubmit={handleEditSubmit}
-        darkMode={darkMode}
-        cardBg={cardBg}
-      />
-
-      <OutModal
-        showOutModal={showOutModal}
-        setShowOutModal={setShowOutModal}
-        outItem={outItem}
-        setOutItem={setOutItem}
-        handleOutSubmit={handleOutSubmit}
-        darkMode={darkMode}
-        cardBg={cardBg}
-      />
-
-      {/* NEW VALUE-ADDED MODALS FOR EVALUATION */}
-      <BarcodeScannerModal
-        show={showBarcodeScanner}
-        onClose={() => setShowBarcodeScanner(false)}
-        inventory={inventory}
-        onSelectScannedItem={(item) => handleOpenOutModal(item)}
-        darkMode={darkMode}
-      />
-
-      <BufferStockCalculatorModal
-        show={showBufferCalculator}
-        onClose={() => setShowBufferCalculator(false)}
-        darkMode={darkMode}
-      />
-
-      <DeliverySlipModal
-        show={showDeliverySlip}
-        onClose={() => setShowDeliverySlip(false)}
-        deliveryData={deliverySlipData}
-        darkMode={darkMode}
-      />
 
       {/* COMMAND PALETTE (CTRL+K) */}
       <CommandPalette

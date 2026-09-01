@@ -6,28 +6,28 @@ export default function NotificationDropdown({ darkMode }) {
     {
       id: 1,
       type: "warning",
-      icon: "⚠️",
-      title: "Stok Menipis (<50 unit)",
-      message: "Haloperidol Injeksi 50mg tersisa 25 ampul di Depo Pusat.",
-      time: "5 menit lalu",
+      icon: "📜",
+      title: "Peringatan STR Nakes",
+      message: "STR dr. Mutia Rahmadani, Sp.KJ mendekati batas kedaluwarsa (<45 hari).",
+      time: "10 menit lalu",
       unread: true,
     },
     {
       id: 2,
-      type: "success",
-      icon: "📦",
-      title: "Pengiriman Vendor PBF",
-      message: "PT Kimia Farma telah mengirimkan 200 botol Risperidone 2mg.",
-      time: "20 menit lalu",
+      type: "info",
+      icon: "🏖️",
+      title: "Pengajuan Cuti Baru",
+      message: "Ns. Budi Setiawan mengajukan Cuti Alasan Penting (2 hari) di IGD Jiwa.",
+      time: "30 menit lalu",
       unread: true,
     },
     {
       id: 3,
-      type: "info",
-      icon: "🌡️",
-      title: "Sensor Suhu Cold-Chain",
-      message: "Chiller Farmasi Utama optimal pada 3.8°C (Standar BPOM).",
-      time: "1 jam lalu",
+      type: "success",
+      icon: "🎓",
+      title: "Pendaftaran Diklat Jiwa",
+      message: "Workshop De-eskalasi & Fiksasi Mekanik Aman telah dibuka untuk 30 peserta.",
+      time: "2 jam lalu",
       unread: true,
     },
   ]);
@@ -48,7 +48,7 @@ export default function NotificationDropdown({ darkMode }) {
         }`}
         style={{ width: "34px", height: "34px" }}
         onClick={() => setIsOpen(!isOpen)}
-        title="Pusat Notifikasi SIM-RS"
+        title="Pusat Notifikasi SIM-SDM"
       >
         <span>🔔</span>
         {unreadCount > 0 && (
@@ -80,7 +80,7 @@ export default function NotificationDropdown({ darkMode }) {
           >
             <div className="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom border-opacity-10">
               <div className="d-flex align-items-center gap-2">
-                <span className="fw-bold small">Pusat Notifikasi</span>
+                <span className="fw-bold small">Notifikasi Kepegawaian</span>
                 {unreadCount > 0 && (
                   <span className="badge badge-soft-danger" style={{ fontSize: "0.65rem" }}>
                     {unreadCount} Baru
@@ -105,22 +105,30 @@ export default function NotificationDropdown({ darkMode }) {
                   style={{
                     backgroundColor: n.unread
                       ? darkMode
-                        ? "#151b2e"
+                        ? "#171d30"
                         : "#f0fdf4"
                       : "transparent",
-                    border: darkMode ? "1px solid #1c2438" : "1px solid #f1f5f9",
+                    border: n.unread
+                      ? darkMode
+                        ? "1px solid #232c47"
+                        : "1px solid #bbf7d0"
+                      : "1px solid transparent",
                   }}
                 >
                   <div className="d-flex align-items-start gap-2">
-                    <span className="fs-5">{n.icon}</span>
-                    <div className="flex-grow-1 overflow-hidden">
-                      <strong className="d-block small text-truncate">{n.title}</strong>
-                      <p className="mb-0 small opacity-75" style={{ fontSize: "0.74rem", lineHeight: "1.3" }}>
+                    <span className="fs-6 mt-1">{n.icon}</span>
+                    <div className="flex-grow-1">
+                      <div className="d-flex justify-content-between align-items-center mb-1">
+                        <span className="fw-bold" style={{ fontSize: "0.8rem" }}>
+                          {n.title}
+                        </span>
+                        <span className="text-muted" style={{ fontSize: "0.65rem" }}>
+                          {n.time}
+                        </span>
+                      </div>
+                      <p className="mb-0 text-muted" style={{ fontSize: "0.74rem", lineHeight: "1.3" }}>
                         {n.message}
                       </p>
-                      <small className="opacity-50" style={{ fontSize: "0.65rem" }}>
-                        {n.time}
-                      </small>
                     </div>
                   </div>
                 </div>

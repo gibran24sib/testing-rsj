@@ -1,22 +1,58 @@
-// Utilitas ekspor data CSV dan pencetakan dokumen inventaris RSJ Tampan
+// Utilitas Ekspor Data CSV untuk SIM-SDM RSJ Tampan
 
 /**
- * Ekspor data inventaris ke format CSV
+ * Ekspor data pegawai ke format CSV
  */
-export function exportInventoryToCSV(inventory) {
-  if (!inventory || !inventory.length) {
-    alert("Tidak ada data inventaris untuk diekspor.");
+export function exportEmployeesToCSV(employees) {
+  if (!employees || !employees.length) {
+    alert("Tidak ada data pegawai untuk diekspor.");
     return;
   }
 
-  const headers = ["Kode ID", "Nama Barang", "Kategori", "Jumlah Stok", "Satuan", "Kondisi"];
-  const rows = inventory.map((item) => [
-    item.id,
-    `"${item.nama.replace(/"/g, '""')}"`,
-    `"${item.kategori}"`,
-    item.stok,
-    item.satuan,
-    item.kondisi,
+  const headers = [
+    "ID Pegawai",
+    "NIP/NRK",
+    "Nama Lengkap",
+    "Profesi",
+    "Kategori",
+    "Jabatan",
+    "Unit Penempatan",
+    "Status Kepegawaian",
+    "Golongan",
+    "Pendidikan",
+    "Email",
+    "No HP",
+    "No STR",
+    "Masa Berlaku STR",
+    "Status STR",
+    "No SIP",
+    "Masa Berlaku SIP",
+    "Status SIP",
+    "Sisa Cuti",
+    "Skor SKP",
+  ];
+
+  const rows = employees.map((emp) => [
+    emp.id,
+    `"${emp.nip}"`,
+    `"${emp.nama.replace(/"/g, '""')}"`,
+    `"${emp.profesi}"`,
+    `"${emp.kategori}"`,
+    `"${emp.jabatan.replace(/"/g, '""')}"`,
+    `"${emp.unitPenempatan}"`,
+    `"${emp.statusKepegawaian}"`,
+    `"${emp.golongan}"`,
+    `"${emp.pendidikan}"`,
+    `"${emp.email}"`,
+    `"${emp.noHp}"`,
+    `"${emp.str?.nomor || "-"}"`,
+    `"${emp.str?.masaBerlaku || "-"}"`,
+    `"${emp.str?.status || "-"}"`,
+    `"${emp.sip?.nomor || "-"}"`,
+    `"${emp.sip?.masaBerlaku || "-"}"`,
+    `"${emp.sip?.status || "-"}"`,
+    emp.sisaCuti,
+    emp.skpSkor,
   ]);
 
   const csvContent =
@@ -28,7 +64,7 @@ export function exportInventoryToCSV(inventory) {
   link.setAttribute("href", encodedUri);
   link.setAttribute(
     "download",
-    `Laporan_Inventaris_RSJ_Tampan_${new Date().toISOString().split("T")[0]}.csv`
+    `Data_Pegawai_RSJ_Tampan_${new Date().toISOString().split("T")[0]}.csv`
   );
   document.body.appendChild(link);
   link.click();
@@ -36,35 +72,44 @@ export function exportInventoryToCSV(inventory) {
 }
 
 /**
- * Ekspor data mutasi ke format CSV
+ * Ekspor riwayat cuti pegawai ke format CSV
  */
-export function exportMutationsToCSV(mutations) {
-  if (!mutations || !mutations.length) {
-    alert("Tidak ada data mutasi untuk diekspor.");
+export function exportLeavesToCSV(leaves) {
+  if (!leaves || !leaves.length) {
+    alert("Tidak ada data cuti untuk diekspor.");
     return;
   }
 
   const headers = [
-    "Tanggal",
-    "Kode Barang",
-    "Nama Barang",
-    "Jenis Mutasi",
-    "Jumlah",
-    "Satuan",
-    "Asal/Tujuan",
-    "Kondisi",
-    "Petugas",
+    "No Pengajuan",
+    "ID Pegawai",
+    "Nama Pegawai",
+    "Profesi",
+    "Unit Kerja",
+    "Jenis Cuti",
+    "Tanggal Mulai",
+    "Tanggal Selesai",
+    "Durasi (Hari)",
+    "Alasan",
+    "Petugas Pengganti",
+    "Status",
+    "Disetujui Oleh",
   ];
-  const rows = mutations.map((item) => [
-    item.tanggal,
-    item.kode,
+
+  const rows = leaves.map((item) => [
+    item.id,
+    item.employeeId,
     `"${item.nama.replace(/"/g, '""')}"`,
-    item.jenis,
-    item.jumlah,
-    item.satuan,
-    `"${item.asalTujuan.replace(/"/g, '""')}"`,
-    item.kondisi,
-    `"${item.petugas.replace(/"/g, '""')}"`,
+    `"${item.profesi}"`,
+    `"${item.unit}"`,
+    `"${item.jenisCuti}"`,
+    item.tanggalMulai,
+    item.tanggalSelesai,
+    item.jumlahHari,
+    `"${item.alasan.replace(/"/g, '""')}"`,
+    `"${item.petugasPengganti.replace(/"/g, '""')}"`,
+    `"${item.status}"`,
+    `"${item.disetujuiOleh}"`,
   ]);
 
   const csvContent =
@@ -76,7 +121,7 @@ export function exportMutationsToCSV(mutations) {
   link.setAttribute("href", encodedUri);
   link.setAttribute(
     "download",
-    `Laporan_Mutasi_Logistik_RSJ_Tampan_${new Date().toISOString().split("T")[0]}.csv`
+    `Rekap_Cuti_Pegawai_RSJ_Tampan_${new Date().toISOString().split("T")[0]}.csv`
   );
   document.body.appendChild(link);
   link.click();

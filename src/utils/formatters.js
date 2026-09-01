@@ -1,11 +1,12 @@
-// Fungsi-fungsi pembantu utilitas untuk RSJ Tampan Inventory
+// Utilitas Format Teks & Angka SIM-SDM RSJ Tampan
 
 /**
  * Format tanggal standar Indonesia (contoh: 21 Agustus 2026)
  */
 export function formatIndonesianDate(dateString) {
-  if (!dateString) return "-";
+  if (!dateString || dateString === "-") return "-";
   const date = new Date(dateString);
+  if (isNaN(date.getTime())) return dateString;
   return new Intl.DateTimeFormat("id-ID", {
     day: "numeric",
     month: "long",
@@ -14,33 +15,39 @@ export function formatIndonesianDate(dateString) {
 }
 
 /**
- * Mendapatkan status stok & warna badge
+ * Mendapatkan status kepatuhan STR/SIP
  */
-export function getStockStatus(stok) {
-  if (stok <= 10) {
-    return { label: "Sangat Kritis", badgeClass: "badge-soft-danger", isCritical: true };
-  } else if (stok <= 50) {
-    return { label: "Menipis", badgeClass: "badge-soft-warning", isCritical: true };
-  } else {
-    return { label: "Aman", badgeClass: "badge-soft-success", isCritical: false };
+export function getStrStatusBadge(status) {
+  switch (status) {
+    case "Aktif":
+      return { label: "STR/SIP Aktif", badgeClass: "badge-soft-success", color: "#10b981" };
+    case "Mendekati Expired":
+      return { label: "Menjelang Expired (<90 Hari)", badgeClass: "badge-soft-warning", color: "#f59e0b" };
+    case "Expired":
+      return { label: "Kedaluwarsa / Tidak Berlaku", badgeClass: "badge-soft-danger", color: "#ef4444" };
+    default:
+      return { label: "Non-Nakes", badgeClass: "badge-soft-secondary", color: "#64748b" };
   }
 }
 
 /**
- * Badge warna kategori barang
+ * Badge warna kategori profesi SDM
  */
 export function getCategoryBadgeClass(kategori) {
   switch (kategori) {
-    case "Alat Medis":
+    case "Medis":
       return "badge-soft-primary";
-    case "Obat Farmasi":
+    case "Keperawatan":
       return "badge-soft-success";
-    case "ATK":
-      return "badge-soft-secondary";
-    case "Bahan Habis Pakai":
+    case "Kefarmasian":
       return "badge-soft-info";
+    case "Penunjang Medis":
+      return "badge-soft-warning";
+    case "Administrasi & Manajemen":
+      return "badge-soft-secondary";
+    case "Keamanan & Pengamanan":
+      return "badge-soft-dark";
     default:
       return "badge-soft-dark";
   }
 }
-

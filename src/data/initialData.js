@@ -1,85 +1,35 @@
+// Akun Pengguna Sistem Informasi SDM & Kepegawaian RSJ Tampan Riau
 export const initialUsers = [
   {
-    nama: "Admin Utama",
+    nama: "Agus Pratondo, S.Sos",
     username: "admin",
     password: "123",
-    role: "Super Admin",
-  },
-];
-
-export const initialInventory = [
-  {
-    id: "B001",
-    nama: "Suntikan 3ml",
-    kategori: "Alat Medis",
-    stok: 150,
-    satuan: "Pcs",
-    kondisi: "Bagus",
+    role: "Kasubbag Kepegawaian & SDM",
+    nip: "19830214 200803 1 001",
+    email: "agus.pratondo@rsjtampan.riau.go.id",
   },
   {
-    id: "B002",
-    nama: "Haloperidol 5mg",
-    kategori: "Obat Farmasi",
-    stok: 300,
-    satuan: "Tablet",
-    kondisi: "Bagus",
+    nama: "dr. Faisal Anwar, Sp.KJ (K)",
+    username: "faisal",
+    password: "123",
+    role: "Dokter Spesialis Jiwa",
+    nip: "19780412 200312 1 002",
+    email: "faisal.anwar@rsjtampan.riau.go.id",
   },
   {
-    id: "B003",
-    nama: "Kursi Roda Bangsal C",
-    kategori: "Alat Medis",
-    stok: 5,
-    satuan: "Unit",
-    kondisi: "Rusak",
+    nama: "Ns. Siti Rahmawati, S.Kep., Sp.Kep.J",
+    username: "siti",
+    password: "123",
+    role: "Kepala Ruangan Bangsal Kampar",
+    nip: "19860303 201001 2 014",
+    email: "siti.rahmawati@rsjtampan.riau.go.id",
   },
   {
-    id: "B004",
-    nama: "Kertas A4 Bangsal",
-    kategori: "ATK",
-    stok: 30,
-    satuan: "Rim",
-    kondisi: "Bagus",
+    nama: "Ns. Budi Setiawan, S.Kep",
+    username: "budi",
+    password: "123",
+    role: "Perawat Pelaksana IGD Jiwa",
+    nip: "19920817 201902 1 004",
+    email: "budi.setiawan@rsjtampan.riau.go.id",
   },
-];
-
-export const initialMutations = [
-  {
-    id: 1,
-    tanggal: "2026-08-20",
-    kode: "B003",
-    nama: "Kursi Roda Bangsal C",
-    jenis: "Keluar",
-    jumlah: 1,
-    satuan: "Unit",
-    asalTujuan: "Afkir / Rusak",
-    kondisi: "Rusak",
-    petugas: "Siti, A.Md.Kep",
-  },
-  {
-    id: 2,
-    tanggal: "2026-08-19",
-    kode: "B001",
-    nama: "Suntikan 3ml",
-    jenis: "Masuk",
-    jumlah: 200,
-    satuan: "Pcs",
-    asalTujuan: "Dinas Kesehatan Riau",
-    kondisi: "Bagus",
-    petugas: "Admin Utama",
-  },
-];
-
-export const categoryOptions = [
-  "Alat Medis",
-  "Obat Farmasi",
-  "ATK",
-  "Bahan Habis Pakai",
-];
-
-export const distributionDestinationOptions = [
-  "Bangsal Psychiatric Akut",
-  "Poliklinik Jiwa Child & Adolescent",
-  "Apotek & Farmasi RSJ",
-  "Instalasi Gawat Darurat (IGD)",
-  "Afkir / Disposisi Barang Rusak",
 ];
