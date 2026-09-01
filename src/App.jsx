@@ -28,7 +28,6 @@ import {
 
 // Supabase Integration
 import {
-  supabase,
   isSupabaseConfigured,
   ambilDataSupabase,
   tambahDataSupabase,
@@ -121,22 +120,23 @@ function App() {
   // ==========================================================================
   // PENGAMBILAN DATA DARI SUPABASE (REAL-TIME FETCH PADA SAAT HALAMAN DIMUAT)
   // ==========================================================================
+  // KODE BARU (SUDAH DIPERBAIKI):
   useEffect(() => {
     async function loadDataFromSupabase() {
       if (isSupabaseConfigured()) {
         console.log("🔄 Menghubungkan ke database Supabase...");
-        
-        // 1. Ambil data tabel 'pegawai' atau 'produk'
-        const dataPegawai = await ambilDataSupabase("pegawai");
-        if (dataPegawai && dataPegawai.length > 0) {
-          setEmployees(dataPegawai);
-          showToast("Supabase Terhubung", `Memuat ${dataPegawai.length} data dari Supabase.`, "success");
-        }
 
-        // 2. Mengambil data tabel 'produk' (jika tabel produk dibuat di Supabase)
-        const dataProduk = await ambilDataSupabase("produk");
-        if (dataProduk && dataProduk.length > 0) {
-          console.log("📦 Data Produk Supabase:", dataProduk);
+        // Ambil data dari tabel 'employees'
+        const dataEmployees = await ambilDataSupabase("employees");
+
+        if (dataEmployees && dataEmployees.length > 0) {
+          console.log("✅ Berhasil memuat data pegawai:", dataEmployees);
+          setEmployees(dataEmployees);
+          showToast(
+            "Supabase Terhubung",
+            `Berhasil memuat ${dataEmployees.length} data pegawai dari Supabase.`,
+            "success"
+          );
         }
       }
     }
@@ -163,9 +163,9 @@ function App() {
   // SDM HANDLERS
   const handleAddEmployee = useCallback((newEmp) => {
     setEmployees((prev) => [newEmp, ...prev]);
-    // Sinkronisasi otomatis ke Supabase jika aktif
+    // Sinkronisasi otomatis ke tabel 'employees' Supabase jika aktif
     if (isSupabaseConfigured()) {
-      tambahDataSupabase("pegawai", newEmp);
+      tambahDataSupabase("employees", newEmp);
     }
   }, []);
 
@@ -188,11 +188,11 @@ function App() {
       prev.map((leave) =>
         leave.id === leaveId
           ? {
-              ...leave,
-              status: "Disetujui",
-              disetujuiOleh: "Agus Pratondo, S.Sos (Kasubbag Kepegawaian)",
-              catatan: "Disetujui oleh Kepala Subbagian Kepegawaian RSJ Tampan.",
-            }
+            ...leave,
+            status: "Disetujui",
+            disetujuiOleh: "Agus Pratondo, S.Sos (Kasubbag Kepegawaian)",
+            catatan: "Disetujui oleh Kepala Subbagian Kepegawaian RSJ Tampan.",
+          }
           : leave
       )
     );
@@ -203,11 +203,11 @@ function App() {
       prev.map((leave) =>
         leave.id === leaveId
           ? {
-              ...leave,
-              status: "Ditolak",
-              disetujuiOleh: "Kasubbag Kepegawaian",
-              catatan: "Penyesuaian kuota shift bangsal.",
-            }
+            ...leave,
+            status: "Ditolak",
+            disetujuiOleh: "Kasubbag Kepegawaian",
+            catatan: "Penyesuaian kuota shift bangsal.",
+          }
           : leave
       )
     );

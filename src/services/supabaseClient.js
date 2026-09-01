@@ -5,24 +5,24 @@ import { createClient } from "@supabase/supabase-js";
 // ============================================================================
 
 // 1. Tempelkan URL & Anon Key dari Dashboard Supabase Anda di sini:
-export const SUPABASE_URL = "https://xxxx.supabase.co"; // Ganti dengan URL projek Supabase Anda
-export const SUPABASE_KEY = "eyJhbGciOi...";            // Ganti dengan anon key milik Anda
+export const SUPABASE_URL = "https://tvnnsnzixhybuyktfynh.supabase.co";
+export const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR2bm5zbnppeGh5YnV5a3RmeW5oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgyMzM3NDUsImV4cCI6MjEwMzgwOTc0NX0.rqAo4fVAC9AkyJST1zfYDnYPklUEbVi03DAmH_XZb2I";
 
 // 2. Inisialisasi Klien Supabase
 export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// 3. Helper Cek apakah Supabase sudah dikonfigurasi dengan URL asli
+// 3. Helper Cek apakah Supabase sudah dikonfigurasi dengan URL & Key asli
 export const isSupabaseConfigured = () => {
   return (
     SUPABASE_URL &&
     !SUPABASE_URL.includes("xxxx") &&
     SUPABASE_KEY &&
-    !SUPABASE_KEY.includes("...")
+    SUPABASE_KEY.length > 20
   );
 };
 
-// 4. Fungsi Mengambil Data dari Tabel Supabase (Contoh: 'pegawai', 'produk', dll.)
-export async function ambilDataSupabase(namaTabel = "pegawai") {
+// 4. Fungsi Mengambil Data dari Tabel Supabase (Default: 'employees')
+export async function ambilDataSupabase(namaTabel = "employees") {
   if (!isSupabaseConfigured()) {
     console.info(`[Supabase Info] URL / Key belum dikonfigurasi. Menggunakan data lokal.`);
     return null;
@@ -45,8 +45,8 @@ export async function ambilDataSupabase(namaTabel = "pegawai") {
   }
 }
 
-// 5. Fungsi Menambah Data ke Tabel Supabase
-export async function tambahDataSupabase(namaTabel = "pegawai", record = {}) {
+// 5. Fungsi Menambah Data ke Tabel Supabase (Default: 'employees')
+export async function tambahDataSupabase(namaTabel = "employees", record = {}) {
   if (!isSupabaseConfigured()) {
     return { success: true, local: true };
   }
