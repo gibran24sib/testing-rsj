@@ -25,6 +25,30 @@ export default function Sidebar({
       badge: "Duty Shift",
     },
     {
+      id: "abk_wisn",
+      label: "Beban Kerja (WISN)",
+      icon: "🧮",
+      badge: "Kemenkes",
+    },
+    {
+      id: "kredensialing",
+      label: "Jenjang Karir & SPK",
+      icon: "🎖️",
+      badge: "KARS",
+    },
+    {
+      id: "presensi",
+      label: "E-Presensi Shift",
+      icon: "⏱️",
+      badge: "Live GPS",
+    },
+    {
+      id: "dossier",
+      label: "E-Berkas Digital",
+      icon: "📁",
+      badge: "DMS",
+    },
+    {
       id: "legalitas",
       label: "Legalitas STR & SIP",
       icon: "📜",
@@ -165,17 +189,17 @@ export default function Sidebar({
                     ? "#94a3b8"
                     : "#475569",
                   fontWeight: isActive ? 600 : 500,
-                  fontSize: "0.85rem",
+                  fontSize: "0.83rem",
                 }}
               >
                 <div className="d-flex align-items-center gap-2">
-                  <span style={{ fontSize: "1rem" }}>{item.icon}</span>
+                  <span style={{ fontSize: "0.95rem" }}>{item.icon}</span>
                   <span>{item.label}</span>
                 </div>
                 <span
                   className="badge rounded-pill"
                   style={{
-                    fontSize: "0.65rem",
+                    fontSize: "0.62rem",
                     fontWeight: 500,
                     backgroundColor: isActive
                       ? "rgba(16, 185, 129, 0.2)"

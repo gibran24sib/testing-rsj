@@ -33,6 +33,34 @@ export default function CommandPalette({
       action: () => onSelectAction({ type: "navigate_tab", tab: "roster" }),
     },
     {
+      id: "abk_wisn",
+      label: "Kalkulator Analisis Beban Kerja (WISN Kemenkes)",
+      category: "Akreditasi KARS",
+      icon: "🧮",
+      action: () => onSelectAction({ type: "navigate_tab", tab: "abk_wisn" }),
+    },
+    {
+      id: "kredensialing",
+      label: "Jenjang Karir Perawat Jiwa & SPK/RKK Komite",
+      category: "Akreditasi KARS",
+      icon: "🎖️",
+      action: () => onSelectAction({ type: "navigate_tab", tab: "kredensialing" }),
+    },
+    {
+      id: "presensi",
+      label: "Simulasi E-Presensi Shift Geolocation & Swafoto",
+      category: "Operasional Modern",
+      icon: "⏱️",
+      action: () => onSelectAction({ type: "navigate_tab", tab: "presensi" }),
+    },
+    {
+      id: "dossier",
+      label: "E-Berkas & Arsip Digital Dossier Pegawai",
+      category: "Operasional Modern",
+      icon: "📁",
+      action: () => onSelectAction({ type: "navigate_tab", tab: "dossier" }),
+    },
+    {
       id: "legalitas",
       label: "Audit Masa Berlaku STR & SIP Nakes",
       category: "Modul SDM",
@@ -113,7 +141,7 @@ export default function CommandPalette({
               color: darkMode ? "#ffffff" : "#0f172a",
               fontSize: "1rem",
             }}
-            placeholder="Cari modul SDM, nakes, roster shift, cuti (Ctrl+K)..."
+            placeholder="Cari modul SDM, WISN, SPK/RKK, presensi, cuti (Ctrl+K)..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />

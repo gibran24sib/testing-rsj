@@ -26,6 +26,14 @@ import {
   initialTrainings,
 } from "./data/sdmData";
 
+// Supabase Integration
+import {
+  supabase,
+  isSupabaseConfigured,
+  ambilDataSupabase,
+  tambahDataSupabase,
+} from "./services/supabaseClient";
+
 function App() {
   const [currentView, setCurrentView] = useState("guest");
   const [currentUser, setCurrentUser] = useState(null);
@@ -87,7 +95,7 @@ function App() {
   }, [users]);
 
   // STATE TAMPILAN ADMIN TAB
-  const [activeTab, setActiveTab] = useState("direktori"); // "direktori" | "roster" | "legalitas" | "cuti" | "diklat" | "analitik"
+  const [activeTab, setActiveTab] = useState("direktori");
 
   // STATE SDM & KEPEGAWAIAN NAKES
   const [employees, setEmployees] = useState(() => {
@@ -110,6 +118,32 @@ function App() {
     return saved ? JSON.parse(saved) : initialTrainings;
   });
 
+  // ==========================================================================
+  // PENGAMBILAN DATA DARI SUPABASE (REAL-TIME FETCH PADA SAAT HALAMAN DIMUAT)
+  // ==========================================================================
+  useEffect(() => {
+    async function loadDataFromSupabase() {
+      if (isSupabaseConfigured()) {
+        console.log("🔄 Menghubungkan ke database Supabase...");
+        
+        // 1. Ambil data tabel 'pegawai' atau 'produk'
+        const dataPegawai = await ambilDataSupabase("pegawai");
+        if (dataPegawai && dataPegawai.length > 0) {
+          setEmployees(dataPegawai);
+          showToast("Supabase Terhubung", `Memuat ${dataPegawai.length} data dari Supabase.`, "success");
+        }
+
+        // 2. Mengambil data tabel 'produk' (jika tabel produk dibuat di Supabase)
+        const dataProduk = await ambilDataSupabase("produk");
+        if (dataProduk && dataProduk.length > 0) {
+          console.log("📦 Data Produk Supabase:", dataProduk);
+        }
+      }
+    }
+
+    loadDataFromSupabase();
+  }, [showToast]);
+
   useEffect(() => {
     localStorage.setItem("rsj_employees", JSON.stringify(employees));
   }, [employees]);
@@ -129,6 +163,10 @@ function App() {
   // SDM HANDLERS
   const handleAddEmployee = useCallback((newEmp) => {
     setEmployees((prev) => [newEmp, ...prev]);
+    // Sinkronisasi otomatis ke Supabase jika aktif
+    if (isSupabaseConfigured()) {
+      tambahDataSupabase("pegawai", newEmp);
+    }
   }, []);
 
   const handleUpdateEmployee = useCallback((updatedEmp) => {

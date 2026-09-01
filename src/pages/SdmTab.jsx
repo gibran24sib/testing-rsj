@@ -1,6 +1,17 @@
 import React, { useState, useMemo } from "react";
 import SdmEmployeeModal from "../components/SdmEmployeeModal";
 import SdmLeaveModal from "../components/SdmLeaveModal";
+import SdmAbkWisnModal from "../components/SdmAbkWisnModal";
+import SdmSpkModal from "../components/SdmSpkModal";
+import SdmPresensiModal from "../components/SdmPresensiModal";
+import SdmDossierModal from "../components/SdmDossierModal";
+
+import {
+  initialWisnData,
+  initialCredentials,
+  initialAttendanceLogs,
+  initialDossiers,
+} from "../data/sdmData";
 
 export default function SdmTab({
   activeTab = "direktori",
@@ -22,8 +33,51 @@ export default function SdmTab({
   // SUB-TAB STATE
   const [subTab, setSubTab] = useState(activeTab || "direktori");
 
+  // DATA STATES FOR CAT 2 & 4
+  const [wisnList, setWisnList] = useState(initialWisnData);
+  const [credentialsList, setCredentialsList] = useState(initialCredentials);
+  const [attendanceLogs, setAttendanceLogs] = useState(initialAttendanceLogs);
+  const [dossiersList, setDossiersList] = useState(() => {
+    try {
+      const saved = localStorage.getItem("rsj_dossiers");
+      return saved ? JSON.parse(saved) : initialDossiers;
+    } catch {
+      return initialDossiers;
+    }
+  });
+
+  // MODAL STATES
+  const [isEmployeeModalOpen, setIsEmployeeModalOpen] = useState(false);
+  const [employeeModalMode, setEmployeeModalMode] = useState("view");
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
+
+  const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
+
+  // NEW MODALS STATES (CAT 2 & 4)
+  const [isAbkModalOpen, setIsAbkModalOpen] = useState(false);
+  const [selectedWisnUnit, setSelectedWisnUnit] = useState(null);
+
+  const [isSpkModalOpen, setIsSpkModalOpen] = useState(false);
+  const [selectedCredential, setSelectedCredential] = useState(null);
+
+  const [isPresensiModalOpen, setIsPresensiModalOpen] = useState(false);
+
+  const [isDossierModalOpen, setIsDossierModalOpen] = useState(false);
+  const [selectedDossier, setSelectedDossier] = useState(null);
+
   React.useEffect(() => {
-    if (activeTab && ["direktori", "roster", "legalitas", "cuti", "diklat", "analitik"].includes(activeTab)) {
+    if (activeTab && [
+      "direktori",
+      "roster",
+      "abk_wisn",
+      "kredensialing",
+      "presensi",
+      "dossier",
+      "legalitas",
+      "cuti",
+      "diklat",
+      "analitik"
+    ].includes(activeTab)) {
       setSubTab(activeTab);
     }
   }, [activeTab]);
@@ -41,13 +95,6 @@ export default function SdmTab({
 
   // ROSTER FILTER
   const [rosterWardFilter, setRosterWardFilter] = useState("semua");
-
-  // MODAL STATES
-  const [isEmployeeModalOpen, setIsEmployeeModalOpen] = useState(false);
-  const [employeeModalMode, setEmployeeModalMode] = useState("view"); // "view" | "add" | "edit"
-  const [selectedEmployee, setSelectedEmployee] = useState(null);
-
-  const [isLeaveModalOpen, setIsLeaveModalOpen] = useState(false);
 
   // FILTERED EMPLOYEES
   const filteredEmployees = useMemo(() => {
@@ -69,7 +116,11 @@ export default function SdmTab({
   // STR/SIP EXPIRED COUNT & LIST
   const expiringLicenses = useMemo(() => {
     return employees.filter(
-      (emp) => emp.str?.status === "Expired" || emp.str?.status === "Mendekati Expired" || emp.sip?.status === "Expired" || emp.sip?.status === "Mendekati Expired"
+      (emp) =>
+        emp.str?.status === "Expired" ||
+        emp.str?.status === "Mendekati Expired" ||
+        emp.sip?.status === "Expired" ||
+        emp.sip?.status === "Mendekati Expired"
     );
   }, [employees]);
 
@@ -81,9 +132,10 @@ export default function SdmTab({
     const pns = employees.filter((e) => e.statusKepegawaian === "PNS").length;
     const pppk = employees.filter((e) => e.statusKepegawaian === "PPPK").length;
     const pendingLeaves = leaveRequests.filter((l) => l.status === "Menunggu Persetujuan").length;
+    const totalDefisitWisn = wisnList.reduce((acc, curr) => acc + (curr.selisihKebutuhan < 0 ? Math.abs(curr.selisihKebutuhan) : 0), 0);
 
-    return { total, medis, keperawatan, pns, pppk, pendingLeaves };
-  }, [employees, leaveRequests]);
+    return { total, medis, keperawatan, pns, pppk, pendingLeaves, totalDefisitWisn };
+  }, [employees, leaveRequests, wisnList]);
 
   // HANDLERS
   const handleOpenAddEmployee = () => {
@@ -121,24 +173,55 @@ export default function SdmTab({
     }
   };
 
-  const handleExportCsv = () => {
-    const headers = "ID,NIP,Nama,Profesi,Kategori,Jabatan,Unit Penempatan,Status Kepegawaian,Golongan,Email,No HP,No STR,Masa STR,No SIP,Masa SIP,SKP\n";
-    const rows = employees
-      .map(
-        (e) =>
-          `"${e.id}","${e.nip}","${e.nama}","${e.profesi}","${e.kategori}","${e.jabatan}","${e.unitPenempatan}","${e.statusKepegawaian}","${e.golongan}","${e.email}","${e.noHp}","${e.str?.nomor}","${e.str?.masaBerlaku}","${e.sip?.nomor}","${e.sip?.masaBerlaku}","${e.skpSkor}"`
-      )
-      .join("\n");
+  const handleOpenSpkModal = (cred) => {
+    setSelectedCredential(cred);
+    setIsSpkModalOpen(true);
+  };
 
-    const blob = new Blob([headers + rows], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", `Daftar_SDM_RSJ_Tampan_${new Date().toISOString().split("T")[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    showToast?.("Ekspor Berhasil", "Data kepegawaian berhasil diunduh dalam format CSV.", "success");
+  const handleOpenDossierModal = (empId, name) => {
+    const existing = dossiersList.find((d) => d.employeeId === empId);
+    if (existing) {
+      setSelectedDossier(existing);
+    } else {
+      const newDossier = {
+        employeeId: empId,
+        nama: name,
+        persentaseLengkap: 60,
+        dokumen: [
+          { id: `DOC-${Date.now()}-1`, nama: "SK Pengangkatan Pegawai", tipe: "PDF", ukuran: "1.2 MB", tanggalUpload: "2024-01-10", status: "Terverifikasi" },
+          { id: `DOC-${Date.now()}-2`, nama: "Ijazah Terakhir", tipe: "PDF", ukuran: "2.0 MB", tanggalUpload: "2024-01-10", status: "Terverifikasi" },
+          { id: `DOC-${Date.now()}-3`, nama: "STR & SIP Nakes", tipe: "PDF", ukuran: "850 KB", tanggalUpload: "2024-03-12", status: "Terverifikasi" },
+        ],
+      };
+      setSelectedDossier(newDossier);
+    }
+    setIsDossierModalOpen(true);
+  };
+
+  const handleSaveDossier = (updatedDossier) => {
+    setDossiersList((prev) => {
+      const idx = prev.findIndex((d) => d.employeeId === updatedDossier.employeeId);
+      let updated;
+      if (idx >= 0) {
+        updated = [...prev];
+        updated[idx] = updatedDossier;
+      } else {
+        updated = [updatedDossier, ...prev];
+      }
+      try {
+        localStorage.setItem("rsj_dossiers", JSON.stringify(updated));
+      } catch (e) {
+        console.error("Gagal simpan dossiers:", e);
+      }
+      return updated;
+    });
+    setSelectedDossier(updatedDossier);
+    showToast?.("Arsip Diperbarui", `Dokumen digital untuk ${updatedDossier.nama} berhasil disimpan.`, "success");
+  };
+
+  const handleAddAttendance = (newLog) => {
+    setAttendanceLogs((prev) => [newLog, ...prev]);
+    showToast?.("Presensi Tercatat", `Presensi ${newLog.shift} atas nama ${newLog.nama} berhasil direkam.`, "success");
   };
 
   // UI THEME HELPERS
@@ -146,7 +229,6 @@ export default function SdmTab({
   const cardBorder = darkMode ? "#1d253b" : "#e2e8f0";
   const textMuted = darkMode ? "#94a3b8" : "#64748b";
   const tableHeaderBg = darkMode ? "#161c2d" : "#f1f5f9";
-  const tableRowHover = darkMode ? "#182035" : "#f8fafc";
 
   return (
     <div className="d-flex flex-column gap-4 animate-fade-in">
@@ -184,19 +266,19 @@ export default function SdmTab({
           >
             <div
               className="rounded-3 d-flex align-items-center justify-content-center fs-4"
-              style={{ width: "48px", height: "48px", backgroundColor: "rgba(59, 130, 246, 0.12)", color: "#3b82f6" }}
+              style={{ width: "48px", height: "48px", backgroundColor: "rgba(239, 68, 68, 0.12)", color: "#ef4444" }}
             >
-              🏛️
+              🧮
             </div>
             <div>
               <span className="small fw-semibold d-block" style={{ color: textMuted }}>
-                Komposisi ASN
+                Defisit Nakes (WISN)
               </span>
-              <h4 className="fw-bold mb-0" style={{ letterSpacing: "-0.02em" }}>
-                {stats.pns + stats.pppk} <span className="fs-6 fw-normal text-muted">ASN</span>
+              <h4 className="fw-bold mb-0 text-danger" style={{ letterSpacing: "-0.02em" }}>
+                -{stats.totalDefisitWisn} <span className="fs-6 fw-normal text-muted">Formasi Ners</span>
               </h4>
-              <small className="text-primary fw-medium" style={{ fontSize: "0.72rem" }}>
-                {stats.pns} PNS &bull; {stats.pppk} PPPK
+              <small className="text-danger fw-semibold" style={{ fontSize: "0.72rem" }}>
+                Kebutuhan Bangsal Kampar & IGD
               </small>
             </div>
           </div>
@@ -209,27 +291,19 @@ export default function SdmTab({
           >
             <div
               className="rounded-3 d-flex align-items-center justify-content-center fs-4"
-              style={{
-                width: "48px",
-                height: "48px",
-                backgroundColor: expiringLicenses.length > 0 ? "rgba(239, 68, 68, 0.12)" : "rgba(16, 185, 129, 0.12)",
-                color: expiringLicenses.length > 0 ? "#ef4444" : "#10b981",
-              }}
+              style={{ width: "48px", height: "48px", backgroundColor: "rgba(139, 92, 246, 0.12)", color: "#8b5cf6" }}
             >
-              📜
+              🎖️
             </div>
             <div>
               <span className="small fw-semibold d-block" style={{ color: textMuted }}>
-                STR / SIP Perlu Dicek
+                Kredensialing PK Jiwa
               </span>
               <h4 className="fw-bold mb-0" style={{ letterSpacing: "-0.02em" }}>
-                {expiringLicenses.length} <span className="fs-6 fw-normal text-muted">Nakes</span>
+                {credentialsList.length} <span className="fs-6 fw-normal text-muted">SPK Terbit</span>
               </h4>
-              <small
-                className={expiringLicenses.length > 0 ? "text-danger fw-semibold" : "text-success"}
-                style={{ fontSize: "0.72rem" }}
-              >
-                {expiringLicenses.length > 0 ? "Perlu Perpanjangan STR/SIP" : "Seluruh Legalitas Valid"}
+              <small className="text-purple fw-semibold" style={{ fontSize: "0.72rem", color: "#8b5cf6" }}>
+                Jenjang Karir PK I s/d PK IV
               </small>
             </div>
           </div>
@@ -244,17 +318,17 @@ export default function SdmTab({
               className="rounded-3 d-flex align-items-center justify-content-center fs-4"
               style={{ width: "48px", height: "48px", backgroundColor: "rgba(245, 158, 11, 0.12)", color: "#f59e0b" }}
             >
-              🏖️
+              ⏱️
             </div>
             <div>
               <span className="small fw-semibold d-block" style={{ color: textMuted }}>
-                Pengajuan Cuti Aktif
+                Presensi Shift Hari Ini
               </span>
               <h4 className="fw-bold mb-0" style={{ letterSpacing: "-0.02em" }}>
-                {stats.pendingLeaves} <span className="fs-6 fw-normal text-muted">Menunggu</span>
+                {attendanceLogs.length} <span className="fs-6 fw-normal text-muted">Clock-In</span>
               </h4>
               <small className="text-warning fw-semibold" style={{ fontSize: "0.72rem" }}>
-                {leaveRequests.length} Total Riwayat Pengajuan
+                Presensi Digital Geolocation
               </small>
             </div>
           </div>
@@ -271,11 +345,15 @@ export default function SdmTab({
       >
         <div className="d-flex flex-wrap align-items-center gap-2">
           {[
-            { id: "direktori", label: "Direktori Pegawai", icon: "👥", count: employees.length },
-            { id: "roster", label: "Roster Shift 24/7", icon: "📅", count: shiftRoster.length },
+            { id: "direktori", label: "Direktori Pegawai", icon: "👥" },
+            { id: "roster", label: "Roster Shift 24/7", icon: "📅" },
+            { id: "abk_wisn", label: "Analisis Beban Kerja (WISN)", icon: "🧮", badge: "Kemenkes" },
+            { id: "kredensialing", label: "Jenjang Karir & SPK/RKK", icon: "🎖️", badge: "KARS" },
+            { id: "presensi", label: "E-Presensi Shift", icon: "⏱️", badge: "Live" },
+            { id: "dossier", label: "E-Berkas Digital Dossier", icon: "📁" },
             { id: "legalitas", label: "Legalitas STR & SIP", icon: "📜", alert: expiringLicenses.length },
             { id: "cuti", label: "Pengajuan Cuti", icon: "🏖️", alert: stats.pendingLeaves },
-            { id: "diklat", label: "Diklat & Kredensialing Jiwa", icon: "🎓", count: trainings.length },
+            { id: "diklat", label: "Diklat Jiwa", icon: "🎓" },
             { id: "analitik", label: "Analitik SDM & Kinerja", icon: "📊" },
           ].map((tab) => {
             const isActive = subTab === tab.id;
@@ -291,26 +369,26 @@ export default function SdmTab({
                   backgroundColor: isActive ? "#10b981" : darkMode ? "#181f33" : "#f1f5f9",
                   color: isActive ? "#ffffff" : darkMode ? "#cbd5e1" : "#334155",
                   border: "none",
-                  fontSize: "0.82rem",
+                  fontSize: "0.8rem",
                 }}
               >
                 <span>{tab.icon}</span>
                 <span>{tab.label}</span>
-                {tab.alert !== undefined && tab.alert > 0 && (
-                  <span className="badge rounded-pill bg-danger" style={{ fontSize: "0.68rem" }}>
-                    {tab.alert}
-                  </span>
-                )}
-                {tab.count !== undefined && !tab.alert && (
+                {tab.badge && (
                   <span
                     className="badge rounded-pill"
                     style={{
-                      fontSize: "0.68rem",
-                      backgroundColor: isActive ? "rgba(255,255,255,0.25)" : darkMode ? "#283452" : "#e2e8f0",
-                      color: isActive ? "#ffffff" : darkMode ? "#94a3b8" : "#64748b",
+                      fontSize: "0.65rem",
+                      backgroundColor: isActive ? "rgba(255,255,255,0.25)" : darkMode ? "#283452" : "#cbd5e1",
+                      color: isActive ? "#fff" : darkMode ? "#94a3b8" : "#334155",
                     }}
                   >
-                    {tab.count}
+                    {tab.badge}
+                  </span>
+                )}
+                {tab.alert !== undefined && tab.alert > 0 && (
+                  <span className="badge rounded-pill bg-danger" style={{ fontSize: "0.68rem" }}>
+                    {tab.alert}
                   </span>
                 )}
               </button>
@@ -320,24 +398,35 @@ export default function SdmTab({
 
         {/* QUICK ACTIONS */}
         <div className="d-flex align-items-center gap-2">
+          {subTab === "abk_wisn" && (
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedWisnUnit(wisnList[0]);
+                setIsAbkModalOpen(true);
+              }}
+              className="btn btn-danger btn-sm d-flex align-items-center gap-1 rounded-3 px-3 fw-semibold shadow-sm"
+            >
+              <span>🧮</span> Kalkulator Simulasi WISN
+            </button>
+          )}
+          {subTab === "presensi" && (
+            <button
+              type="button"
+              onClick={() => setIsPresensiModalOpen(true)}
+              className="btn btn-success btn-sm d-flex align-items-center gap-1 rounded-3 px-3 fw-semibold shadow-sm"
+            >
+              <span>📸</span> Clock-In / Clock-Out Shift
+            </button>
+          )}
           {subTab === "direktori" && (
-            <>
-              <button
-                type="button"
-                onClick={handleExportCsv}
-                className="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1 rounded-3 px-3"
-                title="Unduh Data Format CSV"
-              >
-                <span>📥</span> Ekspor CSV
-              </button>
-              <button
-                type="button"
-                onClick={handleOpenAddEmployee}
-                className="btn btn-success btn-sm d-flex align-items-center gap-1 rounded-3 px-3 fw-semibold shadow-sm"
-              >
-                <span>➕</span> Tambah Pegawai
-              </button>
-            </>
+            <button
+              type="button"
+              onClick={handleOpenAddEmployee}
+              className="btn btn-success btn-sm d-flex align-items-center gap-1 rounded-3 px-3 fw-semibold shadow-sm"
+            >
+              <span>➕</span> Tambah Pegawai
+            </button>
           )}
           {subTab === "cuti" && (
             <button
@@ -353,7 +442,373 @@ export default function SdmTab({
 
       {/* 3. SUB-TAB CONTENTS */}
 
-      {/* TAB 1: DIREKTORI PEGAWAI */}
+      {/* =================================================================== */}
+      {/* TAB: ANALISIS BEBAN KERJA (WISN KEMENKES RI)                        */}
+      {/* =================================================================== */}
+      {subTab === "abk_wisn" && (
+        <div
+          className="rounded-4 p-4 shadow-sm"
+          style={{ backgroundColor: cardBg, border: `1px solid ${cardBorder}` }}
+        >
+          <div className="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+            <div>
+              <h5 className="fw-bold mb-1">🧮 Analisis Beban Kerja Ketenagaan (Metode WISN Kemenkes RI)</h5>
+              <p className="small mb-0" style={{ color: textMuted }}>
+                Perhitungan kebutuhan riil tenaga perawat & dokter jiwa berbasis Permenkes RI No. 33 & Standar Akreditasi KARS
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedWisnUnit(wisnList[0]);
+                setIsAbkModalOpen(true);
+              }}
+              className="btn btn-outline-danger btn-sm d-flex align-items-center gap-2 px-3 py-2 fw-semibold"
+            >
+              <span>⚙️</span> Buka Simulator Interaktif WISN
+            </button>
+          </div>
+
+          <div className="row g-3">
+            {wisnList.map((w) => (
+              <div key={w.id} className="col-12 col-lg-6">
+                <div
+                  className="p-4 rounded-3 h-100 border d-flex flex-column justify-content-between transition-all"
+                  style={{
+                    backgroundColor: darkMode ? "#141a2c" : "#f8fafc",
+                    borderColor: darkMode ? "#222c45" : "#e2e8f0",
+                  }}
+                >
+                  <div>
+                    <div className="d-flex justify-content-between align-items-center mb-2">
+                      <span className="badge bg-secondary">{w.kategoriUnit}</span>
+                      <span
+                        className={`badge rounded-pill px-3 py-1 ${
+                          w.status.includes("Defisit Kritis")
+                            ? "bg-danger"
+                            : w.status.includes("Defisit")
+                            ? "bg-warning text-dark"
+                            : "bg-success"
+                        }`}
+                      >
+                        {w.status}
+                      </span>
+                    </div>
+
+                    <h5 className="fw-bold mb-1">{w.unit}</h5>
+                    <p className="small text-muted mb-3">
+                      BOR Hunian: <strong>{w.borRanjang}%</strong> &bull; {w.pasienAktif} Pasien Aktif ({w.ketergantungan.totalCare} Total Care / Restrain)
+                    </p>
+
+                    <div className="row g-2 text-center mb-3">
+                      <div className="col-4">
+                        <div className="p-2 rounded border bg-body-tertiary">
+                          <small className="d-block text-muted" style={{ fontSize: "0.7rem" }}>Nakes Ada</small>
+                          <strong className="fs-5 text-primary">{w.tenagaTersedia}</strong>
+                        </div>
+                      </div>
+                      <div className="col-4">
+                        <div className="p-2 rounded border bg-body-tertiary">
+                          <small className="d-block text-muted" style={{ fontSize: "0.7rem" }}>Kebutuhan Ideal</small>
+                          <strong className="fs-5 text-success">{w.kebutuhanTenagaIdeal}</strong>
+                        </div>
+                      </div>
+                      <div className="col-4">
+                        <div className="p-2 rounded border bg-body-tertiary">
+                          <small className="d-block text-muted" style={{ fontSize: "0.7rem" }}>Rasio WISN</small>
+                          <strong className={`fs-5 ${w.rasioWisn < 1.0 ? "text-danger" : "text-success"}`}>
+                            {w.rasioWisn}
+                          </strong>
+                        </div>
+                      </div>
+                    </div>
+
+                    <p className="small text-muted mb-0" style={{ fontSize: "0.8rem", lineHeight: "1.4" }}>
+                      <strong>Rekomendasi Formasi:</strong> {w.rekomendasi}
+                    </p>
+                  </div>
+
+                  <div className="pt-3 border-top mt-3 d-flex justify-content-between align-items-center">
+                    <span className="small text-muted">Formula WKT: 1.840 Jam/Thn</span>
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-outline-primary"
+                      onClick={() => {
+                        setSelectedWisnUnit(w);
+                        setIsAbkModalOpen(true);
+                      }}
+                    >
+                      Kalkulasi Ulang
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* =================================================================== */}
+      {/* TAB: JENJANG KARIR PK I - PK IV & SPK/RKK KOMITE                   */}
+      {/* =================================================================== */}
+      {subTab === "kredensialing" && (
+        <div
+          className="rounded-4 p-4 shadow-sm"
+          style={{ backgroundColor: cardBg, border: `1px solid ${cardBorder}` }}
+        >
+          <div className="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+            <div>
+              <h5 className="fw-bold mb-1">🎖️ Jenjang Karir Perawat Jiwa & Kredensialing SPK / RKK</h5>
+              <p className="small mb-0" style={{ color: textMuted }}>
+                Surat Penugasan Klinis (SPK) & Rincian Kewenangan Klinis (RKK) Komite Keperawatan & Komite Medik RSJ Tampan
+              </p>
+            </div>
+            <span className="badge bg-purple rounded-pill px-3 py-2" style={{ backgroundColor: "#8b5cf6", color: "#fff" }}>
+              Standar Akreditasi KARS Kemenkes
+            </span>
+          </div>
+
+          <div className="table-responsive rounded-3 border" style={{ borderColor: cardBorder }}>
+            <table className="table table-hover align-middle mb-0" style={{ fontSize: "0.86rem" }}>
+              <thead style={{ backgroundColor: tableHeaderBg, color: darkMode ? "#cbd5e1" : "#475569" }}>
+                <tr>
+                  <th className="py-3 px-3">Tenaga Medis / Nakes</th>
+                  <th className="py-3">Jenjang Karir Klinis</th>
+                  <th className="py-3">Nomor SPK & Masa Berlaku</th>
+                  <th className="py-3">Komite Penilai & Mitra Bestari</th>
+                  <th className="py-3 text-center">Status Kredensial</th>
+                  <th className="py-3 text-end px-3">Aksi Dokumen</th>
+                </tr>
+              </thead>
+              <tbody>
+                {credentialsList.map((c) => (
+                  <tr key={c.id} style={{ borderBottomColor: cardBorder }}>
+                    <td className="px-3 py-3">
+                      <div className="fw-bold">{c.nama}</div>
+                      <small className="text-muted">{c.id}</small>
+                    </td>
+                    <td>
+                      <span className="badge bg-purple-subtle text-purple fw-bold" style={{ color: "#8b5cf6" }}>
+                        {c.jenjangKarir}
+                      </span>
+                    </td>
+                    <td>
+                      <div className="font-monospace small">{c.noSpk}</div>
+                      <small className="text-muted">Exp: {c.masaBerlakuSpk}</small>
+                    </td>
+                    <td>
+                      <div>{c.komite}</div>
+                      <small className="text-muted">Peer: {c.mitraBestari}</small>
+                    </td>
+                    <td className="text-center">
+                      <span
+                        className={`badge rounded-pill px-3 py-1 ${
+                          c.statusKredensial.includes("Penuh")
+                            ? "bg-success"
+                            : "bg-warning text-dark"
+                        }`}
+                      >
+                        {c.statusKredensial}
+                      </span>
+                    </td>
+                    <td className="text-end px-3">
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-outline-purple d-inline-flex align-items-center gap-1"
+                        style={{ color: "#8b5cf6", borderColor: "#8b5cf6" }}
+                        onClick={() => handleOpenSpkModal(c)}
+                      >
+                        <span>📜</span> Lihat RKK & SPK
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* =================================================================== */}
+      {/* TAB: E-PRESENSI SHIFT DIGITAL 24/7                                  */}
+      {/* =================================================================== */}
+      {subTab === "presensi" && (
+        <div
+          className="rounded-4 p-4 shadow-sm"
+          style={{ backgroundColor: cardBg, border: `1px solid ${cardBorder}` }}
+        >
+          <div className="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+            <div>
+              <h5 className="fw-bold mb-1">⏱️ E-Presensi Shift & Clock-In/Out Geolocation RSJ</h5>
+              <p className="small mb-0" style={{ color: textMuted }}>
+                Pencatatan kehadiran dinas shift 24 jam dengan verifikasi GPS Geofencing radius RSJ Tampan & Swafoto
+              </p>
+            </div>
+            <button
+              type="button"
+              className="btn btn-success btn-sm d-flex align-items-center gap-2 px-3 py-2 fw-semibold shadow-sm"
+              onClick={() => setIsPresensiModalOpen(true)}
+            >
+              <span>📸</span> Clock-In / Clock-Out Shift
+            </button>
+          </div>
+
+          <div className="table-responsive rounded-3 border" style={{ borderColor: cardBorder }}>
+            <table className="table table-hover align-middle mb-0" style={{ fontSize: "0.86rem" }}>
+              <thead style={{ backgroundColor: tableHeaderBg, color: darkMode ? "#cbd5e1" : "#475569" }}>
+                <tr>
+                  <th className="py-3 px-3">Pegawai / Foto</th>
+                  <th className="py-3">Shift & Bangsal Tugas</th>
+                  <th className="py-3">Waktu Masuk & Pulang</th>
+                  <th className="py-3">Status Kehadiran</th>
+                  <th className="py-3">Verifikasi GPS Geofence</th>
+                  <th className="py-3 text-center">Metode</th>
+                </tr>
+              </thead>
+              <tbody>
+                {attendanceLogs.map((att) => (
+                  <tr key={att.id} style={{ borderBottomColor: cardBorder }}>
+                    <td className="px-3 py-3">
+                      <div className="d-flex align-items-center gap-2">
+                        <img
+                          src={att.fotoPresensi}
+                          alt={att.nama}
+                          className="rounded-circle"
+                          style={{ width: "36px", height: "36px", objectFit: "cover" }}
+                        />
+                        <div>
+                          <div className="fw-bold">{att.nama}</div>
+                          <small className="text-muted">{att.profesi}</small>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <div className="fw-semibold">{att.shift}</div>
+                      <small className="text-muted">{att.unit}</small>
+                    </td>
+                    <td>
+                      <div>
+                        <strong>In:</strong> {att.jamMasuk} &bull; <strong>Out:</strong> {att.jamPulang}
+                      </div>
+                      <small className="text-muted">Tgl: {att.tanggal}</small>
+                    </td>
+                    <td>
+                      <span
+                        className={`badge rounded-pill px-2 py-1 ${
+                          att.statusKehadiran.includes("Terlambat")
+                            ? "bg-warning text-dark"
+                            : "bg-success"
+                        }`}
+                      >
+                        {att.statusKehadiran}
+                      </span>
+                    </td>
+                    <td>
+                      <small className="font-monospace text-success d-block">{att.lokasiGps}</small>
+                    </td>
+                    <td className="text-center">
+                      <span className="badge bg-secondary-subtle text-secondary" style={{ fontSize: "0.7rem" }}>
+                        {att.metode}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* =================================================================== */}
+      {/* TAB: E-BERKAS & DIGITAL DOSSIER                                     */}
+      {/* =================================================================== */}
+      {subTab === "dossier" && (
+        <div
+          className="rounded-4 p-4 shadow-sm"
+          style={{ backgroundColor: cardBg, border: `1px solid ${cardBorder}` }}
+        >
+          <div className="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+            <div>
+              <h5 className="fw-bold mb-1">📁 E-Berkas & Arsip Digital Dossier Pegawai</h5>
+              <p className="small mb-0" style={{ color: textMuted }}>
+                Penyimpanan digital SK Pengangkatan, Ijazah, STR, SIP, Sertifikat Pelatihan Jiwa, dan dokumen kepegawaian
+              </p>
+            </div>
+            <span className="badge bg-primary rounded-pill px-3 py-2">
+              DMS Dokumen Terenkripsi
+            </span>
+          </div>
+
+          <div className="row g-3">
+            {employees.map((emp) => {
+              const dos = dossiersList.find((d) => d.employeeId === emp.id) || {
+                persentaseLengkap: 80,
+                dokumen: [{ nama: "SK Pengangkatan" }, { nama: "Ijazah" }, { nama: "STR/SIP" }],
+              };
+
+              return (
+                <div key={emp.id} className="col-12 col-md-6 col-lg-4">
+                  <div
+                    className="p-3 rounded-3 border h-100 d-flex flex-column justify-content-between"
+                    style={{
+                      backgroundColor: darkMode ? "#141a2c" : "#f8fafc",
+                      borderColor: darkMode ? "#222c45" : "#e2e8f0",
+                    }}
+                  >
+                    <div>
+                      <div className="d-flex align-items-center gap-3 mb-3">
+                        <img
+                          src={emp.foto}
+                          alt={emp.nama}
+                          className="rounded-circle shadow-sm"
+                          style={{ width: "48px", height: "48px", objectFit: "cover" }}
+                        />
+                        <div className="overflow-hidden">
+                          <h6 className="fw-bold mb-0 text-truncate">{emp.nama}</h6>
+                          <small className="text-muted d-block text-truncate">NIP: {emp.nip}</small>
+                          <span className="badge bg-info text-dark" style={{ fontSize: "0.68rem" }}>
+                            {emp.profesi}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="mb-3">
+                        <div className="d-flex justify-content-between small mb-1">
+                          <span className="text-muted">Kelengkapan Arsip:</span>
+                          <strong className="text-success">{dos.persentaseLengkap}%</strong>
+                        </div>
+                        <div className="progress" style={{ height: "6px" }}>
+                          <div
+                            className="progress-bar bg-success"
+                            style={{ width: `${dos.persentaseLengkap}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="pt-2 border-top d-flex justify-content-between align-items-center">
+                      <span className="small text-muted">📁 {dos.dokumen?.length || 3} Berkas Tersimpan</span>
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-outline-primary"
+                        onClick={() => handleOpenDossierModal(emp.id, emp.nama)}
+                      >
+                        Buka Dossier
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* =================================================================== */}
+      {/* EXISTING SUB-TABS (DIREKTORI, ROSTER, LEGALITAS, CUTI, DIKLAT, ANALITIK) */}
+      {/* =================================================================== */}
+
+      {/* TAB: DIREKTORI PEGAWAI */}
       {subTab === "direktori" && (
         <div
           className="rounded-4 p-4 shadow-sm"
@@ -589,7 +1044,7 @@ export default function SdmTab({
         </div>
       )}
 
-      {/* TAB 2: ROSTER SHIFT 24/7 */}
+      {/* TAB: ROSTER SHIFT 24/7 */}
       {subTab === "roster" && (
         <div
           className="rounded-4 p-4 shadow-sm"
@@ -710,7 +1165,7 @@ export default function SdmTab({
         </div>
       )}
 
-      {/* TAB 3: LEGALITAS STR & SIP */}
+      {/* TAB: LEGALITAS STR & SIP */}
       {subTab === "legalitas" && (
         <div
           className="rounded-4 p-4 shadow-sm"
@@ -820,7 +1275,7 @@ export default function SdmTab({
         </div>
       )}
 
-      {/* TAB 4: PENGAJUAN & APPROVAL CUTI */}
+      {/* TAB: PENGAJUAN & APPROVAL CUTI */}
       {subTab === "cuti" && (
         <div
           className="rounded-4 p-4 shadow-sm"
@@ -893,11 +1348,6 @@ export default function SdmTab({
                       >
                         {leave.status}
                       </span>
-                      {leave.status === "Disetujui" && (
-                        <small className="d-block text-muted" style={{ fontSize: "0.68rem" }}>
-                          Oleh: {leave.disetujuiOleh}
-                        </small>
-                      )}
                     </td>
                     <td className="text-end px-3">
                       {leave.status === "Menunggu Persetujuan" ? (
@@ -937,7 +1387,7 @@ export default function SdmTab({
         </div>
       )}
 
-      {/* TAB 5: DIKLAT & KREDENSIALING KHUSUS JIWA */}
+      {/* TAB: DIKLAT KHUSUS JIWA */}
       {subTab === "diklat" && (
         <div
           className="rounded-4 p-4 shadow-sm"
@@ -958,7 +1408,7 @@ export default function SdmTab({
                 <div
                   className="p-4 rounded-3 h-100 border d-flex flex-column justify-content-between"
                   style={{
-                    backgroundColor: darkMode ? "#141a29" : "#f8fafc",
+                    backgroundColor: darkMode ? "#141a2c" : "#f8fafc",
                     borderColor: darkMode ? "#1f273d" : "#e2e8f0",
                   }}
                 >
@@ -991,9 +1441,6 @@ export default function SdmTab({
                       <li>
                         <strong>📍 Lokasi:</strong> {trn.lokasi}
                       </li>
-                      <li>
-                        <strong>🎖️ Akreditasi:</strong> {trn.standarAkreditasi}
-                      </li>
                     </ul>
                   </div>
 
@@ -1014,7 +1461,7 @@ export default function SdmTab({
         </div>
       )}
 
-      {/* TAB 6: ANALITIK SDM & KINERJA */}
+      {/* TAB: ANALITIK KINERJA SDM */}
       {subTab === "analitik" && (
         <div
           className="rounded-4 p-4 shadow-sm"
@@ -1023,7 +1470,6 @@ export default function SdmTab({
           <h5 className="fw-bold mb-3">📊 Analitik Eksekutif Ketenagaan & Kinerja SDM RSJ Tampan</h5>
 
           <div className="row g-4">
-            {/* RATIO & ATTENDANCE CARDS */}
             <div className="col-12 col-md-4">
               <div
                 className="p-3 rounded-3 text-center border h-100 d-flex flex-column justify-content-center"
@@ -1056,107 +1502,11 @@ export default function SdmTab({
                 <small className="text-info">Predikat: <strong>Sangat Baik</strong></small>
               </div>
             </div>
-
-            {/* SEBARAN PROFESI SDM */}
-            <div className="col-12 col-md-6">
-              <div
-                className="p-3 rounded-3 border h-100"
-                style={{ backgroundColor: darkMode ? "#141a29" : "#f8fafc", borderColor: cardBorder }}
-              >
-                <h6 className="fw-bold mb-3">Distribusi Kategori Tenaga Kerja</h6>
-                <div className="d-flex flex-column gap-3">
-                  <div>
-                    <div className="d-flex justify-content-between small mb-1">
-                      <span>Tenaga Keperawatan Jiwa</span>
-                      <strong>124 Orang (50%)</strong>
-                    </div>
-                    <div className="progress" style={{ height: "8px" }}>
-                      <div className="progress-bar bg-success" style={{ width: "50%" }} />
-                    </div>
-                  </div>
-                  <div>
-                    <div className="d-flex justify-content-between small mb-1">
-                      <span>Dokter Spesialis & Tenaga Medis</span>
-                      <strong>42 Orang (17%)</strong>
-                    </div>
-                    <div className="progress" style={{ height: "8px" }}>
-                      <div className="progress-bar bg-primary" style={{ width: "17%" }} />
-                    </div>
-                  </div>
-                  <div>
-                    <div className="d-flex justify-content-between small mb-1">
-                      <span>Penunjang Medis & RME SIMRS</span>
-                      <strong>32 Orang (13%)</strong>
-                    </div>
-                    <div className="progress" style={{ height: "8px" }}>
-                      <div className="progress-bar bg-info" style={{ width: "13%" }} />
-                    </div>
-                  </div>
-                  <div>
-                    <div className="d-flex justify-content-between small mb-1">
-                      <span>Administrasi, Manajemen & Security Krisis</span>
-                      <strong>50 Orang (20%)</strong>
-                    </div>
-                    <div className="progress" style={{ height: "8px" }}>
-                      <div className="progress-bar bg-warning" style={{ width: "20%" }} />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* SEBARAN STATUS KEPEGAWAIAN */}
-            <div className="col-12 col-md-6">
-              <div
-                className="p-3 rounded-3 border h-100"
-                style={{ backgroundColor: darkMode ? "#141a29" : "#f8fafc", borderColor: cardBorder }}
-              >
-                <h6 className="fw-bold mb-3">Sebaran Status Kepegawaian</h6>
-                <div className="d-flex flex-column gap-3">
-                  <div>
-                    <div className="d-flex justify-content-between small mb-1">
-                      <span>PNS (Pegawai Negeri Sipil)</span>
-                      <strong>135 Orang (54.4%)</strong>
-                    </div>
-                    <div className="progress" style={{ height: "8px" }}>
-                      <div className="progress-bar bg-primary" style={{ width: "54.4%" }} />
-                    </div>
-                  </div>
-                  <div>
-                    <div className="d-flex justify-content-between small mb-1">
-                      <span>PPPK (Pegawai Pemerintah PK)</span>
-                      <strong>58 Orang (23.4%)</strong>
-                    </div>
-                    <div className="progress" style={{ height: "8px" }}>
-                      <div className="progress-bar bg-info" style={{ width: "23.4%" }} />
-                    </div>
-                  </div>
-                  <div>
-                    <div className="d-flex justify-content-between small mb-1">
-                      <span>Pegawai Tetap BLUD</span>
-                      <strong>35 Orang (14.1%)</strong>
-                    </div>
-                    <div className="progress" style={{ height: "8px" }}>
-                      <div className="progress-bar bg-success" style={{ width: "14.1%" }} />
-                    </div>
-                  </div>
-                  <div>
-                    <div className="d-flex justify-content-between small mb-1">
-                      <span>Tenaga Kontrak / Alih Daya</span>
-                      <strong>20 Orang (8.1%)</strong>
-                    </div>
-                    <div className="progress" style={{ height: "8px" }}>
-                      <div className="progress-bar bg-secondary" style={{ width: "8.1%" }} />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       )}
 
-      {/* MODALS */}
+      {/* ALL MODALS */}
       <SdmEmployeeModal
         isOpen={isEmployeeModalOpen}
         mode={employeeModalMode}
@@ -1174,6 +1524,37 @@ export default function SdmTab({
           showToast?.("Pengajuan Terkirim", "Permohonan cuti berhasil dikirim ke Subbag Kepegawaian.", "success");
         }}
         employees={employees}
+        darkMode={darkMode}
+      />
+
+      {/* CAT 2 & CAT 4 MODALS */}
+      <SdmAbkWisnModal
+        isOpen={isAbkModalOpen}
+        onClose={() => setIsAbkModalOpen(false)}
+        initialData={selectedWisnUnit}
+        darkMode={darkMode}
+      />
+
+      <SdmSpkModal
+        isOpen={isSpkModalOpen}
+        onClose={() => setIsSpkModalOpen(false)}
+        credential={selectedCredential}
+        darkMode={darkMode}
+      />
+
+      <SdmPresensiModal
+        isOpen={isPresensiModalOpen}
+        onClose={() => setIsPresensiModalOpen(false)}
+        employees={employees}
+        onSubmitAttendance={handleAddAttendance}
+        darkMode={darkMode}
+      />
+
+      <SdmDossierModal
+        isOpen={isDossierModalOpen}
+        onClose={() => setIsDossierModalOpen(false)}
+        dossier={selectedDossier}
+        onSaveDossier={handleSaveDossier}
         darkMode={darkMode}
       />
     </div>
