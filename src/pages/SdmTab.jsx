@@ -227,7 +227,7 @@ export default function SdmTab({
   // UI THEME HELPERS
   const cardBg = darkMode ? "#111624" : "#ffffff";
   const cardBorder = darkMode ? "#1d253b" : "#e2e8f0";
-  const textMuted = darkMode ? "#94a3b8" : "#64748b";
+  const textMuted = darkMode ? "#cbd5e1" : "#475569";
   const tableHeaderBg = darkMode ? "#161c2d" : "#f1f5f9";
 
   return (
@@ -363,11 +363,11 @@ export default function SdmTab({
                 type="button"
                 onClick={() => handleTabChange(tab.id)}
                 className={`btn btn-sm d-flex align-items-center gap-2 px-3 py-2 rounded-3 transition-all ${
-                  isActive ? "btn-success fw-semibold shadow-sm" : "btn-light text-dark"
+                  isActive ? "btn-success fw-semibold shadow-sm" : ""
                 }`}
                 style={{
                   backgroundColor: isActive ? "#10b981" : darkMode ? "#181f33" : "#f1f5f9",
-                  color: isActive ? "#ffffff" : darkMode ? "#cbd5e1" : "#334155",
+                  color: isActive ? "#ffffff" : darkMode ? "#e2e8f0" : "#334155",
                   border: "none",
                   fontSize: "0.8rem",
                 }}

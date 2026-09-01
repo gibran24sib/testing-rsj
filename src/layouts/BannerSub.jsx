@@ -15,7 +15,7 @@ export default function BannerSub({ currentView, darkMode }) {
         backgroundColor: darkMode ? "#0c0d12" : "#f8fafc",
         borderColor: darkMode ? "#1c1f2b" : "#e2e8f0",
         fontSize: "0.8rem",
-        color: darkMode ? "#8e94a4" : "#64748b",
+        color: darkMode ? "#e2e8f0" : "#334155",
       }}
     >
       <div className="d-flex align-items-center gap-2">

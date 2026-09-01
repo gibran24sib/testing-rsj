@@ -45,7 +45,7 @@ export default function Navbar({
               className="d-block"
               style={{
                 fontSize: "0.68rem",
-                color: darkMode ? "#8e94a4" : "#64748b",
+                color: darkMode ? "#cbd5e1" : "#64748b",
               }}
             >
               SIM-SDM & KEPEGAWAIAN
@@ -58,9 +58,9 @@ export default function Navbar({
           <button
             className="btn btn-sm d-flex align-items-center gap-2 px-3 py-1 rounded-pill"
             style={{
-              backgroundColor: darkMode ? "#131726" : "#f1f5f9",
-              border: darkMode ? "1px solid #20273c" : "1px solid #e2e8f0",
-              color: darkMode ? "#94a3b8" : "#64748b",
+              backgroundColor: darkMode ? "#181f33" : "#f1f5f9",
+              border: darkMode ? "1px solid #283452" : "1px solid #e2e8f0",
+              color: darkMode ? "#e2e8f0" : "#334155",
               fontSize: "0.8rem",
             }}
             onClick={onOpenCommandPalette}

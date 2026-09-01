@@ -9,15 +9,21 @@ export default function GuestPage({ setCurrentView, darkMode, cardBg }) {
     (e) => e.profesi.includes("Dokter") || e.profesi.includes("Psikolog")
   );
 
+  const textPrimary = darkMode ? "#f8fafc" : "#0f172a";
+  const textSecondary = darkMode ? "#cbd5e1" : "#475569";
+  const textMutedColor = darkMode ? "#94a3b8" : "#64748b";
+  const cardSurfaceBg = darkMode ? "#141a2c" : "#ffffff";
+  const cardBorderColor = darkMode ? "#222c45" : "#e2e8f0";
+
   return (
     <div className="pb-5 animate-fade-in">
       {/* HERO SECTION */}
       <section
-        className={`py-5 px-3 px-md-4 mb-4 border-bottom position-relative overflow-hidden ${
-          darkMode ? "bg-black text-light" : "bg-white text-dark"
-        }`}
+        className="py-5 px-3 px-md-4 mb-4 border-bottom position-relative overflow-hidden"
         style={{
-          borderColor: darkMode ? "#181d2e" : "#e2e8f0",
+          backgroundColor: darkMode ? "#080a10" : "#ffffff",
+          color: textPrimary,
+          borderColor: darkMode ? "#1c2338" : "#e2e8f0",
         }}
       >
         {/* Glow Accent */}
@@ -48,7 +54,7 @@ export default function GuestPage({ setCurrentView, darkMode, cardBg }) {
                 style={{
                   lineHeight: "1.25",
                   letterSpacing: "-0.03em",
-                  color: darkMode ? "#ffffff" : "#0f172a",
+                  color: textPrimary,
                 }}
               >
                 Ketenagaan Profesional, <br className="d-none d-md-block" />
@@ -58,7 +64,7 @@ export default function GuestPage({ setCurrentView, darkMode, cardBg }) {
               <p
                 className="lead fs-6 mb-4"
                 style={{
-                  color: darkMode ? "#94a3b8" : "#64748b",
+                  color: textSecondary,
                   maxWidth: "560px",
                   lineHeight: "1.6",
                 }}
@@ -75,7 +81,12 @@ export default function GuestPage({ setCurrentView, darkMode, cardBg }) {
                   <span>🔐 Masuk Portal SIM-SDM</span>
                 </button>
                 <button
-                  className="btn btn-outline-secondary px-3 py-2 fw-medium d-flex align-items-center gap-2"
+                  className="btn px-3 py-2 fw-medium d-flex align-items-center gap-2 border"
+                  style={{
+                    backgroundColor: darkMode ? "#161c2d" : "#f8fafc",
+                    color: textPrimary,
+                    borderColor: cardBorderColor,
+                  }}
                   onClick={() => setActivePortalTab("tenaga_medis")}
                 >
                   <span>👨‍⚕️ Direktori Tenaga Medis</span>
@@ -88,8 +99,8 @@ export default function GuestPage({ setCurrentView, darkMode, cardBg }) {
               <div
                 className="p-4 rounded-4 shadow-sm border"
                 style={{
-                  backgroundColor: darkMode ? "#0e1322" : "#f8fafc",
-                  borderColor: darkMode ? "#1c2339" : "#e2e8f0",
+                  backgroundColor: darkMode ? "#0f1424" : "#f8fafc",
+                  borderColor: cardBorderColor,
                 }}
               >
                 <h6 className="fw-bold mb-3 d-flex align-items-center gap-2 text-success">
@@ -101,13 +112,17 @@ export default function GuestPage({ setCurrentView, darkMode, cardBg }) {
                     <div
                       className="p-3 rounded-3 border"
                       style={{
-                        backgroundColor: darkMode ? "#141a2c" : "#ffffff",
-                        borderColor: darkMode ? "#222c45" : "#e2e8f0",
+                        backgroundColor: cardSurfaceBg,
+                        borderColor: cardBorderColor,
                       }}
                     >
-                      <span className="small text-muted d-block">Total SDM RSJ</span>
-                      <h3 className="fw-bold mb-0 text-success">{sdmStats.totalPegawai}</h3>
-                      <small className="text-muted" style={{ fontSize: "0.72rem" }}>Pegawai ASN & BLUD</small>
+                      <span className="small fw-semibold d-block mb-1" style={{ color: textSecondary }}>
+                        Total SDM RSJ
+                      </span>
+                      <h3 className="fw-bold mb-1 text-success">{sdmStats.totalPegawai}</h3>
+                      <small className="d-block" style={{ fontSize: "0.75rem", color: textMutedColor }}>
+                        Pegawai ASN & BLUD
+                      </small>
                     </div>
                   </div>
 
@@ -115,13 +130,17 @@ export default function GuestPage({ setCurrentView, darkMode, cardBg }) {
                     <div
                       className="p-3 rounded-3 border"
                       style={{
-                        backgroundColor: darkMode ? "#141a2c" : "#ffffff",
-                        borderColor: darkMode ? "#222c45" : "#e2e8f0",
+                        backgroundColor: cardSurfaceBg,
+                        borderColor: cardBorderColor,
                       }}
                     >
-                      <span className="small text-muted d-block">Ners & Perawat Jiwa</span>
-                      <h3 className="fw-bold mb-0 text-primary">{sdmStats.tenagaKeperawatan}</h3>
-                      <small className="text-muted" style={{ fontSize: "0.72rem" }}>Bersertifikasi Asuhan Jiwa</small>
+                      <span className="small fw-semibold d-block mb-1" style={{ color: textSecondary }}>
+                        Ners & Perawat Jiwa
+                      </span>
+                      <h3 className="fw-bold mb-1 text-primary">{sdmStats.tenagaKeperawatan}</h3>
+                      <small className="d-block" style={{ fontSize: "0.75rem", color: textMutedColor }}>
+                        Bersertifikasi Asuhan Jiwa
+                      </small>
                     </div>
                   </div>
 
@@ -129,13 +148,17 @@ export default function GuestPage({ setCurrentView, darkMode, cardBg }) {
                     <div
                       className="p-3 rounded-3 border"
                       style={{
-                        backgroundColor: darkMode ? "#141a2c" : "#ffffff",
-                        borderColor: darkMode ? "#222c45" : "#e2e8f0",
+                        backgroundColor: cardSurfaceBg,
+                        borderColor: cardBorderColor,
                       }}
                     >
-                      <span className="small text-muted d-block">Dokter & Psikolog</span>
-                      <h3 className="fw-bold mb-0 text-info">{sdmStats.tenagaMedis}</h3>
-                      <small className="text-muted" style={{ fontSize: "0.72rem" }}>Sp.KJ & Subspesialis</small>
+                      <span className="small fw-semibold d-block mb-1" style={{ color: textSecondary }}>
+                        Dokter & Psikolog
+                      </span>
+                      <h3 className="fw-bold mb-1 text-info">{sdmStats.tenagaMedis}</h3>
+                      <small className="d-block" style={{ fontSize: "0.75rem", color: textMutedColor }}>
+                        Sp.KJ & Subspesialis
+                      </small>
                     </div>
                   </div>
 
@@ -143,13 +166,17 @@ export default function GuestPage({ setCurrentView, darkMode, cardBg }) {
                     <div
                       className="p-3 rounded-3 border"
                       style={{
-                        backgroundColor: darkMode ? "#141a2c" : "#ffffff",
-                        borderColor: darkMode ? "#222c45" : "#e2e8f0",
+                        backgroundColor: cardSurfaceBg,
+                        borderColor: cardBorderColor,
                       }}
                     >
-                      <span className="small text-muted d-block">Tingkat Presensi</span>
-                      <h3 className="fw-bold mb-0 text-warning">{sdmStats.tingkatKehadiranBulanIni}%</h3>
-                      <small className="text-muted" style={{ fontSize: "0.72rem" }}>Disiplin Shift 24/7</small>
+                      <span className="small fw-semibold d-block mb-1" style={{ color: textSecondary }}>
+                        Tingkat Presensi
+                      </span>
+                      <h3 className="fw-bold mb-1 text-warning">{sdmStats.tingkatKehadiranBulanIni}%</h3>
+                      <small className="d-block" style={{ fontSize: "0.75rem", color: textMutedColor }}>
+                        Disiplin Shift 24/7
+                      </small>
                     </div>
                   </div>
                 </div>
@@ -166,7 +193,7 @@ export default function GuestPage({ setCurrentView, darkMode, cardBg }) {
           className="d-flex flex-wrap gap-2 p-2 rounded-4 mb-4 border shadow-sm"
           style={{
             backgroundColor: darkMode ? "#111624" : "#ffffff",
-            borderColor: darkMode ? "#1d253b" : "#e2e8f0",
+            borderColor: cardBorderColor,
           }}
         >
           {[
@@ -181,12 +208,13 @@ export default function GuestPage({ setCurrentView, darkMode, cardBg }) {
                 key={tab.id}
                 onClick={() => setActivePortalTab(tab.id)}
                 className={`btn btn-sm d-flex align-items-center gap-2 px-3 py-2 rounded-3 border-0 transition-all ${
-                  isActive ? "btn-success fw-semibold shadow-sm" : "btn-light text-dark"
+                  isActive ? "btn-success fw-bold shadow-sm" : ""
                 }`}
                 style={{
-                  backgroundColor: isActive ? "#10b981" : darkMode ? "#181f33" : "#f1f5f9",
-                  color: isActive ? "#ffffff" : darkMode ? "#cbd5e1" : "#334155",
+                  backgroundColor: isActive ? "#10b981" : darkMode ? "#1c2338" : "#f1f5f9",
+                  color: isActive ? "#ffffff" : darkMode ? "#e2e8f0" : "#334155",
                   fontSize: "0.85rem",
+                  fontWeight: isActive ? 600 : 500,
                 }}
               >
                 <span>{tab.icon}</span>
@@ -202,13 +230,15 @@ export default function GuestPage({ setCurrentView, darkMode, cardBg }) {
             className="p-4 rounded-4 border shadow-sm"
             style={{
               backgroundColor: darkMode ? "#111624" : "#ffffff",
-              borderColor: darkMode ? "#1d253b" : "#e2e8f0",
+              borderColor: cardBorderColor,
             }}
           >
             <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
               <div>
-                <h5 className="fw-bold mb-1">👨‍⚕️ Dokter Spesialis Kedokteran Jiwa & Psikolog Klinis</h5>
-                <p className="small text-muted mb-0">
+                <h5 className="fw-bold mb-1" style={{ color: textPrimary }}>
+                  👨‍⚕️ Dokter Spesialis Kedokteran Jiwa & Psikolog Klinis
+                </h5>
+                <p className="small mb-0" style={{ color: textSecondary }}>
                   Tenaga ahli kejiwaan terakreditasi melayani poliklinik rawat jalan, bangsal rawat inap, dan krisis NAPZA
                 </p>
               </div>
@@ -223,8 +253,8 @@ export default function GuestPage({ setCurrentView, darkMode, cardBg }) {
                   <div
                     className="p-3 rounded-3 h-100 border d-flex flex-column justify-content-between transition-all"
                     style={{
-                      backgroundColor: darkMode ? "#141a2c" : "#f8fafc",
-                      borderColor: darkMode ? "#222c45" : "#e2e8f0",
+                      backgroundColor: cardSurfaceBg,
+                      borderColor: cardBorderColor,
                     }}
                   >
                     <div>
@@ -241,7 +271,7 @@ export default function GuestPage({ setCurrentView, darkMode, cardBg }) {
                           }}
                         />
                         <div>
-                          <h6 className="fw-bold mb-0" style={{ fontSize: "0.95rem" }}>
+                          <h6 className="fw-bold mb-0" style={{ fontSize: "0.95rem", color: textPrimary }}>
                             {doc.nama}
                           </h6>
                           <small className="text-success fw-medium d-block">
@@ -253,18 +283,18 @@ export default function GuestPage({ setCurrentView, darkMode, cardBg }) {
                         </div>
                       </div>
 
-                      <ul className="list-unstyled small d-flex flex-column gap-1 mb-3 text-muted">
+                      <ul className="list-unstyled small d-flex flex-column gap-1 mb-3" style={{ color: textSecondary }}>
                         <li>
-                          <strong>Subspesialisasi:</strong> {doc.jabatan}
+                          <strong style={{ color: textPrimary }}>Subspesialisasi:</strong> {doc.jabatan}
                         </li>
                         <li>
-                          <strong>Unit Layanan:</strong> {doc.unitPenempatan}
+                          <strong style={{ color: textPrimary }}>Unit Layanan:</strong> {doc.unitPenempatan}
                         </li>
                         <li>
-                          <strong>Pendidikan:</strong> {doc.pendidikan}
+                          <strong style={{ color: textPrimary }}>Pendidikan:</strong> {doc.pendidikan}
                         </li>
                         <li>
-                          <strong>No. STR / SIP:</strong> {doc.sip?.nomor}
+                          <strong style={{ color: textPrimary }}>No. STR / SIP:</strong> {doc.sip?.nomor || "-"}
                         </li>
                       </ul>
                     </div>
@@ -277,7 +307,7 @@ export default function GuestPage({ setCurrentView, darkMode, cardBg }) {
                         fontSize: "0.78rem",
                       }}
                     >
-                      <span className="text-muted">Legalitas Izin:</span>
+                      <span style={{ color: textSecondary }}>Legalitas Izin:</span>
                       <strong className="text-success">✅ SIP Aktif</strong>
                     </div>
                   </div>
@@ -293,13 +323,15 @@ export default function GuestPage({ setCurrentView, darkMode, cardBg }) {
             className="p-4 rounded-4 border shadow-sm"
             style={{
               backgroundColor: darkMode ? "#111624" : "#ffffff",
-              borderColor: darkMode ? "#1d253b" : "#e2e8f0",
+              borderColor: cardBorderColor,
             }}
           >
             <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
               <div>
-                <h5 className="fw-bold mb-1">📢 Pengumuman Rekrutmen & Formasi Nakes Jiwa RSJ Tampan</h5>
-                <p className="small text-muted mb-0">
+                <h5 className="fw-bold mb-1" style={{ color: textPrimary }}>
+                  📢 Pengumuman Rekrutmen & Formasi Nakes Jiwa RSJ Tampan
+                </h5>
+                <p className="small mb-0" style={{ color: textSecondary }}>
                   Informasi penerimaan Pegawai Pemerintah dengan Perjanjian Kerja (PPPK) & Pegawai Tetap BLUD
                 </p>
               </div>
@@ -341,8 +373,8 @@ export default function GuestPage({ setCurrentView, darkMode, cardBg }) {
                   <div
                     className="p-3 rounded-3 border h-100 d-flex flex-column justify-content-between"
                     style={{
-                      backgroundColor: darkMode ? "#141a2c" : "#f8fafc",
-                      borderColor: darkMode ? "#222c45" : "#e2e8f0",
+                      backgroundColor: cardSurfaceBg,
+                      borderColor: cardBorderColor,
                     }}
                   >
                     <div>
@@ -350,17 +382,17 @@ export default function GuestPage({ setCurrentView, darkMode, cardBg }) {
                         <span className="badge bg-success-subtle text-success fw-bold">{job.kuota}</span>
                         <span className="badge bg-warning text-dark">{job.status}</span>
                       </div>
-                      <h6 className="fw-bold mb-1">{job.posisi}</h6>
-                      <p className="small text-muted mb-2">
-                        <strong>Persyaratan:</strong> {job.kualifikasi}
+                      <h6 className="fw-bold mb-1" style={{ color: textPrimary }}>{job.posisi}</h6>
+                      <p className="small mb-2" style={{ color: textSecondary }}>
+                        <strong style={{ color: textPrimary }}>Persyaratan:</strong> {job.kualifikasi}
                       </p>
-                      <small className="d-block text-muted">
-                        📅 Batas Pengiriman Berkas: <strong>{job.tenggat}</strong>
+                      <small className="d-block" style={{ color: textMutedColor }}>
+                        📅 Batas Pengiriman Berkas: <strong style={{ color: textSecondary }}>{job.tenggat}</strong>
                       </small>
                     </div>
 
                     <div className="pt-3 border-top mt-3 d-flex justify-content-between align-items-center">
-                      <span className="small text-muted">Subbag Kepegawaian</span>
+                      <span className="small" style={{ color: textMutedColor }}>Subbag Kepegawaian</span>
                       <button
                         className="btn btn-sm btn-outline-success"
                         onClick={() => alert(`Informasi pendaftaran untuk posisi ${job.posisi} dapat diajukan ke Subbag Kepegawaian RSJ Tampan.`)}
@@ -381,13 +413,15 @@ export default function GuestPage({ setCurrentView, darkMode, cardBg }) {
             className="p-4 rounded-4 border shadow-sm"
             style={{
               backgroundColor: darkMode ? "#111624" : "#ffffff",
-              borderColor: darkMode ? "#1d253b" : "#e2e8f0",
+              borderColor: cardBorderColor,
             }}
           >
             <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
               <div>
-                <h5 className="fw-bold mb-1">🎓 Kalender Pelatihan & Workshop Kejiwaan RSJ Tampan</h5>
-                <p className="small text-muted mb-0">
+                <h5 className="fw-bold mb-1" style={{ color: textPrimary }}>
+                  🎓 Kalender Pelatihan & Workshop Kejiwaan RSJ Tampan
+                </h5>
+                <p className="small mb-0" style={{ color: textSecondary }}>
                   Pengembangan kompetensi berkelanjutan (CPD) nakes kejiwaan ber-SKP resmi Kemenkes & PPNI
                 </p>
               </div>
@@ -399,27 +433,27 @@ export default function GuestPage({ setCurrentView, darkMode, cardBg }) {
                   <div
                     className="p-3 rounded-3 border h-100"
                     style={{
-                      backgroundColor: darkMode ? "#141a2c" : "#f8fafc",
-                      borderColor: darkMode ? "#222c45" : "#e2e8f0",
+                      backgroundColor: cardSurfaceBg,
+                      borderColor: cardBorderColor,
                     }}
                   >
                     <div className="d-flex justify-content-between align-items-center mb-2">
                       <span className="badge bg-info-subtle text-info fw-semibold">{trn.kategori}</span>
                       <span className="badge bg-success rounded-pill">{trn.status}</span>
                     </div>
-                    <h6 className="fw-bold mb-2">{trn.namaPelatihan}</h6>
-                    <ul className="list-unstyled small mb-3 text-muted d-flex flex-column gap-1">
+                    <h6 className="fw-bold mb-2" style={{ color: textPrimary }}>{trn.namaPelatihan}</h6>
+                    <ul className="list-unstyled small mb-3 d-flex flex-column gap-1" style={{ color: textSecondary }}>
                       <li>
-                        <strong>Penyelenggara:</strong> {trn.penyelenggara}
+                        <strong style={{ color: textPrimary }}>Penyelenggara:</strong> {trn.penyelenggara}
                       </li>
                       <li>
-                        <strong>Target Profesi:</strong> {trn.targetProfesi}
+                        <strong style={{ color: textPrimary }}>Target Profesi:</strong> {trn.targetProfesi}
                       </li>
                       <li>
-                        <strong>Jadwal:</strong> {trn.jadwalMulai} s/d {trn.jadwalSelesai}
+                        <strong style={{ color: textPrimary }}>Jadwal:</strong> {trn.jadwalMulai} s/d {trn.jadwalSelesai}
                       </li>
                       <li>
-                        <strong>Akreditasi:</strong> {trn.standarAkreditasi}
+                        <strong style={{ color: textPrimary }}>Akreditasi:</strong> {trn.standarAkreditasi}
                       </li>
                     </ul>
                   </div>
@@ -435,21 +469,23 @@ export default function GuestPage({ setCurrentView, darkMode, cardBg }) {
             className="p-4 rounded-4 border shadow-sm"
             style={{
               backgroundColor: darkMode ? "#111624" : "#ffffff",
-              borderColor: darkMode ? "#1d253b" : "#e2e8f0",
+              borderColor: cardBorderColor,
             }}
           >
-            <h5 className="fw-bold mb-3">📋 Panduan Prosedur Standar & Hak Kepegawaian RSJ Tampan</h5>
+            <h5 className="fw-bold mb-3" style={{ color: textPrimary }}>
+              📋 Panduan Prosedur Standar & Hak Kepegawaian RSJ Tampan
+            </h5>
             <div className="row g-3">
               <div className="col-md-6">
                 <div
                   className="p-3 rounded-3 border h-100"
                   style={{
-                    backgroundColor: darkMode ? "#141a2c" : "#f8fafc",
-                    borderColor: darkMode ? "#222c45" : "#e2e8f0",
+                    backgroundColor: cardSurfaceBg,
+                    borderColor: cardBorderColor,
                   }}
                 >
                   <h6 className="fw-bold text-success mb-2">🏖️ Tata Cara Pengajuan Cuti ASN & BLUD</h6>
-                  <ol className="small text-muted ps-3 mb-0 d-flex flex-column gap-1">
+                  <ol className="small ps-3 mb-0 d-flex flex-column gap-1" style={{ color: textSecondary }}>
                     <li>Pengajuan dilakukan H-3 sebelum tanggal cuti melalui sistem SIM-SDM.</li>
                     <li>Wajib menunjuk petugas pengganti (*handover*) demi keamanan bangsal jiwa.</li>
                     <li>Persetujuan berjenjang: Kepala Ruangan &bull; Kasubbag Kepegawaian.</li>
@@ -462,12 +498,12 @@ export default function GuestPage({ setCurrentView, darkMode, cardBg }) {
                 <div
                   className="p-3 rounded-3 border h-100"
                   style={{
-                    backgroundColor: darkMode ? "#141a2c" : "#f8fafc",
-                    borderColor: darkMode ? "#222c45" : "#e2e8f0",
+                    backgroundColor: cardSurfaceBg,
+                    borderColor: cardBorderColor,
                   }}
                 >
                   <h6 className="fw-bold text-primary mb-2">📜 Kewajiban STR & Rekredensialing</h6>
-                  <ol className="small text-muted ps-3 mb-0 d-flex flex-column gap-1">
+                  <ol className="small ps-3 mb-0 d-flex flex-column gap-1" style={{ color: textSecondary }}>
                     <li>Seluruh nakes wajib memperbarui STR 3 bulan sebelum masa berlaku habis.</li>
                     <li>Pengajuan SIP Dinkes didukung oleh rekomendasi Direktur RSJ Tampan.</li>
                     <li>Pelaksanaan audit kredensialing oleh Komite Medik & Komite Keperawatan.</li>

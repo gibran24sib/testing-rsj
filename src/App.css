@@ -13,8 +13,8 @@
   --border-light: #e2e8f0;
   --border-subtle-light: #edf2f7;
   --text-main-light: #0f172a;
-  --text-muted-light: #64748b;
-  --text-dim-light: #94a3b8;
+  --text-muted-light: #475569;
+  --text-dim-light: #64748b;
 
   /* Color Palette - Dark Mode */
   --bg-app-dark: #080a10;
@@ -23,8 +23,8 @@
   --border-dark: #1e2538;
   --border-subtle-dark: #181e2e;
   --text-main-dark: #f8fafc;
-  --text-muted-dark: #94a3b8;
-  --text-dim-dark: #64748b;
+  --text-muted-dark: #cbd5e1;
+  --text-dim-dark: #94a3b8;
 
   /* Brand Accents */
   --color-primary: #10b981;
@@ -198,7 +198,33 @@ body,
 
 .bg-dark .badge-soft-secondary,
 .bg-dark-card .badge-soft-secondary {
-  color: #94a3b8 !important;
+  color: #cbd5e1 !important;
+}
+
+/* ========================================================
+   GLOBAL HIGH CONTRAST TEXT FIXES (DARK MODE & LIGHT MODE)
+   ======================================================== */
+.bg-black .text-muted,
+.bg-dark .text-muted,
+.bg-dark-card .text-muted,
+.border-dark .text-muted,
+[style*="background: rgb(8, 10, 16)"] .text-muted,
+[style*="background-color: rgb(8, 10, 16)"] .text-muted,
+[style*="background-color: rgb(17, 22, 36)"] .text-muted,
+[style*="background-color: rgb(20, 26, 44)"] .text-muted {
+  color: #cbd5e1 !important;
+}
+
+/* Ensure strong contrast for secondary text */
+.text-muted {
+  color: #64748b;
+}
+
+/* Invert accidental dark text inside dark sections */
+.bg-black .text-dark,
+.bg-dark .text-dark,
+.bg-dark-card .text-dark {
+  color: #f1f5f9 !important;
 }
 
 /* Interactive Buttons */
