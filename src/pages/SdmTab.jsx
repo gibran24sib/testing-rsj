@@ -227,7 +227,7 @@ export default function SdmTab({
   // UI THEME HELPERS
   const cardBg = darkMode ? "#111624" : "#ffffff";
   const cardBorder = darkMode ? "#1d253b" : "#e2e8f0";
-  const textMuted = darkMode ? "#cbd5e1" : "#475569";
+  const textMuted = darkMode ? "#94a3b8" : "#475569";
   const tableHeaderBg = darkMode ? "#161c2d" : "#f1f5f9";
 
   return (
@@ -569,7 +569,7 @@ export default function SdmTab({
           </div>
 
           <div className="table-responsive rounded-3 border" style={{ borderColor: cardBorder }}>
-            <table className="table table-hover align-middle mb-0" style={{ fontSize: "0.86rem" }}>
+            <table className={`table ${darkMode ? "table-dark" : "table-light"} table-hover align-middle mb-0`} style={{ fontSize: "0.86rem" }}>
               <thead style={{ backgroundColor: tableHeaderBg, color: darkMode ? "#cbd5e1" : "#475569" }}>
                 <tr>
                   <th className="py-3 px-3">Tenaga Medis / Nakes</th>
@@ -584,8 +584,8 @@ export default function SdmTab({
                 {credentialsList.map((c) => (
                   <tr key={c.id} style={{ borderBottomColor: cardBorder }}>
                     <td className="px-3 py-3">
-                      <div className="fw-bold">{c.nama}</div>
-                      <small className="text-muted">{c.id}</small>
+                      <div className="fw-bold" style={{ color: darkMode ? "#f8fafc" : "#0f172a" }}>{c.nama}</div>
+                      <small style={{ color: darkMode ? "#94a3b8" : "#64748b" }}>{c.id}</small>
                     </td>
                     <td>
                       <span className="badge bg-purple-subtle text-purple fw-bold" style={{ color: "#8b5cf6" }}>
@@ -593,12 +593,12 @@ export default function SdmTab({
                       </span>
                     </td>
                     <td>
-                      <div className="font-monospace small">{c.noSpk}</div>
-                      <small className="text-muted">Exp: {c.masaBerlakuSpk}</small>
+                      <div className="font-monospace small" style={{ color: darkMode ? "#f8fafc" : "#0f172a" }}>{c.noSpk}</div>
+                      <small style={{ color: darkMode ? "#94a3b8" : "#64748b" }}>Exp: {c.masaBerlakuSpk}</small>
                     </td>
                     <td>
-                      <div>{c.komite}</div>
-                      <small className="text-muted">Peer: {c.mitraBestari}</small>
+                      <div style={{ color: darkMode ? "#f8fafc" : "#0f172a" }}>{c.komite}</div>
+                      <small style={{ color: darkMode ? "#94a3b8" : "#64748b" }}>Peer: {c.mitraBestari}</small>
                     </td>
                     <td className="text-center">
                       <span
@@ -654,7 +654,7 @@ export default function SdmTab({
           </div>
 
           <div className="table-responsive rounded-3 border" style={{ borderColor: cardBorder }}>
-            <table className="table table-hover align-middle mb-0" style={{ fontSize: "0.86rem" }}>
+            <table className={`table ${darkMode ? "table-dark" : "table-light"} table-hover align-middle mb-0`} style={{ fontSize: "0.86rem" }}>
               <thead style={{ backgroundColor: tableHeaderBg, color: darkMode ? "#cbd5e1" : "#475569" }}>
                 <tr>
                   <th className="py-3 px-3">Pegawai / Foto</th>
@@ -677,8 +677,8 @@ export default function SdmTab({
                           style={{ width: "36px", height: "36px", objectFit: "cover" }}
                         />
                         <div>
-                          <div className="fw-bold">{att.nama}</div>
-                          <small className="text-muted">{att.profesi}</small>
+                          <div className="fw-bold" style={{ color: darkMode ? "#f8fafc" : "#0f172a" }}>{att.nama}</div>
+                          <small style={{ color: darkMode ? "#94a3b8" : "#64748b" }}>{att.profesi}</small>
                         </div>
                       </div>
                     </td>
@@ -908,7 +908,7 @@ export default function SdmTab({
 
           {/* TABLE OF EMPLOYEES */}
           <div className="table-responsive rounded-3 border" style={{ borderColor: cardBorder }}>
-            <table className="table table-hover align-middle mb-0" style={{ fontSize: "0.86rem" }}>
+            <table className={`table ${darkMode ? "table-dark" : "table-light"} table-hover align-middle mb-0`} style={{ fontSize: "0.86rem" }}>
               <thead style={{ backgroundColor: tableHeaderBg, color: darkMode ? "#cbd5e1" : "#475569" }}>
                 <tr>
                   <th className="py-3 px-3">Pegawai / Nakes</th>
@@ -923,7 +923,7 @@ export default function SdmTab({
               <tbody>
                 {filteredEmployees.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="text-center py-5 text-muted">
+                    <td colSpan={7} className="text-center py-5" style={{ color: darkMode ? "#94a3b8" : "#64748b" }}>
                       Tidak ada data pegawai yang sesuai dengan filter pencarian.
                     </td>
                   </tr>
@@ -943,18 +943,18 @@ export default function SdmTab({
                               style={{ width: "42px", height: "42px", objectFit: "cover" }}
                             />
                             <div>
-                              <div className="fw-bold" style={{ color: darkMode ? "#ffffff" : "#0f172a" }}>
+                              <div className="fw-bold" style={{ color: darkMode ? "#f8fafc" : "#0f172a" }}>
                                 {emp.nama}
                               </div>
-                              <small className="text-muted d-block" style={{ fontSize: "0.74rem" }}>
+                              <small className="d-block" style={{ color: darkMode ? "#94a3b8" : "#64748b", fontSize: "0.75rem", fontWeight: 500 }}>
                                 NIP: {emp.nip}
                               </small>
                             </div>
                           </div>
                         </td>
                         <td>
-                          <div className="fw-medium">{emp.profesi}</div>
-                          <small style={{ color: textMuted, fontSize: "0.74rem" }}>{emp.jabatan}</small>
+                          <div className="fw-semibold" style={{ color: darkMode ? "#f8fafc" : "#0f172a" }}>{emp.profesi}</div>
+                          <small className="d-block" style={{ color: darkMode ? "#94a3b8" : "#64748b", fontSize: "0.74rem" }}>{emp.jabatan}</small>
                         </td>
                         <td>
                           <span
@@ -982,7 +982,7 @@ export default function SdmTab({
                           >
                             {emp.statusKepegawaian}
                           </span>
-                          <small className="d-block text-muted" style={{ fontSize: "0.72rem" }}>
+                          <small className="d-block" style={{ color: darkMode ? "#94a3b8" : "#64748b", fontSize: "0.73rem", marginTop: "2px", fontWeight: 500 }}>
                             {emp.golongan}
                           </small>
                         </td>
@@ -1004,7 +1004,18 @@ export default function SdmTab({
                           )}
                         </td>
                         <td className="text-center">
-                          <span className="badge bg-light text-dark border fw-semibold">{emp.skpSkor}</span>
+                          <span
+                            className="badge rounded-pill px-2 py-1"
+                            style={{
+                              backgroundColor: darkMode ? "#1c2338" : "#f1f5f9",
+                              color: darkMode ? "#f8fafc" : "#0f172a",
+                              border: darkMode ? "1px solid #2e3852" : "1px solid #cbd5e1",
+                              fontWeight: 700,
+                              fontSize: "0.78rem",
+                            }}
+                          >
+                            {emp.skpSkor}
+                          </span>
                         </td>
                         <td className="text-end px-3">
                           <div className="btn-group btn-group-sm">
@@ -1028,7 +1039,7 @@ export default function SdmTab({
                               type="button"
                               onClick={() => handleDeleteEmployee(emp.id, emp.nama)}
                               className="btn btn-outline-danger"
-                              title="Hapus Pegawai"
+                              title="Hapus Data Pegawai"
                             >
                               🗑️
                             </button>
@@ -1186,7 +1197,7 @@ export default function SdmTab({
           </div>
 
           <div className="table-responsive rounded-3 border" style={{ borderColor: cardBorder }}>
-            <table className="table table-hover align-middle mb-0" style={{ fontSize: "0.86rem" }}>
+            <table className={`table ${darkMode ? "table-dark" : "table-light"} table-hover align-middle mb-0`} style={{ fontSize: "0.86rem" }}>
               <thead style={{ backgroundColor: tableHeaderBg, color: darkMode ? "#cbd5e1" : "#475569" }}>
                 <tr>
                   <th className="py-3 px-3">Tenaga Medis / Nakes</th>
@@ -1208,17 +1219,17 @@ export default function SdmTab({
                     return (
                       <tr key={emp.id} style={{ borderBottomColor: cardBorder }}>
                         <td className="px-3 py-3">
-                          <div className="fw-bold" style={{ color: darkMode ? "#ffffff" : "#0f172a" }}>
+                          <div className="fw-bold" style={{ color: darkMode ? "#f8fafc" : "#0f172a" }}>
                             {emp.nama}
                           </div>
-                          <small className="text-muted">NIP: {emp.nip}</small>
+                          <small className="d-block" style={{ color: darkMode ? "#94a3b8" : "#64748b" }}>NIP: {emp.nip}</small>
                         </td>
                         <td>
-                          <div>{emp.profesi}</div>
-                          <small className="text-muted">{emp.unitPenempatan}</small>
+                          <div className="fw-semibold" style={{ color: darkMode ? "#f8fafc" : "#0f172a" }}>{emp.profesi}</div>
+                          <small className="d-block" style={{ color: darkMode ? "#94a3b8" : "#64748b" }}>{emp.unitPenempatan}</small>
                         </td>
                         <td>
-                          <div className="font-monospace small">{emp.str?.nomor}</div>
+                          <div className="font-monospace small" style={{ color: darkMode ? "#f8fafc" : "#0f172a" }}>{emp.str?.nomor}</div>
                           <small
                             className={
                               emp.str?.status === "Expired"
@@ -1298,7 +1309,7 @@ export default function SdmTab({
           </div>
 
           <div className="table-responsive rounded-3 border" style={{ borderColor: cardBorder }}>
-            <table className="table table-hover align-middle mb-0" style={{ fontSize: "0.86rem" }}>
+            <table className={`table ${darkMode ? "table-dark" : "table-light"} table-hover align-middle mb-0`} style={{ fontSize: "0.86rem" }}>
               <thead style={{ backgroundColor: tableHeaderBg, color: darkMode ? "#cbd5e1" : "#475569" }}>
                 <tr>
                   <th className="py-3 px-3">No. Cuti / Pemohon</th>
@@ -1313,20 +1324,20 @@ export default function SdmTab({
                 {leaveRequests.map((leave) => (
                   <tr key={leave.id} style={{ borderBottomColor: cardBorder }}>
                     <td className="px-3 py-3">
-                      <div className="fw-bold">{leave.nama}</div>
-                      <small className="text-muted">
+                      <div className="fw-bold" style={{ color: darkMode ? "#f8fafc" : "#0f172a" }}>{leave.nama}</div>
+                      <small className="d-block" style={{ color: darkMode ? "#94a3b8" : "#64748b" }}>
                         {leave.id} &bull; {leave.unit}
                       </small>
                     </td>
                     <td>
                       <span className="badge bg-primary-subtle text-primary fw-semibold">{leave.jenisCuti}</span>
-                      <small className="d-block text-muted">{leave.jumlahHari} Hari Kerja</small>
+                      <small className="d-block" style={{ color: darkMode ? "#94a3b8" : "#64748b" }}>{leave.jumlahHari} Hari Kerja</small>
                     </td>
                     <td>
-                      <div className="small fw-semibold">
+                      <div className="small fw-semibold" style={{ color: darkMode ? "#f8fafc" : "#0f172a" }}>
                         {leave.tanggalMulai} s/d {leave.tanggalSelesai}
                       </div>
-                      <small className="text-muted">Diajukan: {leave.tanggalPengajuan}</small>
+                      <small className="d-block" style={{ color: darkMode ? "#94a3b8" : "#64748b" }}>Diajukan: {leave.tanggalPengajuan}</small>
                     </td>
                     <td style={{ maxWidth: "250px" }}>
                       <div className="text-truncate" title={leave.alasan}>

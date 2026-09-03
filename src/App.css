@@ -202,22 +202,55 @@ body,
 }
 
 /* ========================================================
-   GLOBAL HIGH CONTRAST TEXT FIXES (DARK MODE & LIGHT MODE)
+   GLOBAL HIGH CONTRAST TEXT & TABLE THEME SYSTEM
    ======================================================== */
-.bg-black .text-muted,
+.text-muted,
+small.text-muted {
+  color: #64748b !important;
+}
+
+.table-dark .text-muted,
 .bg-dark .text-muted,
 .bg-dark-card .text-muted,
-.border-dark .text-muted,
+.bg-black .text-muted,
 [style*="background: rgb(8, 10, 16)"] .text-muted,
 [style*="background-color: rgb(8, 10, 16)"] .text-muted,
 [style*="background-color: rgb(17, 22, 36)"] .text-muted,
 [style*="background-color: rgb(20, 26, 44)"] .text-muted {
-  color: #cbd5e1 !important;
+  color: #94a3b8 !important;
 }
 
-/* Ensure strong contrast for secondary text */
-.text-muted {
-  color: #64748b;
+/* Fix table background and text contrast in dark & light mode */
+.table-dark {
+  --bs-table-bg: #111624 !important;
+  --bs-table-color: #f8fafc !important;
+  --bs-table-border-color: #1d253b !important;
+  --bs-table-hover-bg: #171e31 !important;
+  --bs-table-hover-color: #ffffff !important;
+  color: #f8fafc !important;
+  background-color: #111624 !important;
+}
+
+.table-dark th {
+  background-color: #161c2d !important;
+  color: #cbd5e1 !important;
+  border-bottom: 1px solid #222c45 !important;
+}
+
+.table-light {
+  --bs-table-bg: #ffffff !important;
+  --bs-table-color: #0f172a !important;
+  --bs-table-border-color: #e2e8f0 !important;
+  --bs-table-hover-bg: #f8fafc !important;
+  --bs-table-hover-color: #0f172a !important;
+  color: #0f172a !important;
+  background-color: #ffffff !important;
+}
+
+.table-light th {
+  background-color: #f1f5f9 !important;
+  color: #334155 !important;
+  border-bottom: 1px solid #cbd5e1 !important;
 }
 
 /* Invert accidental dark text inside dark sections */
