@@ -1,8 +1,16 @@
 import React, { useState } from "react";
 import { initialEmployees, initialTrainings, sdmStats } from "../data/sdmData";
 
-export default function GuestPage({ setCurrentView, darkMode, cardBg }) {
-  const [activePortalTab, setActivePortalTab] = useState("tenaga_medis"); // 'tenaga_medis' | 'rekrutmen' | 'diklat' | 'layanan_sdm'
+export default function GuestPage({
+  setCurrentView,
+  darkMode,
+  cardBg,
+  activePortalTab: controlledPortalTab,
+  setActivePortalTab: setControlledPortalTab,
+}) {
+  const [internalPortalTab, setInternalPortalTab] = useState("tenaga_medis");
+  const activePortalTab = controlledPortalTab || internalPortalTab;
+  const setActivePortalTab = setControlledPortalTab || setInternalPortalTab;
 
   // Doctors & Key Nakes for public view
   const doctorsList = initialEmployees.filter(

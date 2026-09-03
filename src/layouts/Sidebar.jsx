@@ -8,6 +8,7 @@ export default function Sidebar({
   toggleTheme,
   handleLogout,
   setCurrentView,
+  onBackToPortal,
   onOpenCommandPalette,
   employeeCount = 0,
 }) {
@@ -97,7 +98,7 @@ export default function Sidebar({
             backgroundColor: darkMode ? "#111624" : "#f8fafc",
             border: darkMode ? "1px solid #1d253b" : "1px solid #e2e8f0",
           }}
-          onClick={() => setCurrentView("guest")}
+          onClick={onBackToPortal ? onBackToPortal : () => setCurrentView("guest")}
           title="Kembali ke Portal SDM Publik"
         >
           <div

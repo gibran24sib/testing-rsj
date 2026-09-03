@@ -16,6 +16,15 @@ import AdminPage from "./pages/AdminPage";
 // Modals / Components
 import CommandPalette from "./components/CommandPalette";
 import ToastNotification from "./components/ToastNotification";
+import ConfirmPortalModal from "./components/ConfirmPortalModal";
+import ConfirmLogoutModal from "./components/ConfirmLogoutModal";
+
+// Navigation & URL Routing
+import {
+  getStateFromPath,
+  getPathForState,
+  getTitleForState,
+} from "./utils/navigation";
 
 // Data
 import { initialUsers } from "./data/initialData";
@@ -34,8 +43,68 @@ import {
 } from "./services/supabaseClient";
 
 function App() {
-  const [currentView, setCurrentView] = useState("guest");
-  const [currentUser, setCurrentUser] = useState(null);
+  // INISIALISASI STATE BERDASARKAN URL BROWSER (HTML5 History API)
+  const initialRoute = getStateFromPath(window.location.pathname);
+  const [currentView, setCurrentView] = useState(initialRoute.view);
+  const [activeTab, setActiveTab] = useState(initialRoute.adminTab || "direktori");
+  const [activePortalTab, setActivePortalTab] = useState(initialRoute.portalTab || "tenaga_medis");
+
+  const [currentUser, setCurrentUser] = useState(() => {
+    const savedUser = localStorage.getItem("rsj_current_user");
+    if (savedUser) {
+      try {
+        return JSON.parse(savedUser);
+      } catch (e) {
+        console.error("Gagal membaca session user:", e);
+      }
+    }
+    // Jika user mengakses rute /admin langsung dan belum login, pasang sesi demo admin
+    if (window.location.pathname.startsWith("/admin")) {
+      return {
+        nama: "Agus Pratondo, S.Sos",
+        role: "Kasubbag Kepegawaian & SDM",
+        username: "admin",
+      };
+    }
+    return null;
+  });
+
+  useEffect(() => {
+    if (currentUser) {
+      localStorage.setItem("rsj_current_user", JSON.stringify(currentUser));
+    } else {
+      localStorage.removeItem("rsj_current_user");
+    }
+  }, [currentUser]);
+
+  // SINKRONISASI OTOMATIS: STATE -> URL BROWSER & DOCUMENT TITLE
+  useEffect(() => {
+    const targetPath = getPathForState(currentView, activeTab, activePortalTab);
+    const targetTitle = getTitleForState(currentView, activeTab, activePortalTab);
+
+    if (window.location.pathname !== targetPath) {
+      window.history.pushState(
+        { view: currentView, adminTab: activeTab, portalTab: activePortalTab },
+        "",
+        targetPath
+      );
+    }
+    document.title = targetTitle;
+  }, [currentView, activeTab, activePortalTab]);
+
+  // SINKRONISASI BROWSER BACK / FORWARD (POPSTATE) -> STATE
+  useEffect(() => {
+    const handlePopState = () => {
+      const state = getStateFromPath(window.location.pathname);
+      setCurrentView(state.view);
+      if (state.adminTab) setActiveTab(state.adminTab);
+      if (state.portalTab) setActivePortalTab(state.portalTab);
+      document.title = getTitleForState(state.view, state.adminTab, state.portalTab);
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
 
   // STATE THEMA (DARK / LIGHT MODE)
   const [darkMode, setDarkMode] = useState(() => {
@@ -59,6 +128,12 @@ function App() {
 
   // STATE COMMAND PALETTE (CTRL+K)
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+
+  // STATE MODAL KONFIRMASI KEMBALI KE PORTAL GUEST
+  const [isConfirmPortalOpen, setIsConfirmPortalOpen] = useState(false);
+
+  // STATE MODAL KONFIRMASI LOGOUT DARI ADMIN
+  const [isConfirmLogoutOpen, setIsConfirmLogoutOpen] = useState(false);
 
   // KEYBOARD SHORTCUT LISTENER (CTRL + K)
   useEffect(() => {
@@ -92,9 +167,6 @@ function App() {
       localStorage.setItem("rsj_users", JSON.stringify(users));
     }
   }, [users]);
-
-  // STATE TAMPILAN ADMIN TAB
-  const [activeTab, setActiveTab] = useState("direktori");
 
   // STATE SDM & KEPEGAWAIAN NAKES
   const [employees, setEmployees] = useState(() => {
@@ -238,6 +310,21 @@ function App() {
     );
   }, []);
 
+  // KONFIRMASI KEMBALI KE PORTAL UTAMA / GUEST DARI ADMIN
+  const handleRequestBackToPortal = useCallback(() => {
+    if (currentView === "admin") {
+      setIsConfirmPortalOpen(true);
+    } else {
+      setCurrentView("guest");
+    }
+  }, [currentView]);
+
+  const handleConfirmBackToPortal = useCallback(() => {
+    setIsConfirmPortalOpen(false);
+    setCurrentView("guest");
+    showToast("Portal Publik", "Anda telah kembali ke tampilan Portal Informasi SDM Publik.", "info");
+  }, [showToast]);
+
   // COMMAND PALETTE ACTIONS
   const handleCommandAction = useCallback(
     (action) => {
@@ -256,10 +343,17 @@ function App() {
           setActiveTab(action.tab);
           break;
         case "navigate_view":
-          setCurrentView(action.view);
+          if (action.view === "guest" && currentView === "admin") {
+            setIsConfirmPortalOpen(true);
+          } else {
+            setCurrentView(action.view);
+          }
           break;
         case "toggle_theme":
           toggleTheme();
+          break;
+        case "logout":
+          setIsConfirmLogoutOpen(true);
           break;
         default:
           break;
@@ -332,11 +426,17 @@ function App() {
     }, 1500);
   };
 
-  const handleLogout = () => {
+  // KONFIRMASI LOGOUT DARI ADMIN
+  const handleRequestLogout = useCallback(() => {
+    setIsConfirmLogoutOpen(true);
+  }, []);
+
+  const handleConfirmLogout = useCallback(() => {
+    setIsConfirmLogoutOpen(false);
     setCurrentUser(null);
     setCurrentView("guest");
-    showToast("Logout Berhasil", "Anda telah keluar dari sesi SIM-SDM.", "info");
-  };
+    showToast("Logout Berhasil", "Anda telah keluar dari sesi SIM-SDM dan kembali ke Portal Utama.", "info");
+  }, [showToast]);
 
   // THEME CLASSES
   const themeBg = darkMode ? "bg-dark text-light" : "bg-light text-dark";
@@ -367,8 +467,9 @@ function App() {
             currentUser={currentUser}
             darkMode={darkMode}
             toggleTheme={toggleTheme}
-            handleLogout={handleLogout}
+            handleLogout={handleRequestLogout}
             setCurrentView={setCurrentView}
+            onBackToPortal={handleRequestBackToPortal}
             employeeCount={employees.length}
             onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
           />
@@ -395,6 +496,7 @@ function App() {
                 cardBg={cardBg}
                 tableTheme={tableTheme}
                 onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
+                onBackToPortal={handleRequestBackToPortal}
               />
             </div>
             <Footer isAdmin={true} darkMode={darkMode} />
@@ -420,6 +522,8 @@ function App() {
             {currentView === "guest" && (
               <GuestPage
                 setCurrentView={setCurrentView}
+                activePortalTab={activePortalTab}
+                setActivePortalTab={setActivePortalTab}
                 darkMode={darkMode}
                 cardBg={cardBg}
               />
@@ -468,6 +572,23 @@ function App() {
       <ToastNotification
         toast={toast}
         onClose={() => setToast(null)}
+        darkMode={darkMode}
+      />
+
+      {/* MODAL KONFIRMASI KEMBALI KE PORTAL PUBLIK */}
+      <ConfirmPortalModal
+        isOpen={isConfirmPortalOpen}
+        onClose={() => setIsConfirmPortalOpen(false)}
+        onConfirm={handleConfirmBackToPortal}
+        darkMode={darkMode}
+      />
+
+      {/* MODAL KONFIRMASI LOGOUT DARI ADMIN */}
+      <ConfirmLogoutModal
+        isOpen={isConfirmLogoutOpen}
+        onClose={() => setIsConfirmLogoutOpen(false)}
+        onConfirm={handleConfirmLogout}
+        currentUser={currentUser}
         darkMode={darkMode}
       />
     </div>

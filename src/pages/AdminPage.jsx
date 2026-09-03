@@ -20,6 +20,7 @@ export default function AdminPage({
   cardBg,
   tableTheme,
   onOpenCommandPalette,
+  onBackToPortal,
 }) {
   const getTabTitleInfo = () => {
     switch (activeTab) {
@@ -104,8 +105,18 @@ export default function AdminPage({
           </p>
         </div>
 
-        {/* QUICK SEARCH BUTTON */}
+        {/* QUICK ACTION BUTTONS */}
         <div className="d-flex align-items-center gap-2">
+          {onBackToPortal && (
+            <button
+              className="btn btn-sm btn-outline-success d-flex align-items-center gap-1 px-3 py-1 rounded-3"
+              onClick={onBackToPortal}
+              title="Kembali ke Portal Publik RSJ Tampan"
+            >
+              <span>🏥</span>
+              <span className="d-none d-sm-inline">Portal Publik</span>
+            </button>
+          )}
           <button
             className="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1 px-3 py-1 rounded-3"
             onClick={onOpenCommandPalette}

@@ -102,6 +102,13 @@ export default function CommandPalette({
       icon: darkMode ? "☀️" : "🌙",
       action: () => onSelectAction({ type: "toggle_theme" }),
     },
+    {
+      id: "logout",
+      label: "Logout & Keluar dari SIM-SDM",
+      category: "Akun Petugas",
+      icon: "🚪",
+      action: () => onSelectAction({ type: "logout" }),
+    },
   ];
 
   const filteredCommands = commands.filter(
