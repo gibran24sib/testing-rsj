@@ -493,12 +493,19 @@ export default function GuestPage({
                   }}
                 >
                   <h6 className="fw-bold text-success mb-2">🏖️ Tata Cara Pengajuan Cuti ASN & BLUD</h6>
-                  <ol className="small ps-3 mb-0 d-flex flex-column gap-1" style={{ color: textSecondary }}>
+                  <ol className="small ps-3 mb-3 d-flex flex-column gap-1" style={{ color: textSecondary }}>
                     <li>Pengajuan dilakukan H-3 sebelum tanggal cuti melalui sistem SIM-SDM.</li>
                     <li>Wajib menunjuk petugas pengganti (*handover*) demi keamanan bangsal jiwa.</li>
                     <li>Persetujuan berjenjang: Kepala Ruangan &bull; Kasubbag Kepegawaian.</li>
                     <li>Sisa kuota cuti tahunan maksimal 12 hari kerja per tahun.</li>
                   </ol>
+                  <button
+                    className="btn btn-sm btn-outline-success fw-semibold w-100 d-flex align-items-center justify-content-center gap-2"
+                    onClick={() => setCurrentView("cuti_pegawai")}
+                  >
+                    <span>🏖️</span>
+                    <span>Buka Portal Pengajuan Cuti Nakes &rarr;</span>
+                  </button>
                 </div>
               </div>
 

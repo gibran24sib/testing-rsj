@@ -13,6 +13,9 @@ import {
   initialDossiers,
 } from "../data/sdmData";
 
+import { isAdminOrHrd, canApproveLeave, getActiveUser } from "../utils/authHelpers";
+import { exportLeavesToCSV } from "../utils/exportHelpers";
+
 export default function SdmTab({
   activeTab = "direktori",
   setActiveTab,
@@ -20,6 +23,8 @@ export default function SdmTab({
   shiftRoster = [],
   leaveRequests = [],
   trainings = [],
+  currentUser,
+  setCurrentView,
   onAddEmployee,
   onUpdateEmployee,
   onDeleteEmployee,
@@ -30,8 +35,16 @@ export default function SdmTab({
   darkMode,
   showToast,
 }) {
+  // USER AKTIF (fallback ke LocalStorage jika currentUser prop sedang hydration)
+  const effectiveUser = currentUser || getActiveUser();
+
   // SUB-TAB STATE
   const [subTab, setSubTab] = useState(activeTab || "direktori");
+
+  // ADMIN CUTI FILTER & SEARCH STATE
+  const [adminLeaveSearch, setAdminLeaveSearch] = useState("");
+  const [adminLeaveFilterStatus, setAdminLeaveFilterStatus] = useState("semua");
+  const [adminLeaveFilterUnit, setAdminLeaveFilterUnit] = useState("semua");
 
   // DATA STATES FOR CAT 2 & 4
   const [wisnList, setWisnList] = useState(initialWisnData);
@@ -419,7 +432,7 @@ export default function SdmTab({
               <span>📸</span> Clock-In / Clock-Out Shift
             </button>
           )}
-          {subTab === "direktori" && (
+          {subTab === "direktori" && isAdminOrHrd(effectiveUser) && (
             <button
               type="button"
               onClick={handleOpenAddEmployee}
@@ -1023,26 +1036,30 @@ export default function SdmTab({
                               type="button"
                               onClick={() => handleOpenViewEmployee(emp)}
                               className="btn btn-outline-info"
-                              title="Lihat Detail Profil"
+                              title="Lihat Detail Profil Pegawai"
                             >
-                              👁️
+                              👁️ {isAdminOrHrd(effectiveUser) ? "" : "Detail"}
                             </button>
-                            <button
-                              type="button"
-                              onClick={() => handleOpenEditEmployee(emp)}
-                              className="btn btn-outline-primary"
-                              title="Edit Data Pegawai"
-                            >
-                              ✏️
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteEmployee(emp.id, emp.nama)}
-                              className="btn btn-outline-danger"
-                              title="Hapus Data Pegawai"
-                            >
-                              🗑️
-                            </button>
+                            {isAdminOrHrd(effectiveUser) && (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => handleOpenEditEmployee(emp)}
+                                  className="btn btn-outline-primary"
+                                  title="Edit Data Pegawai"
+                                >
+                                  ✏️
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteEmployee(emp.id, emp.nama)}
+                                  className="btn btn-outline-danger"
+                                  title="Hapus Data Pegawai"
+                                >
+                                  🗑️
+                                </button>
+                              </>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -1266,16 +1283,22 @@ export default function SdmTab({
                           </span>
                         </td>
                         <td className="text-end px-3">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              onRenewStrSip?.(emp.id);
-                              showToast?.("Legalitas Diperpanjang", `STR/SIP atas nama ${emp.nama} telah diverifikasi perpanjangan 5 tahun.`, "success");
-                            }}
-                            className="btn btn-outline-success btn-sm d-inline-flex align-items-center gap-1"
-                          >
-                            <span>🔄</span> Perbarui STR/SIP
-                          </button>
+                          {isAdminOrHrd(effectiveUser) ? (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                onRenewStrSip?.(emp.id);
+                                showToast?.("Legalitas Diperpanjang", `STR/SIP atas nama ${emp.nama} telah diverifikasi perpanjangan 5 tahun.`, "success");
+                              }}
+                              className="btn btn-outline-success btn-sm d-inline-flex align-items-center gap-1"
+                            >
+                              <span>🔄</span> Perbarui STR/SIP
+                            </button>
+                          ) : (
+                            <span className="badge bg-secondary-subtle text-secondary px-2 py-1">
+                              Tinjauan Kasubbag SDM
+                            </span>
+                          )}
                         </td>
                       </tr>
                     );
@@ -1288,112 +1311,385 @@ export default function SdmTab({
 
       {/* TAB: PENGAJUAN & APPROVAL CUTI */}
       {subTab === "cuti" && (
-        <div
-          className="rounded-4 p-4 shadow-sm"
-          style={{ backgroundColor: cardBg, border: `1px solid ${cardBorder}` }}
-        >
-          <div className="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
-            <div>
-              <h5 className="fw-bold mb-1">🏖️ Manajemen Pengajuan & Persetujuan Cuti Pegawai</h5>
-              <p className="small mb-0" style={{ color: textMuted }}>
-                Pengelolaan cuti tahunan, cuti sakit, seminar/tugas belajar, dan pelimpahan tugas (handover)
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => setIsLeaveModalOpen(true)}
-              className="btn btn-warning btn-sm d-flex align-items-center gap-2 fw-semibold text-dark shadow-sm px-3 py-2"
+        <div className="d-flex flex-column gap-4">
+          {/* NOTICE BANNER JIKA USER BUKAN ADMIN / HRD */}
+          {!isAdminOrHrd(effectiveUser) && (
+            <div
+              className="p-3 rounded-4 border d-flex flex-wrap align-items-center justify-content-between gap-3 shadow-sm"
+              style={{
+                backgroundColor: darkMode ? "rgba(16, 185, 129, 0.1)" : "#ecfdf5",
+                borderColor: darkMode ? "#059669" : "#a7f3d0",
+                color: darkMode ? "#a7f3d0" : "#065f46",
+              }}
             >
-              <span>➕</span> Ajukan Permohonan Cuti
-            </button>
+              <div className="d-flex align-items-center gap-3">
+                <span className="fs-3">🏖️</span>
+                <div>
+                  <h6 className="fw-bold mb-1">Portal Pengajuan Cuti Mandiri Nakes</h6>
+                  <small className="d-block" style={{ fontSize: "0.82rem" }}>
+                    Anda login sebagai <strong>{effectiveUser?.nama || "Petugas Medis"}</strong> ({effectiveUser?.role || "Nakes"}). Anda dapat mengajukan cuti baru atau melihat status approval permohonan Anda pada tabel di bawah.
+                  </small>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsLeaveModalOpen(true)}
+                className="btn btn-success btn-sm fw-bold px-3 py-2 shadow-sm"
+              >
+                ➕ Ajukan Cuti Baru Sekarang
+              </button>
+            </div>
+          )}
+
+          {/* STATS OVERVIEW CARDS */}
+          <div className="row g-3">
+            <div className="col-6 col-md-3">
+              <div
+                className="p-3 rounded-4 border shadow-sm"
+                style={{ backgroundColor: cardBg, borderColor: cardBorder }}
+              >
+                <span className="small fw-semibold d-block mb-1" style={{ color: textMuted }}>
+                  Total Permohonan
+                </span>
+                <h3 className="fw-bold mb-0 text-primary">{leaveRequests.length}</h3>
+                <small style={{ fontSize: "0.74rem", color: textMuted }}>Seluruh Tenaga Medis</small>
+              </div>
+            </div>
+
+            <div className="col-6 col-md-3">
+              <div
+                className="p-3 rounded-4 border shadow-sm"
+                style={{ backgroundColor: cardBg, borderColor: cardBorder }}
+              >
+                <span className="small fw-semibold d-block mb-1" style={{ color: textMuted }}>
+                  Menunggu Approval
+                </span>
+                <h3 className="fw-bold mb-0 text-warning">
+                  {leaveRequests.filter((l) => l.status === "Menunggu Persetujuan").length}
+                </h3>
+                <small style={{ fontSize: "0.74rem", color: textMuted }}>Perlu Telaah HRD</small>
+              </div>
+            </div>
+
+            <div className="col-6 col-md-3">
+              <div
+                className="p-3 rounded-4 border shadow-sm"
+                style={{ backgroundColor: cardBg, borderColor: cardBorder }}
+              >
+                <span className="small fw-semibold d-block mb-1" style={{ color: textMuted }}>
+                  Cuti Disetujui
+                </span>
+                <h3 className="fw-bold mb-0 text-success">
+                  {leaveRequests.filter((l) => l.status === "Disetujui").length}
+                </h3>
+                <small style={{ fontSize: "0.74rem", color: textMuted }}>Jadwal Shift Disesuaikan</small>
+              </div>
+            </div>
+
+            <div className="col-6 col-md-3">
+              <div
+                className="p-3 rounded-4 border shadow-sm"
+                style={{ backgroundColor: cardBg, borderColor: cardBorder }}
+              >
+                <span className="small fw-semibold d-block mb-1" style={{ color: textMuted }}>
+                  Cuti Ditolak
+                </span>
+                <h3 className="fw-bold mb-0 text-danger">
+                  {leaveRequests.filter((l) => l.status === "Ditolak").length}
+                </h3>
+                <small style={{ fontSize: "0.74rem", color: textMuted }}>Kuota Shift Penuh</small>
+              </div>
+            </div>
           </div>
 
-          <div className="table-responsive rounded-3 border" style={{ borderColor: cardBorder }}>
-            <table className={`table ${darkMode ? "table-dark" : "table-light"} table-hover align-middle mb-0`} style={{ fontSize: "0.86rem" }}>
-              <thead style={{ backgroundColor: tableHeaderBg, color: darkMode ? "#cbd5e1" : "#475569" }}>
-                <tr>
-                  <th className="py-3 px-3">No. Cuti / Pemohon</th>
-                  <th className="py-3">Jenis & Durasi</th>
-                  <th className="py-3">Rentang Tanggal</th>
-                  <th className="py-3">Alasan & Handover</th>
-                  <th className="py-3 text-center">Status Approval</th>
-                  <th className="py-3 text-end px-3">Tindakan Atasan / HRD</th>
-                </tr>
-              </thead>
-              <tbody>
-                {leaveRequests.map((leave) => (
-                  <tr key={leave.id} style={{ borderBottomColor: cardBorder }}>
-                    <td className="px-3 py-3">
-                      <div className="fw-bold" style={{ color: darkMode ? "#f8fafc" : "#0f172a" }}>{leave.nama}</div>
-                      <small className="d-block" style={{ color: darkMode ? "#94a3b8" : "#64748b" }}>
-                        {leave.id} &bull; {leave.unit}
-                      </small>
-                    </td>
-                    <td>
-                      <span className="badge bg-primary-subtle text-primary fw-semibold">{leave.jenisCuti}</span>
-                      <small className="d-block" style={{ color: darkMode ? "#94a3b8" : "#64748b" }}>{leave.jumlahHari} Hari Kerja</small>
-                    </td>
-                    <td>
-                      <div className="small fw-semibold" style={{ color: darkMode ? "#f8fafc" : "#0f172a" }}>
-                        {leave.tanggalMulai} s/d {leave.tanggalSelesai}
-                      </div>
-                      <small className="d-block" style={{ color: darkMode ? "#94a3b8" : "#64748b" }}>Diajukan: {leave.tanggalPengajuan}</small>
-                    </td>
-                    <td style={{ maxWidth: "250px" }}>
-                      <div className="text-truncate" title={leave.alasan}>
-                        {leave.alasan}
-                      </div>
-                      <small className="text-info d-block">
-                        <strong>Pengganti:</strong> {leave.petugasPengganti}
-                      </small>
-                    </td>
-                    <td className="text-center">
-                      <span
-                        className={`badge px-3 py-1 rounded-pill ${
-                          leave.status === "Disetujui"
-                            ? "bg-success"
-                            : leave.status === "Ditolak"
-                            ? "bg-danger"
-                            : "bg-warning text-dark"
-                        }`}
-                      >
-                        {leave.status}
-                      </span>
-                    </td>
-                    <td className="text-end px-3">
-                      {leave.status === "Menunggu Persetujuan" ? (
-                        <div className="btn-group btn-group-sm">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              onApproveLeave?.(leave.id);
-                              showToast?.("Cuti Disetujui", `Pengajuan cuti ${leave.nama} berhasil disetujui.`, "success");
-                            }}
-                            className="btn btn-success"
-                            title="Setujui Pengajuan Cuti"
-                          >
-                            ✅ Setujui
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              onRejectLeave?.(leave.id);
-                              showToast?.("Cuti Ditolak", `Pengajuan cuti ${leave.nama} telah ditolak.`, "info");
-                            }}
-                            className="btn btn-danger"
-                            title="Tolak Pengajuan Cuti"
-                          >
-                            ❌ Tolak
-                          </button>
-                        </div>
-                      ) : (
-                        <span className="small text-muted">Selesai Ditinjau</span>
-                      )}
-                    </td>
+          {/* MAIN TABLE CONTAINER */}
+          <div
+            className="rounded-4 p-4 shadow-sm"
+            style={{ backgroundColor: cardBg, border: `1px solid ${cardBorder}` }}
+          >
+            {/* TABLE HEADER ACTIONS & SEARCH CONTROLS */}
+            <div className="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+              <div>
+                <h5 className="fw-bold mb-1">🏖️ Panel Manajemen & Persetujuan Cuti Seluruh Pegawai</h5>
+                <p className="small mb-0" style={{ color: textMuted }}>
+                  Verifikasi cuti tahunan, sakit, izin dinas, dan pelimpahan tugas perawat bangsal jiwa RSJ Tampan
+                </p>
+              </div>
+
+              <div className="d-flex flex-wrap align-items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => exportLeavesToCSV(leaveRequests)}
+                  className="btn btn-outline-success btn-sm d-flex align-items-center gap-1 px-3 py-2 fw-medium"
+                  title="Ekspor Seluruh Rekap Data Cuti ke File CSV"
+                >
+                  <span>📥</span> Ekspor CSV
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setIsLeaveModalOpen(true)}
+                  className="btn btn-warning btn-sm d-flex align-items-center gap-2 fw-semibold text-dark shadow-sm px-3 py-2"
+                >
+                  <span>➕</span> Tambah Pengajuan Cuti
+                </button>
+              </div>
+            </div>
+
+            {/* FILTER & SEARCH BAR */}
+            <div
+              className="p-3 rounded-3 mb-4 border d-flex flex-wrap align-items-center justify-content-between gap-3"
+              style={{
+                backgroundColor: darkMode ? "#14192b" : "#f8fafc",
+                borderColor: cardBorder,
+              }}
+            >
+              <div className="d-flex flex-wrap align-items-center gap-2 flex-grow-1">
+                <div style={{ minWidth: "220px", flexGrow: 1 }}>
+                  <input
+                    type="text"
+                    placeholder="Cari nama pemohon, NIP, bangsal, atau jenis cuti..."
+                    value={adminLeaveSearch}
+                    onChange={(e) => setAdminLeaveSearch(e.target.value)}
+                    className="form-control form-control-sm"
+                    style={{
+                      backgroundColor: darkMode ? "#181f33" : "#ffffff",
+                      color: darkMode ? "#ffffff" : "#0f172a",
+                      borderColor: cardBorder,
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <select
+                    value={adminLeaveFilterStatus}
+                    onChange={(e) => setAdminLeaveFilterStatus(e.target.value)}
+                    className="form-select form-select-sm"
+                    style={{
+                      backgroundColor: darkMode ? "#181f33" : "#ffffff",
+                      color: darkMode ? "#ffffff" : "#0f172a",
+                      borderColor: cardBorder,
+                    }}
+                  >
+                    <option value="semua">Semua Status Cuti</option>
+                    <option value="Menunggu Persetujuan">Menunggu Persetujuan</option>
+                    <option value="Disetujui">Disetujui</option>
+                    <option value="Ditolak">Ditolak</option>
+                  </select>
+                </div>
+
+                <div>
+                  <select
+                    value={adminLeaveFilterUnit}
+                    onChange={(e) => setAdminLeaveFilterUnit(e.target.value)}
+                    className="form-select form-select-sm"
+                    style={{
+                      backgroundColor: darkMode ? "#181f33" : "#ffffff",
+                      color: darkMode ? "#ffffff" : "#0f172a",
+                      borderColor: cardBorder,
+                    }}
+                  >
+                    <option value="semua">Semua Bangsal & Unit</option>
+                    <option value="Kampar">Bangsal Kampar (Akut Pria)</option>
+                    <option value="Siak">Bangsal Siak (Wanita)</option>
+                    <option value="Rokan">Bangsal Rokan (Rehabilitasi NAPZA)</option>
+                    <option value="IGD">IGD Jiwa & Krisis 24 Jam</option>
+                    <option value="Poli">Poliklinik Rawat Jalan</option>
+                    <option value="Farmasi">Instalasi Farmasi</option>
+                  </select>
+                </div>
+              </div>
+
+              <small style={{ color: textMuted }}>
+                Menampilkan <strong>{
+                  leaveRequests.filter((leave) => {
+                    const matchSearch =
+                      !adminLeaveSearch ||
+                      leave.nama?.toLowerCase().includes(adminLeaveSearch.toLowerCase()) ||
+                      leave.id?.toLowerCase().includes(adminLeaveSearch.toLowerCase()) ||
+                      leave.unit?.toLowerCase().includes(adminLeaveSearch.toLowerCase()) ||
+                      leave.profesi?.toLowerCase().includes(adminLeaveSearch.toLowerCase()) ||
+                      leave.alasan?.toLowerCase().includes(adminLeaveSearch.toLowerCase());
+                    const matchStatus = adminLeaveFilterStatus === "semua" || leave.status === adminLeaveFilterStatus;
+                    const matchUnit = adminLeaveFilterUnit === "semua" || leave.unit?.includes(adminLeaveFilterUnit);
+                    return matchSearch && matchStatus && matchUnit;
+                  }).length
+                }</strong> dari {leaveRequests.length} data
+              </small>
+            </div>
+
+            {/* TABEL DATA PENGELOLAAN CUTI */}
+            <div className="table-responsive rounded-3 border" style={{ borderColor: cardBorder }}>
+              <table className={`table ${darkMode ? "table-dark" : "table-light"} table-hover align-middle mb-0`} style={{ fontSize: "0.86rem" }}>
+                <thead style={{ backgroundColor: tableHeaderBg, color: darkMode ? "#cbd5e1" : "#475569" }}>
+                  <tr>
+                    <th className="py-3 px-3">No. Cuti / Pemohon</th>
+                    <th className="py-3">Jenis & Durasi</th>
+                    <th className="py-3">Rentang Tanggal</th>
+                    <th className="py-3">Alasan & Handover</th>
+                    <th className="py-3 text-center">Status Approval</th>
+                    <th className="py-3 text-end px-3">TINDAKAN ATASAN / HRD</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {leaveRequests
+                    .filter((leave) => {
+                      const matchSearch =
+                        !adminLeaveSearch ||
+                        leave.nama?.toLowerCase().includes(adminLeaveSearch.toLowerCase()) ||
+                        leave.id?.toLowerCase().includes(adminLeaveSearch.toLowerCase()) ||
+                        leave.unit?.toLowerCase().includes(adminLeaveSearch.toLowerCase()) ||
+                        leave.profesi?.toLowerCase().includes(adminLeaveSearch.toLowerCase()) ||
+                        leave.alasan?.toLowerCase().includes(adminLeaveSearch.toLowerCase());
+                      const matchStatus = adminLeaveFilterStatus === "semua" || leave.status === adminLeaveFilterStatus;
+                      const matchUnit = adminLeaveFilterUnit === "semua" || leave.unit?.includes(adminLeaveFilterUnit);
+                      return matchSearch && matchStatus && matchUnit;
+                    })
+                    .map((leave) => {
+                      // Cek otoritas persetujuan untuk baris ini
+                      const approvalAuth = canApproveLeave(effectiveUser, leave, employees);
+                      const isPending = leave.status === "Menunggu Persetujuan";
+
+                      return (
+                        <tr key={leave.id} style={{ borderBottomColor: cardBorder }}>
+                          <td className="px-3 py-3">
+                            <div className="fw-bold" style={{ color: darkMode ? "#f8fafc" : "#0f172a" }}>
+                              {leave.nama}
+                            </div>
+                            <small className="d-block" style={{ color: darkMode ? "#94a3b8" : "#64748b" }}>
+                              {leave.id} &bull; {leave.unit} ({leave.profesi || "Nakes"})
+                            </small>
+                          </td>
+                          <td>
+                            <span className="badge bg-primary-subtle text-primary fw-semibold">{leave.jenisCuti}</span>
+                            <small className="d-block mt-1" style={{ color: darkMode ? "#94a3b8" : "#64748b" }}>
+                              <strong>{leave.jumlahHari} Hari</strong> Kerja
+                            </small>
+                          </td>
+                          <td>
+                            <div className="small fw-semibold" style={{ color: darkMode ? "#f8fafc" : "#0f172a" }}>
+                              {leave.tanggalMulai} s/d {leave.tanggalSelesai}
+                            </div>
+                            <small className="d-block" style={{ color: darkMode ? "#94a3b8" : "#64748b" }}>
+                              Diajukan: {leave.tanggalPengajuan}
+                            </small>
+                          </td>
+                          <td style={{ maxWidth: "250px" }}>
+                            <div className="text-truncate fw-medium" title={leave.alasan} style={{ color: darkMode ? "#f8fafc" : "#0f172a" }}>
+                              {leave.alasan}
+                            </div>
+                            <small className="text-info d-block">
+                              <strong>Pengganti:</strong> {leave.petugasPengganti || "-"}
+                            </small>
+                          </td>
+                          <td className="text-center">
+                            <span
+                              className={`badge px-3 py-1 rounded-pill ${
+                                leave.status === "Disetujui"
+                                  ? "bg-success"
+                                  : leave.status === "Ditolak"
+                                  ? "bg-danger"
+                                  : "bg-warning text-dark"
+                              }`}
+                            >
+                              {isPending ? "⏳ " : leave.status === "Disetujui" ? "✅ " : "❌ "}
+                              {leave.status}
+                            </span>
+                          </td>
+                          <td className="text-end px-3">
+                            {/* LOGIKA PERSETUJUAN KETAT BERDASARKAN ROLE & USERNAME (@admin / HRD) */}
+                            {!isAdminOrHrd(effectiveUser) ? (
+                              /* READ-ONLY UNTUK AKUN PEGAWAI BIASA (cth: @gibran / Dokter / Perawat): Teks status statis tanpa tombol approval */
+                              <div className="small">
+                                {leave.status === "Menunggu Persetujuan" ? (
+                                  <span className="badge bg-secondary-subtle text-secondary border border-secondary-subtle px-2 py-1">
+                                    ⏳ Menunggu Persetujuan HRD
+                                  </span>
+                                ) : leave.status === "Disetujui" ? (
+                                  <span className="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">
+                                    ✅ Disetujui ({leave.disetujuiOleh || "HRD"})
+                                  </span>
+                                ) : (
+                                  <span className="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1">
+                                    ❌ Ditolak ({leave.disetujuiOleh || "HRD"})
+                                  </span>
+                                )}
+                              </div>
+                            ) : approvalAuth.isSelf ? (
+                              /* KASUS SELF-APPROVAL: Pemohon @admin tidak boleh menyetujui cutinya sendiri (user.id === pemohon.user_id) */
+                              <span
+                                className="badge px-2 py-1 text-wrap"
+                                style={{
+                                  backgroundColor: darkMode ? "rgba(245, 158, 11, 0.15)" : "#fffbeb",
+                                  color: "#f59e0b",
+                                  border: "1px solid #f59e0b",
+                                  fontSize: "0.72rem",
+                                  maxWidth: "190px",
+                                }}
+                                title="Anda adalah pemohon cuti ini (user.id === pemohon.user_id). Sesuai regulasi rumah sakit, persetujuan harus dilakukan oleh Direktur / Wadir."
+                              >
+                                ⚠️ Pengajuan Sendiri (Wajib Direktur)
+                              </span>
+                            ) : isPending ? (
+                              /* KASUS NORMAL: Admin (@admin/HRD) menyetujui pengajuan pegawai lain */
+                              <div className="btn-group btn-group-sm shadow-sm">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const cleanUsername = (effectiveUser?.username || "").toLowerCase().trim().replace(/^@/, "");
+                                    const cleanRole = (effectiveUser?.role || "").toLowerCase().trim();
+                                    if (cleanUsername !== "admin" && cleanRole !== "admin" && !isAdminOrHrd(effectiveUser)) {
+                                      alert("Akses Ditolak: Hanya Kasubbag Kepegawaian (@admin) yang berhak menyetujui cuti.");
+                                      return;
+                                    }
+                                    onApproveLeave?.(leave.id);
+                                    showToast?.("Cuti Disetujui", `Pengajuan cuti ${leave.nama} berhasil disetujui.`, "success");
+                                  }}
+                                  className="btn btn-success fw-semibold"
+                                  title="Setujui Pengajuan Cuti Pegawai"
+                                >
+                                  ✅ Setujui
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const cleanUsername = (effectiveUser?.username || "").toLowerCase().trim().replace(/^@/, "");
+                                    const cleanRole = (effectiveUser?.role || "").toLowerCase().trim();
+                                    if (cleanUsername !== "admin" && cleanRole !== "admin" && !isAdminOrHrd(effectiveUser)) {
+                                      alert("Akses Ditolak: Hanya Kasubbag Kepegawaian (@admin) yang berhak menyetujui cuti.");
+                                      return;
+                                    }
+                                    const reason = window.prompt(
+                                      `Masukkan alasan penolakan cuti untuk ${leave.nama}:`,
+                                      "Penyesuaian kuota shift jaga bangsal."
+                                    );
+                                    if (reason !== null) {
+                                      onRejectLeave?.(leave.id, reason);
+                                      showToast?.("Cuti Ditolak", `Pengajuan cuti ${leave.nama} telah ditolak.`, "info");
+                                    }
+                                  }}
+                                  className="btn btn-danger fw-semibold"
+                                  title="Tolak Pengajuan Cuti Pegawai"
+                                >
+                                  ❌ Tolak
+                                </button>
+                              </div>
+                            ) : (
+                              /* SUDAH DIPROSES OLEH ADMIN / HRD */
+                              <div className="small text-muted">
+                                <span>Selesai Ditinjau:</span>
+                                <strong className="d-block text-truncate" style={{ maxWidth: "160px" }}>
+                                  {leave.disetujuiOleh || "Kasubbag Kepegawaian"}
+                                </strong>
+                              </div>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       )}

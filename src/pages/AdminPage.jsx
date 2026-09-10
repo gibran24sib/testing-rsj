@@ -8,6 +8,8 @@ export default function AdminPage({
   shiftRoster,
   leaveRequests,
   trainings,
+  currentUser,
+  setCurrentView,
   onAddEmployee,
   onUpdateEmployee,
   onDeleteEmployee,
@@ -136,6 +138,8 @@ export default function AdminPage({
         shiftRoster={shiftRoster}
         leaveRequests={leaveRequests}
         trainings={trainings}
+        currentUser={currentUser}
+        setCurrentView={setCurrentView}
         onAddEmployee={onAddEmployee}
         onUpdateEmployee={onUpdateEmployee}
         onDeleteEmployee={onDeleteEmployee}

@@ -29,6 +29,7 @@ export const PORTAL_TAB_ROUTES = {
 export const PAGE_TITLES = {
   login: "Masuk SIM-SDM • RSJ Tampan Riau",
   register: "Registrasi Petugas SIM-SDM • RSJ Tampan",
+  cuti_pegawai: "Portal Pengajuan Cuti Mandiri Nakes • SIM-SDM RSJ Tampan",
   portal_tenaga_medis: "Portal Informasi Tenaga Medis • RSJ Tampan",
   portal_rekrutmen: "Informasi Rekrutmen & Formasi Nakes • RSJ Tampan",
   portal_diklat: "Program Diklat & Kredensialing Jiwa • RSJ Tampan",
@@ -41,7 +42,7 @@ export const PAGE_TITLES = {
   admin_presensi: "E-Presensi Shift Geolocation • SIM-SDM RSJ Tampan",
   admin_dossier: "E-Berkas Digital Kepegawaian • SIM-SDM RSJ Tampan",
   admin_legalitas: "Audit Legalitas STR & SIP • SIM-SDM RSJ Tampan",
-  admin_cuti: "Manajemen Cuti & Izin Nakes • SIM-SDM RSJ Tampan",
+  admin_cuti: "Approval & Manajemen Cuti HRD • SIM-SDM RSJ Tampan",
   admin_diklat: "Diklat & Sertifikasi Jiwa • SIM-SDM RSJ Tampan",
   admin_analitik: "Analitik Kinerja SDM & SKP • SIM-SDM RSJ Tampan",
 };
@@ -50,6 +51,9 @@ export const PAGE_TITLES = {
  * Menghasilkan URL path berdasarkan state aplikasi saat ini
  */
 export function getPathForState(view, adminTab = "direktori", portalTab = "tenaga_medis") {
+  if (view === "cuti_pegawai") {
+    return "/cuti/pengajuan";
+  }
   if (view === "admin") {
     return ADMIN_TAB_ROUTES[adminTab] || `/admin/${adminTab.replace("_", "-")}`;
   }
@@ -72,6 +76,9 @@ export function getPathForState(view, adminTab = "direktori", portalTab = "tenag
  * Menghasilkan judul halaman untuk title browser tab
  */
 export function getTitleForState(view, adminTab = "direktori", portalTab = "tenaga_medis") {
+  if (view === "cuti_pegawai") {
+    return PAGE_TITLES.cuti_pegawai;
+  }
   if (view === "admin") {
     return PAGE_TITLES[`admin_${adminTab}`] || "Panel Admin SIM-SDM • RSJ Tampan";
   }
@@ -109,7 +116,21 @@ export function getStateFromPath(pathname = window.location.pathname) {
     };
   }
 
-  // 2. RUTE ADMIN & MODUL SDM
+  // 2. RUTE CUTI PEGAWAI / NAKES MANDIRI
+  if (
+    cleanPath === "/cuti/pengajuan" ||
+    cleanPath === "/cuti" ||
+    cleanPath === "/pegawai/cuti" ||
+    cleanPath === "/nakes/cuti"
+  ) {
+    return {
+      view: "cuti_pegawai",
+      adminTab: "cuti",
+      portalTab: "tenaga_medis",
+    };
+  }
+
+  // 3. RUTE ADMIN & MODUL SDM
   if (cleanPath.startsWith("/admin")) {
     const parts = cleanPath.split("/").filter(Boolean);
     let tab = "direktori";
@@ -149,7 +170,7 @@ export function getStateFromPath(pathname = window.location.pathname) {
     };
   }
 
-  // 3. RUTE PORTAL PUBLIK
+  // 4. RUTE PORTAL PUBLIK
   if (cleanPath.startsWith("/portal") || cleanPath === "/") {
     const parts = cleanPath.split("/").filter(Boolean);
     let portalTab = "tenaga_medis";

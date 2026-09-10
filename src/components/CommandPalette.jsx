@@ -68,10 +68,17 @@ export default function CommandPalette({
       action: () => onSelectAction({ type: "navigate_tab", tab: "legalitas" }),
     },
     {
-      id: "cuti",
-      label: "Manajemen Pengajuan & Approval Cuti",
-      category: "Modul SDM",
+      id: "cuti_pegawai",
+      label: "Portal Pengajuan Cuti Mandiri Nakes (/cuti/pengajuan)",
+      category: "Layanan Mandiri Pegawai",
       icon: "🏖️",
+      action: () => onSelectAction({ type: "navigate_view", view: "cuti_pegawai" }),
+    },
+    {
+      id: "admin_cuti",
+      label: "Manajemen & Persetujuan Cuti Seluruh Pegawai (HRD/Admin)",
+      category: "Modul SDM Admin",
+      icon: "📋",
       action: () => onSelectAction({ type: "navigate_tab", tab: "cuti" }),
     },
     {

@@ -96,7 +96,7 @@ export default function Navbar({
           </button>
 
           {/* NAVIGATION ACTION PILLS */}
-          <div className="d-flex gap-1">
+          <div className="d-flex gap-1 flex-wrap">
             <button
               className={`btn btn-sm rounded-pill px-3 fw-medium ${
                 currentView === "guest"
@@ -106,6 +106,17 @@ export default function Navbar({
               onClick={() => setCurrentView("guest")}
             >
               Portal Publik
+            </button>
+            <button
+              className={`btn btn-sm rounded-pill px-3 fw-medium ${
+                currentView === "cuti_pegawai"
+                  ? "btn-success shadow-sm"
+                  : "btn-outline-warning text-dark"
+              }`}
+              onClick={() => setCurrentView("cuti_pegawai")}
+              title="Portal Mandiri Pengajuan Cuti Nakes (/cuti/pengajuan)"
+            >
+              🏖️ Cuti Nakes
             </button>
             <button
               className={`btn btn-sm rounded-pill px-3 fw-medium ${

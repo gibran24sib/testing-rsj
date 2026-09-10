@@ -1,4 +1,5 @@
 import React from "react";
+import { isAdminOrHrd } from "../utils/authHelpers";
 
 export default function Sidebar({
   activeTab,
@@ -12,6 +13,8 @@ export default function Sidebar({
   onOpenCommandPalette,
   employeeCount = 0,
 }) {
+  const isAdmin = isAdminOrHrd(currentUser);
+
   const menuItems = [
     {
       id: "direktori",
@@ -57,13 +60,13 @@ export default function Sidebar({
     },
     {
       id: "cuti",
-      label: "Manajemen Cuti",
+      label: isAdmin ? "Manajemen Cuti" : "Pengajuan Cuti",
       icon: "🏖️",
-      badge: "Izin & Approval",
+      badge: isAdmin ? "Approval" : "Mandiri",
     },
     {
       id: "diklat",
-      label: "Diklat & Kredensialing",
+      label: "Diklat Jiwa",
       icon: "🎓",
       badge: "Keahlian Jiwa",
     },
@@ -224,6 +227,41 @@ export default function Sidebar({
 
       {/* FOOTER USER CARD */}
       <div>
+        {/* ROLE STATUS INDICATOR BADGE */}
+        <div
+          className="px-3 py-2 rounded-3 mb-2 d-flex align-items-center justify-content-between border"
+          style={{
+            backgroundColor: darkMode
+              ? isAdmin
+                ? "rgba(245, 158, 11, 0.1)"
+                : "rgba(16, 185, 129, 0.1)"
+              : isAdmin
+              ? "#fffbeb"
+              : "#ecfdf5",
+            borderColor: darkMode
+              ? isAdmin
+                ? "#b45309"
+                : "#059669"
+              : isAdmin
+              ? "#fde68a"
+              : "#a7f3d0",
+            fontSize: "0.74rem",
+            fontWeight: 600,
+            color: isAdmin ? "#f59e0b" : "#10b981",
+          }}
+        >
+          <div className="d-flex align-items-center gap-1">
+            <span>{isAdmin ? "🔑" : "👤"}</span>
+            <span>{isAdmin ? "Mode Administrator" : "Mode Pegawai / Nakes"}</span>
+          </div>
+          <span
+            className={`badge rounded-pill ${isAdmin ? "bg-warning text-dark" : "bg-success"}`}
+            style={{ fontSize: "0.62rem" }}
+          >
+            {isAdmin ? "HRD" : "Nakes"}
+          </span>
+        </div>
+
         <div
           className="p-3 rounded-3 mb-2 d-flex align-items-center justify-content-between"
           style={{
@@ -237,7 +275,7 @@ export default function Sidebar({
               style={{
                 width: "34px",
                 height: "34px",
-                backgroundColor: "#10b981",
+                backgroundColor: isAdmin ? "#f59e0b" : "#10b981",
                 fontSize: "0.85rem",
                 flexShrink: 0,
               }}
@@ -248,8 +286,9 @@ export default function Sidebar({
               <div
                 className="fw-semibold text-truncate"
                 style={{ fontSize: "0.82rem" }}
+                title={currentUser?.nama}
               >
-                {currentUser?.nama || "Kasubbag SDM"}
+                {currentUser?.nama || (isAdmin ? "Kasubbag SDM" : "Pegawai RSJ")}
               </div>
               <small
                 className="d-block text-truncate"
@@ -257,8 +296,9 @@ export default function Sidebar({
                   fontSize: "0.68rem",
                   color: darkMode ? "#7e8699" : "#64748b",
                 }}
+                title={currentUser?.role}
               >
-                {currentUser?.role || "Administrator SDM"}
+                {currentUser?.role || (isAdmin ? "Administrator SDM" : "Perawat Pelaksana")}
               </small>
             </div>
           </div>
@@ -278,7 +318,7 @@ export default function Sidebar({
 
         <button
           onClick={handleLogout}
-          className="btn btn-sm w-100 d-flex align-items-center justify-content-center gap-2 py-2 rounded-3 border-0"
+          className="btn btn-sm w-100 d-flex align-items-center justify-content-center gap-2 py-2 rounded-3 border-0 shadow-sm"
           style={{
             backgroundColor: darkMode ? "#221319" : "#fee2e2",
             color: "#ef4444",

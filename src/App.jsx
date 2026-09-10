@@ -12,6 +12,7 @@ import GuestPage from "./pages/GuestPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import AdminPage from "./pages/AdminPage";
+import PegawaiCutiPage from "./pages/PegawaiCutiPage";
 
 // Modals / Components
 import CommandPalette from "./components/CommandPalette";
@@ -26,6 +27,9 @@ import {
   getTitleForState,
 } from "./utils/navigation";
 
+// Auth & Permissions
+import { isAdminOrHrd, isLeaveApplicant } from "./utils/authHelpers";
+
 // Data
 import { initialUsers } from "./data/initialData";
 import {
@@ -37,9 +41,16 @@ import {
 
 // Supabase Integration
 import {
+  supabase,
   isSupabaseConfigured,
   ambilDataSupabase,
   tambahDataSupabase,
+  tambahCutiSupabase,
+  updateStatusCutiSupabase,
+  registerUserSupabase,
+  loginUserSupabase,
+  ambilProfilUserSupabase,
+  logoutUserSupabase,
 } from "./services/supabaseClient";
 
 function App() {
@@ -64,6 +75,18 @@ function App() {
         nama: "Agus Pratondo, S.Sos",
         role: "Kasubbag Kepegawaian & SDM",
         username: "admin",
+        nip: "19830214 200803 1 001",
+        employeeId: "EMP-004",
+      };
+    }
+    // Jika user mengakses rute /cuti langsung dan belum login, pasang sesi demo nakes perawat
+    if (window.location.pathname.startsWith("/cuti") || window.location.pathname.startsWith("/pegawai")) {
+      return {
+        nama: "Ns. Budi Setiawan, S.Kep",
+        role: "Perawat Pelaksana IGD Jiwa",
+        username: "budi",
+        nip: "19920817 201902 1 004",
+        employeeId: "EMP-006",
       };
     }
     return null;
@@ -150,9 +173,12 @@ function App() {
   // STATE AUTENTIKASI
   const [authInput, setAuthInput] = useState({
     nama: "",
-    username: "",
-    password: "",
+    nip: "",
     role: "Perawat Pelaksana",
+    unit: "Bangsal Kampar (Akut Pria)",
+    username: "",
+    email: "",
+    password: "",
   });
   const [authError, setAuthError] = useState("");
   const [authSuccess, setAuthSuccess] = useState("");
@@ -167,6 +193,65 @@ function App() {
       localStorage.setItem("rsj_users", JSON.stringify(users));
     }
   }, [users]);
+
+  // ==========================================================================
+  // SINKRONISASI SESI AUTH SUPABASE (TOKEN & PROFIL TETAP AKTIF SAAT BUKA TAB BARU)
+  // ==========================================================================
+  useEffect(() => {
+    async function syncSession() {
+      if (isSupabaseConfigured()) {
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.user) {
+            const profile = await ambilProfilUserSupabase(session.user.id);
+            const meta = session.user.user_metadata || {};
+            const activeUser = {
+              id: session.user.id,
+              email: session.user.email,
+              username: profile?.username || meta.username || session.user.email.split("@")[0],
+              nama: profile?.nama || meta.nama || meta.full_name || session.user.email.split("@")[0],
+              role: profile?.role || meta.role || "Perawat Pelaksana",
+              nip: profile?.nip || meta.nip || "-",
+              unit: profile?.unit || meta.unit || "Unit Pelayanan RSJ Tampan",
+              profesi: profile?.profesi || profile?.role || meta.profesi || meta.role || "Tenaga Medis",
+            };
+            setCurrentUser(activeUser);
+            localStorage.setItem("rsj_current_user", JSON.stringify(activeUser));
+          }
+        } catch (e) {
+          console.warn("Gagal inisialisasi sesi Supabase Auth:", e);
+        }
+      }
+    }
+
+    syncSession();
+
+    if (isSupabaseConfigured()) {
+      const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+        if (event === "SIGNED_IN" && session?.user) {
+          const profile = await ambilProfilUserSupabase(session.user.id);
+          const meta = session.user.user_metadata || {};
+          const syncedUser = {
+            id: session.user.id,
+            email: session.user.email,
+            username: profile?.username || meta.username || session.user.email.split("@")[0],
+            nama: profile?.nama || meta.nama || meta.full_name || session.user.email.split("@")[0],
+            role: profile?.role || meta.role || "Perawat Pelaksana",
+            nip: profile?.nip || meta.nip || "-",
+            unit: profile?.unit || meta.unit || "Unit Pelayanan RSJ Tampan",
+            profesi: profile?.profesi || profile?.role || meta.profesi || meta.role || "Tenaga Medis",
+          };
+          setCurrentUser(syncedUser);
+          localStorage.setItem("rsj_current_user", JSON.stringify(syncedUser));
+        } else if (event === "SIGNED_OUT") {
+          setCurrentUser(null);
+          localStorage.removeItem("rsj_current_user");
+        }
+      });
+
+      return () => subscription.unsubscribe();
+    }
+  }, []);
 
   // STATE SDM & KEPEGAWAIAN NAKES
   const [employees, setEmployees] = useState(() => {
@@ -253,37 +338,134 @@ function App() {
 
   const handleSubmitLeave = useCallback((newLeave) => {
     setLeaveRequests((prev) => [newLeave, ...prev]);
+    if (isSupabaseConfigured()) {
+      tambahCutiSupabase(newLeave);
+    }
   }, []);
 
   const handleApproveLeave = useCallback((leaveId) => {
-    setLeaveRequests((prev) =>
-      prev.map((leave) =>
-        leave.id === leaveId
-          ? {
-            ...leave,
-            status: "Disetujui",
-            disetujuiOleh: "Agus Pratondo, S.Sos (Kasubbag Kepegawaian)",
-            catatan: "Disetujui oleh Kepala Subbagian Kepegawaian RSJ Tampan.",
-          }
-          : leave
-      )
-    );
-  }, []);
+    // 1. Pengecekan tegas username & role Admin / HRD
+    const cleanUsername = (currentUser?.username || "").toLowerCase().trim().replace(/^@/, "");
+    const cleanRole = (currentUser?.role || "").toLowerCase().trim();
+    const isAuthorized =
+      cleanUsername === "admin" ||
+      cleanRole === "admin" ||
+      cleanRole === "hrd" ||
+      cleanRole.includes("admin") ||
+      cleanRole.includes("hrd") ||
+      cleanRole.includes("kepegawaian") ||
+      cleanRole.includes("kasubbag");
 
-  const handleRejectLeave = useCallback((leaveId) => {
+    if (!isAuthorized) {
+      alert("Akses Ditolak: Hanya Kasubbag Kepegawaian (@admin) yang berhak menyetujui cuti.");
+      showToast("Akses Ditolak", "Hanya Kasubbag Kepegawaian (@admin) yang berhak menyetujui cuti.", "danger");
+      return;
+    }
+
+    const targetLeave = leaveRequests.find((l) => l.id === leaveId);
+    if (!targetLeave) return;
+
+    // 2. Validasi pencegahan Self-Approval
+    if (isLeaveApplicant(currentUser, targetLeave, employees)) {
+      alert("Akses Ditolak: Anda tidak dapat menyetujui pengajuan cuti Anda sendiri. Wajib melalui atasan/pimpinan.");
+      showToast(
+        "Akses Ditolak",
+        "Anda tidak dapat menyetujui permohonan cuti Anda sendiri. Wajib melalui atasan/pimpinan.",
+        "warning"
+      );
+      return;
+    }
+
+    const approverTitle = `${currentUser?.nama || "Agus Pratondo, S.Sos"} (${currentUser?.role || "Kasubbag Kepegawaian"})`;
+    const updatedNote = "Disetujui oleh Kepala Subbagian Kepegawaian & SDM RSJ Tampan.";
+
     setLeaveRequests((prev) =>
       prev.map((leave) =>
         leave.id === leaveId
           ? {
-            ...leave,
-            status: "Ditolak",
-            disetujuiOleh: "Kasubbag Kepegawaian",
-            catatan: "Penyesuaian kuota shift bangsal.",
-          }
+              ...leave,
+              status: "Disetujui",
+              disetujuiOleh: approverTitle,
+              catatan: updatedNote,
+            }
           : leave
       )
     );
-  }, []);
+
+    // Sinkronkan ke Supabase jika aktif
+    if (isSupabaseConfigured()) {
+      updateStatusCutiSupabase({
+        leaveId,
+        status: "Disetujui",
+        disetujuiOleh: approverTitle,
+        catatan: updatedNote,
+        currentUser,
+        targetLeave,
+      });
+    }
+  }, [currentUser, leaveRequests, employees, showToast]);
+
+  const handleRejectLeave = useCallback((leaveId, customReason = "") => {
+    // 1. Pengecekan tegas username & role Admin / HRD
+    const cleanUsername = (currentUser?.username || "").toLowerCase().trim().replace(/^@/, "");
+    const cleanRole = (currentUser?.role || "").toLowerCase().trim();
+    const isAuthorized =
+      cleanUsername === "admin" ||
+      cleanRole === "admin" ||
+      cleanRole === "hrd" ||
+      cleanRole.includes("admin") ||
+      cleanRole.includes("hrd") ||
+      cleanRole.includes("kepegawaian") ||
+      cleanRole.includes("kasubbag");
+
+    if (!isAuthorized) {
+      alert("Akses Ditolak: Hanya Kasubbag Kepegawaian (@admin) yang berhak menyetujui cuti.");
+      showToast("Akses Ditolak", "Hanya Kasubbag Kepegawaian (@admin) yang berhak menyetujui cuti.", "danger");
+      return;
+    }
+
+    const targetLeave = leaveRequests.find((l) => l.id === leaveId);
+    if (!targetLeave) return;
+
+    // 2. Validasi pencegahan Self-Approval
+    if (isLeaveApplicant(currentUser, targetLeave, employees)) {
+      alert("Akses Ditolak: Anda tidak dapat mengubah status permohonan cuti Anda sendiri.");
+      showToast(
+        "Akses Ditolak",
+        "Anda tidak dapat mengubah status permohonan cuti Anda sendiri.",
+        "warning"
+      );
+      return;
+    }
+
+    const approverTitle = `${currentUser?.nama || "Agus Pratondo, S.Sos"} (${currentUser?.role || "Kasubbag Kepegawaian"})`;
+    const updatedNote = customReason || "Penyesuaian kuota shift jaga bangsal.";
+
+    setLeaveRequests((prev) =>
+      prev.map((leave) =>
+        leave.id === leaveId
+          ? {
+              ...leave,
+              status: "Ditolak",
+              disetujuiOleh: approverTitle,
+              catatan: updatedNote,
+            }
+          : leave
+      )
+    );
+
+    // Sinkronkan ke Supabase jika aktif
+    if (isSupabaseConfigured()) {
+      updateStatusCutiSupabase({
+        leaveId,
+        status: "Ditolak",
+        disetujuiOleh: approverTitle,
+        catatan: updatedNote,
+        currentUser,
+        targetLeave,
+      });
+    }
+  }, [currentUser, leaveRequests, employees, showToast]);
 
   const handleRenewStrSip = useCallback((empId) => {
     setEmployees((prev) =>
@@ -363,77 +545,175 @@ function App() {
   );
 
   // AUTH HANDLERS
-  const handleLogin = (e) => {
-    e.preventDefault();
-    setAuthError("");
-    const foundUser = users.find(
-      (u) =>
-        u.username.toLowerCase() === authInput.username.trim().toLowerCase() &&
-        u.password === authInput.password
-    );
-
-    if (foundUser) {
-      setCurrentUser(foundUser);
-      setCurrentView("admin");
-      setAuthInput({
-        nama: "",
-        username: "",
-        password: "",
-        role: "Perawat Pelaksana",
-      });
-      showToast("Login Berhasil", `Selamat bertugas di SIM-SDM, ${foundUser.nama}!`, "success");
-    } else {
-      setAuthError("Username atau Password salah! (Default demo: admin / 123)");
-    }
-  };
-
-  const handleRegister = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     setAuthError("");
     setAuthSuccess("");
 
-    const isExist = users.some(
-      (u) =>
-        u.username.toLowerCase() === authInput.username.trim().toLowerCase()
-    );
-    if (isExist) {
-      setAuthError("Username sudah terdaftar!");
+    const loginIdentifier = (authInput.username || authInput.email || "").trim();
+    const loginPassword = authInput.password;
+
+    if (!loginIdentifier || !loginPassword) {
+      setAuthError("Mohon masukkan Email/Username dan Password.");
       return;
     }
 
+    // 1. Coba login melalui Supabase Auth
+    if (isSupabaseConfigured()) {
+      const res = await loginUserSupabase({
+        usernameOrEmail: loginIdentifier,
+        password: loginPassword,
+      });
+
+      if (res.success && res.user) {
+        setCurrentUser(res.user);
+        localStorage.setItem("rsj_current_user", JSON.stringify(res.user));
+
+        // Layout Terpadu (Unified Layout):
+        // Seluruh user yang login (Admin maupun Pegawai/Nakes) masuk ke Dashboard Terpadu dengan Sidebar Lengkap
+        setCurrentView("admin");
+        setActiveTab("direktori");
+
+        setAuthInput({
+          nama: "",
+          nip: "",
+          role: "Perawat Pelaksana",
+          unit: "Bangsal Kampar (Akut Pria)",
+          username: "",
+          email: "",
+          password: "",
+        });
+        showToast("Login Berhasil", `Selamat bertugas di SIM-SDM, ${res.user.nama}!`, "success");
+        return;
+      } else if (res.error && !res.localOnly) {
+        // Cek apakah ada akun lokal demo yang cocok jika password demo dimasukkan
+        const foundLocal = users.find(
+          (u) =>
+            (u.username?.toLowerCase() === loginIdentifier.toLowerCase() ||
+             u.email?.toLowerCase() === loginIdentifier.toLowerCase()) &&
+            u.password === loginPassword
+        );
+
+        if (foundLocal) {
+          setCurrentUser(foundLocal);
+          localStorage.setItem("rsj_current_user", JSON.stringify(foundLocal));
+          setCurrentView("admin");
+          setActiveTab("direktori");
+          showToast("Login Berhasil (Akun Demo)", `Selamat bertugas di SIM-SDM, ${foundLocal.nama}!`, "success");
+          return;
+        }
+
+        setAuthError(res.error.message || "Gagal masuk. Periksa kembali username/email dan password.");
+        return;
+      }
+    }
+
+    // 2. Fallback untuk akun lokal / demo offline
+    const foundUser = users.find(
+      (u) =>
+        (u.username?.toLowerCase() === loginIdentifier.toLowerCase() ||
+         u.email?.toLowerCase() === loginIdentifier.toLowerCase()) &&
+        u.password === loginPassword
+    );
+
+    if (foundUser) {
+      setCurrentUser(foundUser);
+      localStorage.setItem("rsj_current_user", JSON.stringify(foundUser));
+      setCurrentView("admin");
+      setActiveTab("direktori");
+      setAuthInput({
+        nama: "",
+        nip: "",
+        role: "Perawat Pelaksana",
+        unit: "Bangsal Kampar (Akut Pria)",
+        username: "",
+        email: "",
+        password: "",
+      });
+      showToast("Login Berhasil", `Selamat bertugas di SIM-SDM, ${foundUser.nama}!`, "success");
+    } else {
+      setAuthError("Email/Username atau Password tidak sesuai. Silakan periksa kembali atau gunakan akun demo terdaftar.");
+    }
+  };
+
+  const handleRegister = async (e) => {
+    e.preventDefault();
+    setAuthError("");
+    setAuthSuccess("");
+
+    const cleanNama = (authInput.nama || "").trim();
+    const cleanNip = (authInput.nip || "").trim();
+    const cleanRole = authInput.role || "Perawat Pelaksana";
+    const cleanUnit = authInput.unit || "Bangsal Kampar (Akut Pria)";
+    const cleanUsername = (authInput.username || "").trim().toLowerCase();
+    const cleanEmail = (authInput.email || "").trim().toLowerCase() || `${cleanUsername}@rsjtampan.riau.go.id`;
+    const cleanPassword = authInput.password;
+
+    if (!cleanNama || !cleanUsername || !cleanPassword) {
+      setAuthError("Mohon lengkapi seluruh kolom formulir registrasi.");
+      return;
+    }
+
+    if (cleanPassword.length < 6) {
+      setAuthError("Password minimal 6 karakter demi keamanan akun.");
+      return;
+    }
+
+    // 1. Eksekusi Registrasi ke Supabase Auth + Profil Database
+    const res = await registerUserSupabase({
+      email: cleanEmail,
+      password: cleanPassword,
+      nama: cleanNama,
+      role: cleanRole,
+      nip: cleanNip,
+      unit: cleanUnit,
+      username: cleanUsername,
+    });
+
+    if (!res.success) {
+      setAuthError(res.error?.message || "Gagal melakukan registrasi akun.");
+      return;
+    }
+
+    // 2. Simpan juga ke state & localStorage lokal sebagai fallback instan
     const newUser = {
-      nama: authInput.nama,
-      username: authInput.username.trim(),
-      password: authInput.password,
-      role: authInput.role,
+      id: res.user?.id || `usr-${Date.now()}`,
+      nama: cleanNama,
+      nip: cleanNip,
+      role: cleanRole,
+      unit: cleanUnit,
+      username: cleanUsername,
+      email: cleanEmail,
+      password: cleanPassword,
     };
 
-    const updatedUsers = [...users, newUser];
+    const updatedUsers = [...users.filter((u) => u.username !== cleanUsername), newUser];
     setUsers(updatedUsers);
     localStorage.setItem("rsj_users", JSON.stringify(updatedUsers));
 
-    setAuthSuccess("Pendaftaran akun berhasil! Silakan Login.");
-    showToast("Registrasi Berhasil", "Akun petugas Anda telah terdaftar.", "success");
+    const successMsg = res.requiresEmailConfirmation
+      ? "Pendaftaran akun berhasil! Silakan periksa email Anda untuk konfirmasi, lalu Login."
+      : "Pendaftaran akun petugas berhasil dan data profil tersimpan! Mengalihkan ke halaman Login...";
+
+    setAuthSuccess(successMsg);
+    showToast("Registrasi Berhasil", `Akun ${cleanNama} telah terdaftar.`, "success");
+
     setTimeout(() => {
       setCurrentView("login");
       setAuthSuccess("");
-      setAuthInput({
-        nama: "",
-        username: "",
-        password: "",
-        role: "Perawat Pelaksana",
-      });
-    }, 1500);
+    }, 1800);
   };
 
-  // KONFIRMASI LOGOUT DARI ADMIN
+  // KONFIRMASI LOGOUT DARI ADMIN / SISTEM
   const handleRequestLogout = useCallback(() => {
     setIsConfirmLogoutOpen(true);
   }, []);
 
-  const handleConfirmLogout = useCallback(() => {
+  const handleConfirmLogout = useCallback(async () => {
     setIsConfirmLogoutOpen(false);
+    await logoutUserSupabase();
     setCurrentUser(null);
+    localStorage.removeItem("rsj_current_user");
     setCurrentView("guest");
     showToast("Logout Berhasil", "Anda telah keluar dari sesi SIM-SDM dan kembali ke Portal Utama.", "info");
   }, [showToast]);
@@ -456,14 +736,19 @@ function App() {
       }}
     >
       {/* ======================================================== */}
-      {/* 1. ADMIN VIEW (CLEAN 2-COLUMN LAYOUT)                   */}
+      {/* 1. UNIFIED PORTAL & DASHBOARD VIEW (2-COLUMN LAYOUT)     */}
       {/* ======================================================== */}
-      {currentView === "admin" ? (
+      {currentView === "admin" || currentView === "cuti_pegawai" ? (
         <div className="d-flex w-100 min-vh-100">
-          {/* SIDEBAR NAVIGASI KIRI */}
+          {/* SIDEBAR NAVIGASI KIRI LENGKAP */}
           <Sidebar
-            activeTab={activeTab}
-            setActiveTab={setActiveTab}
+            activeTab={currentView === "cuti_pegawai" ? "cuti" : activeTab}
+            setActiveTab={(tab) => {
+              if (currentView === "cuti_pegawai") {
+                setCurrentView("admin");
+              }
+              setActiveTab(tab);
+            }}
             currentUser={currentUser}
             darkMode={darkMode}
             toggleTheme={toggleTheme}
@@ -478,12 +763,14 @@ function App() {
           <main className="flex-grow-1 w-100 d-flex flex-column min-vh-100 overflow-auto">
             <div className="flex-grow-1 px-3 px-md-4 py-3">
               <AdminPage
-                activeTab={activeTab}
+                activeTab={currentView === "cuti_pegawai" ? "cuti" : activeTab}
                 setActiveTab={setActiveTab}
                 employees={employees}
                 shiftRoster={shiftRoster}
                 leaveRequests={leaveRequests}
                 trainings={trainings}
+                currentUser={currentUser}
+                setCurrentView={setCurrentView}
                 onAddEmployee={handleAddEmployee}
                 onUpdateEmployee={handleUpdateEmployee}
                 onDeleteEmployee={handleDeleteEmployee}
@@ -504,7 +791,7 @@ function App() {
         </div>
       ) : (
         /* ======================================================== */
-        /* 2. GUEST / PUBLIC VIEW                                  */
+        /* 3. GUEST / PUBLIC VIEW                                  */
         /* ======================================================== */
         <div className="w-100 min-vh-100 d-flex flex-column justify-content-between">
           <div>
