@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import ForgotPasswordModal from "../components/ForgotPasswordModal";
 
 export default function LoginPage({
   authInput,
@@ -11,6 +12,9 @@ export default function LoginPage({
   cardBg,
 }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [isForgotModalOpen, setIsForgotModalOpen] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
 
   const onSubmit = async (e) => {
     e.preventDefault();
@@ -98,22 +102,55 @@ export default function LoginPage({
               </div>
 
               <div className="mb-3">
-                <label className="form-label small fw-semibold" style={{ color: labelColor }}>
-                  Password
-                </label>
+                <div className="d-flex justify-content-between align-items-center mb-1">
+                  <label className="form-label small fw-semibold mb-0" style={{ color: labelColor }}>
+                    Password
+                  </label>
+                  <button
+                    type="button"
+                    className="btn btn-link btn-sm p-0 text-decoration-none text-muted"
+                    style={{ fontSize: "0.74rem" }}
+                    onClick={() => setIsForgotModalOpen(true)}
+                  >
+                    Lupa Password?
+                  </button>
+                </div>
+                <div className="input-group">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="••••••••"
+                    className={inputClass}
+                    required
+                    value={authInput.password || ""}
+                    onChange={(e) =>
+                      setAuthInput({
+                        ...authInput,
+                        password: e.target.value,
+                      })
+                    }
+                  />
+                  <button
+                    type="button"
+                    className={`btn btn-outline-secondary ${darkMode ? "border-secondary text-white" : ""}`}
+                    onClick={() => setShowPassword(!showPassword)}
+                    title={showPassword ? "Sembunyikan password" : "Tampilkan password"}
+                  >
+                    {showPassword ? "👁️" : "👁️‍🗨️"}
+                  </button>
+                </div>
+              </div>
+
+              <div className="form-check mb-3">
                 <input
-                  type="password"
-                  placeholder="••••••••"
-                  className={inputClass}
-                  required
-                  value={authInput.password || ""}
-                  onChange={(e) =>
-                    setAuthInput({
-                      ...authInput,
-                      password: e.target.value,
-                    })
-                  }
+                  className="form-check-input"
+                  type="checkbox"
+                  id="rememberMeCheck"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
                 />
+                <label className="form-check-label small" htmlFor="rememberMeCheck" style={{ color: labelColor }}>
+                  Ingat sesi login saya
+                </label>
               </div>
 
               <button
@@ -196,6 +233,13 @@ export default function LoginPage({
           </div>
         </div>
       </div>
+
+      {/* FORGOT PASSWORD MODAL */}
+      <ForgotPasswordModal
+        isOpen={isForgotModalOpen}
+        onClose={() => setIsForgotModalOpen(false)}
+        darkMode={darkMode}
+      />
     </div>
   );
 }

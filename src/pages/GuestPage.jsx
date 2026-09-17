@@ -1,10 +1,18 @@
-import React, { useState } from "react";
-import { initialEmployees, initialTrainings, sdmStats } from "../data/sdmData";
+import React, { useState, useMemo } from "react";
+import {
+  initialEmployees,
+  initialTrainings,
+  sdmStats,
+  doctorSchedules,
+  orgStructureData,
+  sdmFaqs,
+} from "../data/sdmData";
+import SdmRecruitmentModal from "../components/SdmRecruitmentModal";
 
 export default function GuestPage({
   setCurrentView,
   darkMode,
-  cardBg,
+  cardBg: _cardBg,
   activePortalTab: controlledPortalTab,
   setActivePortalTab: setControlledPortalTab,
 }) {
@@ -12,10 +20,55 @@ export default function GuestPage({
   const activePortalTab = controlledPortalTab || internalPortalTab;
   const setActivePortalTab = setControlledPortalTab || setInternalPortalTab;
 
+  // Search and filter in public doctor directory
+  const [doctorSearch, setDoctorSearch] = useState("");
+  const [doctorCategory, setDoctorCategory] = useState("semua");
+
+  // Filter in doctor schedule tab
+  const [scheduleDayFilter, setScheduleDayFilter] = useState("semua");
+
+  // FAQ open/close state
+  const [openFaqIndex, setOpenFaqIndex] = useState(0);
+
+  // Recruitment modal state
+  const [isRecruitmentModalOpen, setIsRecruitmentModalOpen] = useState(false);
+  const [selectedJob, setSelectedJob] = useState(null);
+
   // Doctors & Key Nakes for public view
-  const doctorsList = initialEmployees.filter(
-    (e) => e.profesi.includes("Dokter") || e.profesi.includes("Psikolog")
-  );
+  const allDoctors = useMemo(() => {
+    return initialEmployees.filter(
+      (e) => e.profesi.includes("Dokter") || e.profesi.includes("Psikolog") || e.profesi.includes("Apoteker")
+    );
+  }, []);
+
+  const filteredDoctors = useMemo(() => {
+    return allDoctors.filter((doc) => {
+      const matchSearch =
+        doc.nama.toLowerCase().includes(doctorSearch.toLowerCase()) ||
+        doc.profesi.toLowerCase().includes(doctorSearch.toLowerCase()) ||
+        doc.jabatan.toLowerCase().includes(doctorSearch.toLowerCase()) ||
+        doc.unitPenempatan.toLowerCase().includes(doctorSearch.toLowerCase());
+
+      const matchCategory =
+        doctorCategory === "semua" ||
+        (doctorCategory === "dokter" && doc.profesi.includes("Dokter")) ||
+        (doctorCategory === "psikolog" && doc.profesi.includes("Psikolog")) ||
+        (doctorCategory === "farmasi" && doc.profesi.includes("Apoteker"));
+
+      return matchSearch && matchCategory;
+    });
+  }, [allDoctors, doctorSearch, doctorCategory]);
+
+  // Filtered doctor schedules
+  const filteredSchedules = useMemo(() => {
+    if (scheduleDayFilter === "semua") return doctorSchedules;
+    return doctorSchedules.filter((sch) => sch.hari.includes(scheduleDayFilter));
+  }, [scheduleDayFilter]);
+
+  const handleOpenRecruitment = (job) => {
+    setSelectedJob(job);
+    setIsRecruitmentModalOpen(true);
+  };
 
   const textPrimary = darkMode ? "#f8fafc" : "#0f172a";
   const textSecondary = darkMode ? "#cbd5e1" : "#475569";
@@ -77,7 +130,7 @@ export default function GuestPage({
                   lineHeight: "1.6",
                 }}
               >
-                Pusat data kepegawaian terpadu, informasi profil dokter spesialis kedokteran jiwa, perawat jiwa kompeten, jadwal dinas 24/7, dan pelatihan kredensialing penanganan krisis kejiwaan.
+                Pusat data kepegawaian terpadu, jadwal praktik dokter spesialis kedokteran jiwa, perawat jiwa bersertifikasi KARS, rekrutmen formasi nakes, dan layanan kepegawaian RSJ Tampan Provinsi Riau.
               </p>
 
               {/* QUICK ACTION BUTTONS */}
@@ -95,9 +148,20 @@ export default function GuestPage({
                     color: textPrimary,
                     borderColor: cardBorderColor,
                   }}
-                  onClick={() => setActivePortalTab("tenaga_medis")}
+                  onClick={() => setActivePortalTab("jadwal_dokter")}
                 >
-                  <span>👨‍⚕️ Direktori Tenaga Medis</span>
+                  <span>📅 Jadwal Praktik Dokter</span>
+                </button>
+                <button
+                  className="btn px-3 py-2 fw-medium d-flex align-items-center gap-2 border"
+                  style={{
+                    backgroundColor: darkMode ? "#161c2d" : "#f8fafc",
+                    color: textPrimary,
+                    borderColor: cardBorderColor,
+                  }}
+                  onClick={() => setActivePortalTab("rekrutmen")}
+                >
+                  <span>📢 Lowongan Nakes 2026</span>
                 </button>
               </div>
             </div>
@@ -112,7 +176,7 @@ export default function GuestPage({
                 }}
               >
                 <h6 className="fw-bold mb-3 d-flex align-items-center gap-2 text-success">
-                  <span>📊</span> Profil Ketenagaan SDM
+                  <span>📊</span> Profil Ketenagaan SDM RSJ Tampan
                 </h6>
 
                 <div className="row g-3">
@@ -205,10 +269,12 @@ export default function GuestPage({
           }}
         >
           {[
-            { id: "tenaga_medis", label: "Profil Tenaga Medis & Dokter", icon: "👨‍⚕️" },
-            { id: "rekrutmen", label: "Informasi Rekrutmen & Formasi Nakes", icon: "📢" },
-            { id: "diklat", label: "Program Diklat & Kredensialing Jiwa", icon: "🎓" },
-            { id: "layanan_sdm", label: "Panduan Layanan Kepegawaian", icon: "📋" },
+            { id: "tenaga_medis", label: "Profil Tenaga Medis", icon: "👨‍⚕️" },
+            { id: "jadwal_dokter", label: "Jadwal Praktik Poliklinik", icon: "📅", badge: "Live" },
+            { id: "rekrutmen", label: "Rekrutmen & Formasi Nakes", icon: "📢", badge: "2026" },
+            { id: "diklat", label: "Diklat & Kredensialing", icon: "🎓" },
+            { id: "organisasi", label: "Struktur Organisasi SDM", icon: "🏛️" },
+            { id: "layanan_sdm", label: "Panduan & FAQ Layanan", icon: "📋" },
           ].map((tab) => {
             const isActive = activePortalTab === tab.id;
             return (
@@ -221,12 +287,24 @@ export default function GuestPage({
                 style={{
                   backgroundColor: isActive ? "#10b981" : darkMode ? "#1c2338" : "#f1f5f9",
                   color: isActive ? "#ffffff" : darkMode ? "#e2e8f0" : "#334155",
-                  fontSize: "0.85rem",
+                  fontSize: "0.83rem",
                   fontWeight: isActive ? 600 : 500,
                 }}
               >
                 <span>{tab.icon}</span>
                 <span>{tab.label}</span>
+                {tab.badge && (
+                  <span
+                    className="badge rounded-pill"
+                    style={{
+                      fontSize: "0.65rem",
+                      backgroundColor: isActive ? "rgba(255,255,255,0.25)" : darkMode ? "#2b3754" : "#e2e8f0",
+                      color: isActive ? "#ffffff" : darkMode ? "#94a3b8" : "#475569",
+                    }}
+                  >
+                    {tab.badge}
+                  </span>
+                )}
               </button>
             );
           })}
@@ -235,7 +313,7 @@ export default function GuestPage({
         {/* TAB 1: PROFIL DOKTER & TENAGA MEDIS */}
         {activePortalTab === "tenaga_medis" && (
           <div
-            className="p-4 rounded-4 border shadow-sm"
+            className="p-4 rounded-4 border shadow-sm animate-fade-in"
             style={{
               backgroundColor: darkMode ? "#111624" : "#ffffff",
               borderColor: cardBorderColor,
@@ -244,7 +322,7 @@ export default function GuestPage({
             <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
               <div>
                 <h5 className="fw-bold mb-1" style={{ color: textPrimary }}>
-                  👨‍⚕️ Dokter Spesialis Kedokteran Jiwa & Psikolog Klinis
+                  👨‍⚕️ Dokter Spesialis Kedokteran Jiwa & Tenaga Medis RSJ Tampan
                 </h5>
                 <p className="small mb-0" style={{ color: textSecondary }}>
                   Tenaga ahli kejiwaan terakreditasi melayani poliklinik rawat jalan, bangsal rawat inap, dan krisis NAPZA
@@ -255,8 +333,33 @@ export default function GuestPage({
               </span>
             </div>
 
+            {/* SEARCH & FILTER CONTROLS */}
+            <div className="row g-2 mb-4">
+              <div className="col-12 col-md-8">
+                <input
+                  type="text"
+                  className={`form-control form-control-sm ${darkMode ? "bg-dark text-white border-secondary" : ""}`}
+                  placeholder="Cari nama dokter, subspesialisasi, atau unit layanan..."
+                  value={doctorSearch}
+                  onChange={(e) => setDoctorSearch(e.target.value)}
+                />
+              </div>
+              <div className="col-12 col-md-4">
+                <select
+                  className={`form-select form-select-sm ${darkMode ? "bg-dark text-white border-secondary" : ""}`}
+                  value={doctorCategory}
+                  onChange={(e) => setDoctorCategory(e.target.value)}
+                >
+                  <option value="semua">Semua Kategori Tenaga Medis</option>
+                  <option value="dokter">Dokter Spesialis Jiwa (Sp.KJ)</option>
+                  <option value="psikolog">Psikolog Klinis</option>
+                  <option value="farmasi">Apoteker Farmasi Jiwa</option>
+                </select>
+              </div>
+            </div>
+
             <div className="row g-4">
-              {doctorsList.map((doc) => (
+              {filteredDoctors.map((doc) => (
                 <div key={doc.id} className="col-12 col-md-6 col-lg-4">
                   <div
                     className="p-3 rounded-3 h-100 border d-flex flex-column justify-content-between transition-all"
@@ -316,7 +419,7 @@ export default function GuestPage({
                       }}
                     >
                       <span style={{ color: textSecondary }}>Legalitas Izin:</span>
-                      <strong className="text-success">✅ SIP Aktif</strong>
+                      <strong className="text-success">✅ SIP Aktif Kemenkes</strong>
                     </div>
                   </div>
                 </div>
@@ -325,10 +428,116 @@ export default function GuestPage({
           </div>
         )}
 
-        {/* TAB 2: REKRUTMEN & FORMASI */}
+        {/* TAB 2: JADWAL PRAKTIK POLIKLINIK (NEW) */}
+        {activePortalTab === "jadwal_dokter" && (
+          <div
+            className="p-4 rounded-4 border shadow-sm animate-fade-in"
+            style={{
+              backgroundColor: darkMode ? "#111624" : "#ffffff",
+              borderColor: cardBorderColor,
+            }}
+          >
+            <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+              <div>
+                <h5 className="fw-bold mb-1" style={{ color: textPrimary }}>
+                  📅 Jadwal Praktik Poliklinik Rawat Jalan Spesialis Jiwa
+                </h5>
+                <p className="small mb-0" style={{ color: textSecondary }}>
+                  Informasi jam buka poliklinik psikiatri, konsultasi psikologi, dan layanan rehabilitasi adiksi NAPZA
+                </p>
+              </div>
+              {/* DAY FILTER PILLS */}
+              <div className="d-flex flex-wrap gap-1">
+                {["semua", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"].map((day) => (
+                  <button
+                    key={day}
+                    onClick={() => setScheduleDayFilter(day)}
+                    className={`btn btn-sm px-2 py-1 rounded-pill ${
+                      scheduleDayFilter === day ? "btn-success fw-bold" : "btn-outline-secondary"
+                    }`}
+                    style={{ fontSize: "0.75rem" }}
+                  >
+                    {day === "semua" ? "Semua Hari" : day}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="row g-3">
+              {filteredSchedules.map((sch) => (
+                <div key={sch.id} className="col-12 col-md-6 col-lg-4">
+                  <div
+                    className="p-3 rounded-3 h-100 border d-flex flex-column justify-content-between"
+                    style={{
+                      backgroundColor: cardSurfaceBg,
+                      borderColor: cardBorderColor,
+                    }}
+                  >
+                    <div>
+                      <div className="d-flex align-items-center gap-3 mb-3">
+                        <img
+                          src={sch.foto}
+                          alt={sch.nama}
+                          className="rounded-circle"
+                          style={{ width: "50px", height: "50px", objectFit: "cover", border: "2px solid #10b981" }}
+                        />
+                        <div>
+                          <h6 className="fw-bold mb-0" style={{ fontSize: "0.92rem", color: textPrimary }}>
+                            {sch.nama}
+                          </h6>
+                          <small className="text-success fw-semibold d-block">{sch.profesi}</small>
+                          <span className="badge bg-secondary" style={{ fontSize: "0.65rem" }}>
+                            {sch.ruangan}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div
+                        className="p-2 rounded-2 mb-2"
+                        style={{
+                          backgroundColor: darkMode ? "#161e36" : "#f1f5f9",
+                          fontSize: "0.78rem",
+                        }}
+                      >
+                        <div className="fw-semibold text-primary mb-1">{sch.poliklinik}</div>
+                        <div className="d-flex justify-content-between text-muted">
+                          <span>Hari Praktik:</span>
+                          <strong className="text-reset">{sch.hari.join(", ")}</strong>
+                        </div>
+                        <div className="d-flex justify-content-between text-muted">
+                          <span>Jam Praktik:</span>
+                          <strong className="text-success">{sch.jamMulai} - {sch.jamSelesai} WIB</strong>
+                        </div>
+                        <div className="d-flex justify-content-between text-muted">
+                          <span>Kuota Pasien:</span>
+                          <strong>{sch.kuotaHarian} Pasien/Hari</strong>
+                        </div>
+                      </div>
+
+                      <p className="small mb-0 text-muted" style={{ fontSize: "0.74rem" }}>
+                        <strong>Layanan Unggulan:</strong> {sch.layananKhusus}
+                      </p>
+                    </div>
+
+                    <div className="pt-2 mt-2 border-top d-flex justify-content-between align-items-center">
+                      <span className="badge bg-success-subtle text-success">
+                        ● Poliklinik Buka
+                      </span>
+                      <small className="text-muted" style={{ fontSize: "0.7rem" }}>
+                        Loket Pendaftaran: 07:30 - 11:30 WIB
+                      </small>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* TAB 3: REKRUTMEN & FORMASI */}
         {activePortalTab === "rekrutmen" && (
           <div
-            className="p-4 rounded-4 border shadow-sm"
+            className="p-4 rounded-4 border shadow-sm animate-fade-in"
             style={{
               backgroundColor: darkMode ? "#111624" : "#ffffff",
               borderColor: cardBorderColor,
@@ -340,7 +549,7 @@ export default function GuestPage({
                   📢 Pengumuman Rekrutmen & Formasi Nakes Jiwa RSJ Tampan
                 </h5>
                 <p className="small mb-0" style={{ color: textSecondary }}>
-                  Informasi penerimaan Pegawai Pemerintah dengan Perjanjian Kerja (PPPK) & Pegawai Tetap BLUD
+                  Informasi penerimaan Pegawai Pemerintah dengan Perjanjian Kerja (PPPK) & Pegawai Tetap BLUD Tahun 2026
                 </p>
               </div>
               <span className="badge bg-primary rounded-pill px-3 py-2">Tahun Anggaran 2026</span>
@@ -363,7 +572,7 @@ export default function GuestPage({
                   status: "Pendaftaran Dibuka",
                 },
                 {
-                  posisi: "Petugas Tim De-eskalasi & Pengamanan Krisis (Security)",
+                  posisi: "Petugas Tim De-eskalasi & Pengamanan Krisis",
                   kuota: "6 Formasi",
                   kualifikasi: "SMA/SMK Sederajat / Sertifikat Gada Pratama & Pelatihan Fisik",
                   tenggat: "15 September 2026",
@@ -400,12 +609,13 @@ export default function GuestPage({
                     </div>
 
                     <div className="pt-3 border-top mt-3 d-flex justify-content-between align-items-center">
-                      <span className="small" style={{ color: textMutedColor }}>Subbag Kepegawaian</span>
+                      <span className="small" style={{ color: textMutedColor }}>Subbag SDM RSJ</span>
                       <button
-                        className="btn btn-sm btn-outline-success"
-                        onClick={() => alert(`Informasi pendaftaran untuk posisi ${job.posisi} dapat diajukan ke Subbag Kepegawaian RSJ Tampan.`)}
+                        className="btn btn-sm btn-success fw-semibold d-flex align-items-center gap-1 shadow-sm"
+                        onClick={() => handleOpenRecruitment(job)}
                       >
-                        Lihat Persyaratan Lengkap
+                        <span>📝</span>
+                        <span>Lamar Formasi Ini</span>
                       </button>
                     </div>
                   </div>
@@ -415,10 +625,10 @@ export default function GuestPage({
           </div>
         )}
 
-        {/* TAB 3: PROGRAM DIKLAT */}
+        {/* TAB 4: PROGRAM DIKLAT */}
         {activePortalTab === "diklat" && (
           <div
-            className="p-4 rounded-4 border shadow-sm"
+            className="p-4 rounded-4 border shadow-sm animate-fade-in"
             style={{
               backgroundColor: darkMode ? "#111624" : "#ffffff",
               borderColor: cardBorderColor,
@@ -471,19 +681,78 @@ export default function GuestPage({
           </div>
         )}
 
-        {/* TAB 4: PANDUAN LAYANAN SDM */}
+        {/* TAB 5: STRUKTUR ORGANISASI SDM (NEW) */}
+        {activePortalTab === "organisasi" && (
+          <div
+            className="p-4 rounded-4 border shadow-sm animate-fade-in"
+            style={{
+              backgroundColor: darkMode ? "#111624" : "#ffffff",
+              borderColor: cardBorderColor,
+            }}
+          >
+            <div className="mb-4">
+              <h5 className="fw-bold mb-1" style={{ color: textPrimary }}>
+                🏛️ Bagan Struktur Organisasi Bidang SDM & Komite Nakes
+              </h5>
+              <p className="small mb-0" style={{ color: textSecondary }}>
+                Hierarki kepemimpinan pengelolaan kepegawaian, komite medik, dan komite keperawatan RSJ Tampan
+              </p>
+            </div>
+
+            <div className="row g-3">
+              {orgStructureData.map((org, idx) => (
+                <div key={idx} className="col-12 col-md-6 col-lg-4">
+                  <div
+                    className="p-3 rounded-3 border h-100 d-flex flex-column justify-content-between"
+                    style={{
+                      backgroundColor: cardSurfaceBg,
+                      borderColor: cardBorderColor,
+                    }}
+                  >
+                    <div>
+                      <div className="d-flex align-items-center gap-2 mb-2">
+                        <span className="fs-4">{org.icon}</span>
+                        <span className="badge bg-secondary" style={{ fontSize: "0.68rem" }}>
+                          Level {org.level} &bull; {org.unit}
+                        </span>
+                      </div>
+                      <h6 className="fw-bold text-success mb-1" style={{ fontSize: "0.9rem" }}>
+                        {org.jabatan}
+                      </h6>
+                      <h6 className="fw-bold mb-1" style={{ color: textPrimary, fontSize: "0.95rem" }}>
+                        {org.nama}
+                      </h6>
+                      <small className="text-muted d-block" style={{ fontSize: "0.72rem" }}>
+                        NIP: {org.nip}
+                      </small>
+                    </div>
+
+                    <div className="pt-2 mt-2 border-top d-flex justify-content-between align-items-center">
+                      <span className="small text-muted" style={{ fontSize: "0.72rem" }}>SK Direktur RSJ Tampan</span>
+                      <span className="badge bg-success-subtle text-success">Aktif Menjabat</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* TAB 6: PANDUAN LAYANAN SDM & FAQ (ENHANCED) */}
         {activePortalTab === "layanan_sdm" && (
           <div
-            className="p-4 rounded-4 border shadow-sm"
+            className="p-4 rounded-4 border shadow-sm animate-fade-in"
             style={{
               backgroundColor: darkMode ? "#111624" : "#ffffff",
               borderColor: cardBorderColor,
             }}
           >
             <h5 className="fw-bold mb-3" style={{ color: textPrimary }}>
-              📋 Panduan Prosedur Standar & Hak Kepegawaian RSJ Tampan
+              📋 Panduan Prosedur Standar & FAQ Kepegawaian RSJ Tampan
             </h5>
-            <div className="row g-3">
+
+            {/* SOP CARDS */}
+            <div className="row g-3 mb-4">
               <div className="col-md-6">
                 <div
                   className="p-3 rounded-3 border h-100"
@@ -495,7 +764,7 @@ export default function GuestPage({
                   <h6 className="fw-bold text-success mb-2">🏖️ Tata Cara Pengajuan Cuti ASN & BLUD</h6>
                   <ol className="small ps-3 mb-3 d-flex flex-column gap-1" style={{ color: textSecondary }}>
                     <li>Pengajuan dilakukan H-3 sebelum tanggal cuti melalui sistem SIM-SDM.</li>
-                    <li>Wajib menunjuk petugas pengganti (*handover*) demi keamanan bangsal jiwa.</li>
+                    <li>Wajib menunjuk petugas pengganti (<em>handover</em>) demi keamanan bangsal jiwa.</li>
                     <li>Persetujuan berjenjang: Kepala Ruangan &bull; Kasubbag Kepegawaian.</li>
                     <li>Sisa kuota cuti tahunan maksimal 12 hari kerja per tahun.</li>
                   </ol>
@@ -526,9 +795,64 @@ export default function GuestPage({
                 </div>
               </div>
             </div>
+
+            {/* FAQ ACCORDION */}
+            <div className="mt-4 pt-3 border-top" style={{ borderColor: cardBorderColor }}>
+              <h6 className="fw-bold mb-3 d-flex align-items-center gap-2" style={{ color: textPrimary }}>
+                <span>❓</span> Tanya Jawab Seputar Layanan SDM & Magang / PKL
+              </h6>
+
+              <div className="d-flex flex-column gap-2">
+                {sdmFaqs.map((faq, idx) => {
+                  const isOpen = openFaqIndex === idx;
+                  return (
+                    <div
+                      key={idx}
+                      className="rounded-3 border overflow-hidden"
+                      style={{
+                        backgroundColor: cardSurfaceBg,
+                        borderColor: cardBorderColor,
+                      }}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => setOpenFaqIndex(isOpen ? -1 : idx)}
+                        className="btn w-100 text-start p-3 d-flex align-items-center justify-content-between border-0"
+                        style={{
+                          backgroundColor: isOpen ? (darkMode ? "#182035" : "#f1f5f9") : "transparent",
+                          color: textPrimary,
+                        }}
+                      >
+                        <div className="d-flex align-items-center gap-2">
+                          <span className="badge bg-secondary-subtle text-secondary" style={{ fontSize: "0.68rem" }}>
+                            {faq.kategori}
+                          </span>
+                          <span className="fw-semibold small">{faq.tanya}</span>
+                        </div>
+                        <span>{isOpen ? "▲" : "▼"}</span>
+                      </button>
+
+                      {isOpen && (
+                        <div className="p-3 border-top small" style={{ borderColor: cardBorderColor, color: textSecondary, lineHeight: "1.6" }}>
+                          {faq.jawab}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         )}
       </div>
+
+      {/* RECRUITMENT MODAL */}
+      <SdmRecruitmentModal
+        isOpen={isRecruitmentModalOpen}
+        onClose={() => setIsRecruitmentModalOpen(false)}
+        job={selectedJob}
+        darkMode={darkMode}
+      />
     </div>
   );
 }

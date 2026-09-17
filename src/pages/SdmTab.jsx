@@ -5,16 +5,21 @@ import SdmAbkWisnModal from "../components/SdmAbkWisnModal";
 import SdmSpkModal from "../components/SdmSpkModal";
 import SdmPresensiModal from "../components/SdmPresensiModal";
 import SdmDossierModal from "../components/SdmDossierModal";
+import SdmIdCardModal from "../components/SdmIdCardModal";
+import SdmShiftSwapModal from "../components/SdmShiftSwapModal";
+import SdmLeaveLetterModal from "../components/SdmLeaveLetterModal";
+import SdmCertificateModal from "../components/SdmCertificateModal";
 
 import {
   initialWisnData,
   initialCredentials,
   initialAttendanceLogs,
   initialDossiers,
+  initialAttendanceRecap,
 } from "../data/sdmData";
 
 import { isAdminOrHrd, canApproveLeave, getActiveUser } from "../utils/authHelpers";
-import { exportLeavesToCSV } from "../utils/exportHelpers";
+import { exportLeavesToCSV, exportEmployeesToCSV } from "../utils/exportHelpers";
 
 export default function SdmTab({
   activeTab = "direktori",
@@ -47,9 +52,10 @@ export default function SdmTab({
   const [adminLeaveFilterUnit, setAdminLeaveFilterUnit] = useState("semua");
 
   // DATA STATES FOR CAT 2 & 4
-  const [wisnList, setWisnList] = useState(initialWisnData);
-  const [credentialsList, setCredentialsList] = useState(initialCredentials);
+  const [wisnList] = useState(initialWisnData);
+  const [credentialsList] = useState(initialCredentials);
   const [attendanceLogs, setAttendanceLogs] = useState(initialAttendanceLogs);
+  const [attendanceRecap] = useState(initialAttendanceRecap);
   const [dossiersList, setDossiersList] = useState(() => {
     try {
       const saved = localStorage.getItem("rsj_dossiers");
@@ -77,6 +83,51 @@ export default function SdmTab({
 
   const [isDossierModalOpen, setIsDossierModalOpen] = useState(false);
   const [selectedDossier, setSelectedDossier] = useState(null);
+
+  // ID CARD MODAL STATE
+  const [isIdCardModalOpen, setIsIdCardModalOpen] = useState(false);
+  const [selectedIdCardEmployee, setSelectedIdCardEmployee] = useState(null);
+
+  // SHIFT SWAP MODAL & LIST STATE
+  const [isShiftSwapModalOpen, setIsShiftSwapModalOpen] = useState(false);
+  const [swapRequestsList, setSwapRequestsList] = useState([
+    {
+      id: "SWAP-001",
+      applicantName: "Ns. Budi Setiawan, S.Kep",
+      partnerName: "Ns. Nurul Hidayah, S.Kep",
+      ward: "IGD Jiwa & Krisis 24 Jam",
+      date: "2026-09-18",
+      applicantShift: "Pagi (07:30 - 14:00)",
+      partnerShift: "Malam (20:30 - 07:30)",
+      reason: "Mengikuti Pelatihan Refreshment De-eskalasi Agresi",
+      status: "Disetujui Karu",
+      tanggalPengajuan: "2026-09-14",
+    },
+    {
+      id: "SWAP-002",
+      applicantName: "Dedi Kurniawan, S.Kep",
+      partnerName: "Ns. Siti Rahmawati, Sp.Kep.J",
+      ward: "Bangsal Kampar (Akut Pria)",
+      date: "2026-09-20",
+      applicantShift: "Sore (14:00 - 20:30)",
+      partnerShift: "Pagi (07:30 - 14:00)",
+      reason: "Pendampingan Pasien Rujukan ECT Jiwa",
+      status: "Menunggu Persetujuan Karu",
+      tanggalPengajuan: "2026-09-14",
+    },
+  ]);
+
+  // LEAVE LETTER MODAL STATE
+  const [isLeaveLetterModalOpen, setIsLeaveLetterModalOpen] = useState(false);
+  const [selectedLeaveLetter, setSelectedLeaveLetter] = useState(null);
+
+  // CERTIFICATE MODAL STATE
+  const [isCertificateModalOpen, setIsCertificateModalOpen] = useState(false);
+  const [selectedCertificateTraining, setSelectedCertificateTraining] = useState(null);
+  const [selectedCertificateEmployee, setSelectedCertificateEmployee] = useState(null);
+
+  // DIREKTORI STR/SIP STATUS FILTER
+  const [filterStrStatus, setFilterStrStatus] = useState("semua");
 
   React.useEffect(() => {
     if (activeTab && [
@@ -122,9 +173,18 @@ export default function SdmTab({
       const matchUnit = filterUnit === "semua" || emp.unitPenempatan.includes(filterUnit);
       const matchStatus = filterStatus === "semua" || emp.statusKepegawaian === filterStatus;
 
-      return matchSearch && matchCategory && matchUnit && matchStatus;
+      const isStrExp = emp.str?.status === "Expired" || emp.sip?.status === "Expired";
+      const isStrWarn = emp.str?.status === "Mendekati Expired" || emp.sip?.status === "Mendekati Expired";
+      const matchStrStatus =
+        filterStrStatus === "semua" ||
+        (filterStrStatus === "aktif" && !isStrExp && !isStrWarn && emp.str?.nomor !== "-") ||
+        (filterStrStatus === "warning" && isStrWarn) ||
+        (filterStrStatus === "expired" && isStrExp);
+
+      return matchSearch && matchCategory && matchUnit && matchStatus && matchStrStatus;
     });
-  }, [employees, searchEmp, filterCategory, filterUnit, filterStatus]);
+  }, [employees, searchEmp, filterCategory, filterUnit, filterStatus, filterStrStatus]);
+
 
   // STR/SIP EXPIRED COUNT & LIST
   const expiringLicenses = useMemo(() => {
@@ -235,6 +295,40 @@ export default function SdmTab({
   const handleAddAttendance = (newLog) => {
     setAttendanceLogs((prev) => [newLog, ...prev]);
     showToast?.("Presensi Tercatat", `Presensi ${newLog.shift} atas nama ${newLog.nama} berhasil direkam.`, "success");
+  };
+
+  // HANDLERS MODAL BARU
+  const handleOpenIdCard = (emp) => {
+    setSelectedIdCardEmployee(emp);
+    setIsIdCardModalOpen(true);
+  };
+
+  const handleOpenShiftSwap = () => {
+    setIsShiftSwapModalOpen(true);
+  };
+
+  const handleSubmitSwap = (newSwap) => {
+    setSwapRequestsList((prev) => [newSwap, ...prev]);
+    showToast?.("Tukar Shift Diajukan", `Permohonan pertukaran dinas telah dikirim ke Kepala Ruangan.`, "success");
+  };
+
+  const handleOpenLeaveLetter = (leave) => {
+    setSelectedLeaveLetter(leave);
+    setIsLeaveLetterModalOpen(true);
+  };
+
+  const handleOpenCertificate = (trn, empName = null) => {
+    setSelectedCertificateTraining(trn);
+    setSelectedCertificateEmployee(empName || effectiveUser?.nama || "Ns. Budi Setiawan, S.Kep");
+    setIsCertificateModalOpen(true);
+  };
+
+  const handleSendStrReminder = (emp) => {
+    showToast?.(
+      "Notifikasi Terkirim",
+      `Pengingat pembaruan STR/SIP telah dikirim ke WhatsApp/Email ${emp.nama} (${emp.email || emp.noHp}).`,
+      "info"
+    );
   };
 
   // UI THEME HELPERS
@@ -410,7 +504,37 @@ export default function SdmTab({
         </div>
 
         {/* QUICK ACTIONS */}
-        <div className="d-flex align-items-center gap-2">
+        <div className="d-flex align-items-center gap-2 flex-wrap">
+          {subTab === "direktori" && (
+            <>
+              <button
+                type="button"
+                onClick={() => exportEmployeesToCSV(filteredEmployees)}
+                className="btn btn-outline-success btn-sm d-flex align-items-center gap-1 rounded-3 px-3 fw-semibold shadow-sm"
+                title="Ekspor Seluruh Data Pegawai ke File CSV"
+              >
+                <span>📥</span> Ekspor CSV Pegawai
+              </button>
+              {isAdminOrHrd(effectiveUser) && (
+                <button
+                  type="button"
+                  onClick={handleOpenAddEmployee}
+                  className="btn btn-success btn-sm d-flex align-items-center gap-1 rounded-3 px-3 fw-semibold shadow-sm"
+                >
+                  <span>➕</span> Tambah Pegawai
+                </button>
+              )}
+            </>
+          )}
+          {subTab === "roster" && (
+            <button
+              type="button"
+              onClick={handleOpenShiftSwap}
+              className="btn btn-primary btn-sm d-flex align-items-center gap-1 rounded-3 px-3 fw-semibold shadow-sm"
+            >
+              <span>🔄</span> Permohonan Tukar Shift
+            </button>
+          )}
           {subTab === "abk_wisn" && (
             <button
               type="button"
@@ -430,15 +554,6 @@ export default function SdmTab({
               className="btn btn-success btn-sm d-flex align-items-center gap-1 rounded-3 px-3 fw-semibold shadow-sm"
             >
               <span>📸</span> Clock-In / Clock-Out Shift
-            </button>
-          )}
-          {subTab === "direktori" && isAdminOrHrd(effectiveUser) && (
-            <button
-              type="button"
-              onClick={handleOpenAddEmployee}
-              className="btn btn-success btn-sm d-flex align-items-center gap-1 rounded-3 px-3 fw-semibold shadow-sm"
-            >
-              <span>➕</span> Tambah Pegawai
             </button>
           )}
           {subTab === "cuti" && (
@@ -729,6 +844,63 @@ export default function SdmTab({
               </tbody>
             </table>
           </div>
+
+          {/* REKAPITULASI DISIPLIN & LEMBUR BULANAN */}
+          <div className="mt-4 pt-3 border-top" style={{ borderColor: cardBorder }}>
+            <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+              <div>
+                <h6 className="fw-bold mb-1">📊 Rekapitulasi Disiplin Presensi & Akumulasi Lembur Shift Bulanan</h6>
+                <small className="text-muted">Dasar perhitungan pembayaran TPP (Tambahan Penghasilan Pegawai) dan Insentif Shift Jiwa</small>
+              </div>
+              <span className="badge bg-success-subtle text-success">Periode: September 2026</span>
+            </div>
+
+            <div className="table-responsive rounded-3 border" style={{ borderColor: cardBorder }}>
+              <table className={`table ${darkMode ? "table-dark" : "table-light"} table-sm align-middle mb-0`} style={{ fontSize: "0.82rem" }}>
+                <thead style={{ backgroundColor: tableHeaderBg, color: darkMode ? "#cbd5e1" : "#475569" }}>
+                  <tr>
+                    <th className="py-2 px-3">Nama Petugas / Unit</th>
+                    <th className="py-2 text-center">Shift Wajib</th>
+                    <th className="py-2 text-center">Tepat Waktu</th>
+                    <th className="py-2 text-center">Terlambat</th>
+                    <th className="py-2 text-center">Jam Lembur</th>
+                    <th className="py-2 text-center">Tingkat Disiplin</th>
+                    <th className="py-2 text-center">Grade Kinerja</th>
+                    <th className="py-2 text-end px-3">Status TPP / Insentif</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {attendanceRecap.map((rcp) => (
+                    <tr key={rcp.id} style={{ borderBottomColor: cardBorder }}>
+                      <td className="px-3 py-2">
+                        <div className="fw-semibold">{rcp.nama}</div>
+                        <small className="text-muted">{rcp.unit}</small>
+                      </td>
+                      <td className="text-center">{rcp.totalShiftWajib} Shift</td>
+                      <td className="text-center text-success fw-bold">{rcp.hadirTepatWaktu}</td>
+                      <td className="text-center">
+                        {rcp.terlambatKali > 0 ? (
+                          <span className="text-danger fw-semibold">{rcp.terlambatKali}x ({rcp.totalMenitTerlambat}m)</span>
+                        ) : (
+                          <span className="text-success">0</span>
+                        )}
+                      </td>
+                      <td className="text-center fw-semibold text-primary">+{rcp.jamLembur} Jam</td>
+                      <td className="text-center">
+                        <span className="badge bg-primary-subtle text-primary">{rcp.persentaseDisiplin}%</span>
+                      </td>
+                      <td className="text-center">
+                        <span className="badge bg-success-subtle text-success">{rcp.gradeKinerja}</span>
+                      </td>
+                      <td className="text-end px-3">
+                        <span className="badge bg-success">{rcp.statusTPP}</span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       )}
 
@@ -828,8 +1000,8 @@ export default function SdmTab({
           style={{ backgroundColor: cardBg, border: `1px solid ${cardBorder}` }}
         >
           {/* SEARCH & FILTERS */}
-          <div className="row g-3 mb-4">
-            <div className="col-12 col-md-4">
+          <div className="row g-2 mb-4">
+            <div className="col-12 col-md-3">
               <div className="input-group input-group-sm">
                 <span
                   className="input-group-text border-end-0"
@@ -843,7 +1015,7 @@ export default function SdmTab({
                 </span>
                 <input
                   type="text"
-                  placeholder="Cari nama, NIP, profesi, atau bangsal..."
+                  placeholder="Cari nama, NIP, profesi..."
                   value={searchEmp}
                   onChange={(e) => setSearchEmp(e.target.value)}
                   className="form-control form-control-sm border-start-0"
@@ -877,7 +1049,7 @@ export default function SdmTab({
               </select>
             </div>
 
-            <div className="col-6 col-md-3">
+            <div className="col-6 col-md-2">
               <select
                 className="form-select form-select-sm"
                 value={filterUnit}
@@ -888,18 +1060,18 @@ export default function SdmTab({
                   borderColor: darkMode ? "#283452" : "#cbd5e1",
                 }}
               >
-                <option value="semua">Semua Unit Penempatan</option>
-                <option value="Kampar">Bangsal Kampar (Akut Pria)</option>
-                <option value="Siak">Bangsal Siak (Wanita)</option>
-                <option value="Indragiri">Bangsal Indragiri (Tenang)</option>
-                <option value="Rokan">Bangsal Rokan (NAPZA)</option>
-                <option value="IGD Jiwa">IGD Jiwa & Krisis</option>
-                <option value="Poli">Poli Jiwa & Klinik</option>
-                <option value="Farmasi">Instalasi Farmasi</option>
+                <option value="semua">Semua Unit</option>
+                <option value="Kampar">Bangsal Kampar</option>
+                <option value="Siak">Bangsal Siak</option>
+                <option value="Indragiri">Bangsal Indragiri</option>
+                <option value="Rokan">Bangsal Rokan</option>
+                <option value="IGD Jiwa">IGD Jiwa</option>
+                <option value="Poli">Poli Jiwa</option>
+                <option value="Farmasi">Farmasi</option>
               </select>
             </div>
 
-            <div className="col-12 col-md-2">
+            <div className="col-6 col-md-2">
               <select
                 className="form-select form-select-sm"
                 value={filterStatus}
@@ -910,11 +1082,29 @@ export default function SdmTab({
                   borderColor: darkMode ? "#283452" : "#cbd5e1",
                 }}
               >
-                <option value="semua">Semua Status</option>
+                <option value="semua">Semua Status ASN</option>
                 <option value="PNS">PNS</option>
                 <option value="PPPK">PPPK</option>
                 <option value="Pegawai BLUD">BLUD</option>
                 <option value="Kontrak">Kontrak</option>
+              </select>
+            </div>
+
+            <div className="col-6 col-md-2">
+              <select
+                className="form-select form-select-sm"
+                value={filterStrStatus}
+                onChange={(e) => setFilterStrStatus(e.target.value)}
+                style={{
+                  backgroundColor: darkMode ? "#181f33" : "#f8fafc",
+                  color: darkMode ? "#ffffff" : "#0f172a",
+                  borderColor: darkMode ? "#283452" : "#cbd5e1",
+                }}
+              >
+                <option value="semua">Semua Status STR</option>
+                <option value="aktif">STR/SIP Aktif</option>
+                <option value="warning">Mendekati Expired (&lt; 90 Hari)</option>
+                <option value="expired">Expired / Kadaluarsa</option>
               </select>
             </div>
           </div>
@@ -930,7 +1120,7 @@ export default function SdmTab({
                   <th className="py-3">Status ASN</th>
                   <th className="py-3 text-center">Status STR / SIP</th>
                   <th className="py-3 text-center">SKP</th>
-                  <th className="py-3 text-end px-3">Aksi</th>
+                  <th className="py-3 text-end px-3">Aksi Pegawai</th>
                 </tr>
               </thead>
               <tbody>
@@ -1034,11 +1224,19 @@ export default function SdmTab({
                           <div className="btn-group btn-group-sm">
                             <button
                               type="button"
+                              onClick={() => handleOpenIdCard(emp)}
+                              className="btn btn-outline-success"
+                              title="Cetak Kartu Pegawai (ID Card & QR Badge)"
+                            >
+                              🪪 ID Card
+                            </button>
+                            <button
+                              type="button"
                               onClick={() => handleOpenViewEmployee(emp)}
                               className="btn btn-outline-info"
                               title="Lihat Detail Profil Pegawai"
                             >
-                              👁️ {isAdminOrHrd(effectiveUser) ? "" : "Detail"}
+                              👁️
                             </button>
                             {isAdminOrHrd(effectiveUser) && (
                               <>
@@ -1085,7 +1283,22 @@ export default function SdmTab({
                 Distribusi perawat pelaksana, ketua tim (Katim), dokter spesialis on-call, dan petugas respon krisis bangsal
               </p>
             </div>
-            <div className="d-flex align-items-center gap-2">
+            <div className="d-flex align-items-center gap-2 flex-wrap">
+              <button
+                type="button"
+                onClick={handleOpenShiftSwap}
+                className="btn btn-primary btn-sm d-flex align-items-center gap-1 fw-semibold shadow-sm px-3"
+              >
+                <span>🔄</span> Permohonan Tukar Shift
+              </button>
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1 px-3"
+                title="Cetak Jadwal Shift Format Resmi Rumah Sakit"
+              >
+                <span>🖨️</span> Cetak Roster
+              </button>
               <select
                 className="form-select form-select-sm"
                 value={rosterWardFilter}
@@ -1094,7 +1307,7 @@ export default function SdmTab({
                   backgroundColor: darkMode ? "#181f33" : "#f8fafc",
                   color: darkMode ? "#ffffff" : "#0f172a",
                   borderColor: darkMode ? "#283452" : "#cbd5e1",
-                  width: "220px",
+                  width: "200px",
                 }}
               >
                 <option value="semua">Semua Bangsal & IGD</option>
@@ -1105,6 +1318,45 @@ export default function SdmTab({
               </select>
             </div>
           </div>
+
+          {/* ACTIVE SHIFT SWAP NOTICES */}
+          {swapRequestsList.length > 0 && (
+            <div
+              className="p-3 rounded-3 mb-4 border"
+              style={{
+                backgroundColor: darkMode ? "#141b2e" : "#f0fdf4",
+                borderColor: darkMode ? "#223254" : "#bbf7d0",
+              }}
+            >
+              <div className="d-flex justify-content-between align-items-center mb-2">
+                <span className="small fw-bold text-success d-flex align-items-center gap-1">
+                  <span>🔄</span> Permohonan Tukar Dinas Bangsal (Terbaru):
+                </span>
+                <span className="badge bg-success-subtle text-success">{swapRequestsList.length} Permohonan</span>
+              </div>
+              <div className="row g-2">
+                {swapRequestsList.map((sw) => (
+                  <div key={sw.id} className="col-12 col-md-6">
+                    <div
+                      className="p-2 rounded-2 border bg-body"
+                      style={{ fontSize: "0.78rem" }}
+                    >
+                      <div className="d-flex justify-content-between align-items-center mb-1">
+                        <strong>{sw.applicantName} ↔ {sw.partnerName}</strong>
+                        <span className={`badge ${sw.status.includes("Disetujui") ? "bg-success" : "bg-warning text-dark"}`} style={{ fontSize: "0.65rem" }}>
+                          {sw.status}
+                        </span>
+                      </div>
+                      <div className="text-muted">
+                        📅 Tgl: {sw.date} &bull; {sw.ward} &bull; {sw.applicantShift} ditukar ke {sw.partnerShift}
+                      </div>
+                      <small className="text-muted fst-italic">"{sw.reason}"</small>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* ROSTER CARDS */}
           <div className="row g-4">
@@ -1283,22 +1535,34 @@ export default function SdmTab({
                           </span>
                         </td>
                         <td className="text-end px-3">
-                          {isAdminOrHrd(effectiveUser) ? (
-                            <button
-                              type="button"
-                              onClick={() => {
-                                onRenewStrSip?.(emp.id);
-                                showToast?.("Legalitas Diperpanjang", `STR/SIP atas nama ${emp.nama} telah diverifikasi perpanjangan 5 tahun.`, "success");
-                              }}
-                              className="btn btn-outline-success btn-sm d-inline-flex align-items-center gap-1"
-                            >
-                              <span>🔄</span> Perbarui STR/SIP
-                            </button>
-                          ) : (
-                            <span className="badge bg-secondary-subtle text-secondary px-2 py-1">
-                              Tinjauan Kasubbag SDM
-                            </span>
-                          )}
+                          <div className="btn-group btn-group-sm">
+                            {(isStrWarning || isStrExpired) && (
+                              <button
+                                type="button"
+                                onClick={() => handleSendStrReminder(emp)}
+                                className="btn btn-outline-warning"
+                                title="Kirim Notifikasi Pengingat WhatsApp / Email ke Pegawai"
+                              >
+                                📱 Ingatkan
+                              </button>
+                            )}
+                            {isAdminOrHrd(effectiveUser) ? (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  onRenewStrSip?.(emp.id);
+                                  showToast?.("Legalitas Diperpanjang", `STR/SIP atas nama ${emp.nama} telah diverifikasi perpanjangan 5 tahun.`, "success");
+                                }}
+                                className="btn btn-outline-success d-inline-flex align-items-center gap-1"
+                              >
+                                <span>🔄</span> Perbarui STR/SIP
+                              </button>
+                            ) : (
+                              <span className="badge bg-secondary-subtle text-secondary px-2 py-1">
+                                Tinjauan Kasubbag SDM
+                              </span>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     );
@@ -1600,15 +1864,26 @@ export default function SdmTab({
                             {/* LOGIKA PERSETUJUAN KETAT BERDASARKAN ROLE & USERNAME (@admin / HRD) */}
                             {!isAdminOrHrd(effectiveUser) ? (
                               /* READ-ONLY UNTUK AKUN PEGAWAI BIASA (cth: @gibran / Dokter / Perawat): Teks status statis tanpa tombol approval */
-                              <div className="small">
+                              <div className="d-flex flex-column align-items-end gap-1">
                                 {leave.status === "Menunggu Persetujuan" ? (
                                   <span className="badge bg-secondary-subtle text-secondary border border-secondary-subtle px-2 py-1">
                                     ⏳ Menunggu Persetujuan HRD
                                   </span>
                                 ) : leave.status === "Disetujui" ? (
-                                  <span className="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">
-                                    ✅ Disetujui ({leave.disetujuiOleh || "HRD"})
-                                  </span>
+                                  <>
+                                    <span className="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">
+                                      ✅ Disetujui ({leave.disetujuiOleh || "HRD"})
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleOpenLeaveLetter(leave)}
+                                      className="btn btn-xs btn-outline-success rounded-pill py-0 px-2 fw-semibold mt-1"
+                                      style={{ fontSize: "0.72rem" }}
+                                      title="Cetak Surat Izin Cuti Resmi BKN/RSJ"
+                                    >
+                                      📜 Cetak Surat Cuti
+                                    </button>
+                                  </>
                                 ) : (
                                   <span className="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1">
                                     ❌ Ditolak ({leave.disetujuiOleh || "HRD"})
@@ -1617,19 +1892,32 @@ export default function SdmTab({
                               </div>
                             ) : approvalAuth.isSelf ? (
                               /* KASUS SELF-APPROVAL: Pemohon @admin tidak boleh menyetujui cutinya sendiri (user.id === pemohon.user_id) */
-                              <span
-                                className="badge px-2 py-1 text-wrap"
-                                style={{
-                                  backgroundColor: darkMode ? "rgba(245, 158, 11, 0.15)" : "#fffbeb",
-                                  color: "#f59e0b",
-                                  border: "1px solid #f59e0b",
-                                  fontSize: "0.72rem",
-                                  maxWidth: "190px",
-                                }}
-                                title="Anda adalah pemohon cuti ini (user.id === pemohon.user_id). Sesuai regulasi rumah sakit, persetujuan harus dilakukan oleh Direktur / Wadir."
-                              >
-                                ⚠️ Pengajuan Sendiri (Wajib Direktur)
-                              </span>
+                              <div className="d-flex flex-column align-items-end gap-1">
+                                <span
+                                  className="badge px-2 py-1 text-wrap"
+                                  style={{
+                                    backgroundColor: darkMode ? "rgba(245, 158, 11, 0.15)" : "#fffbeb",
+                                    color: "#f59e0b",
+                                    border: "1px solid #f59e0b",
+                                    fontSize: "0.72rem",
+                                    maxWidth: "190px",
+                                  }}
+                                  title="Anda adalah pemohon cuti ini (user.id === pemohon.user_id). Sesuai regulasi rumah sakit, persetujuan harus dilakukan oleh Direktur / Wadir."
+                                >
+                                  ⚠️ Pengajuan Sendiri (Wajib Direktur)
+                                </span>
+                                {leave.status === "Disetujui" && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleOpenLeaveLetter(leave)}
+                                    className="btn btn-xs btn-outline-success rounded-pill py-0 px-2 fw-semibold mt-1"
+                                    style={{ fontSize: "0.72rem" }}
+                                    title="Cetak Surat Izin Cuti Resmi BKN/RSJ"
+                                  >
+                                    📜 Cetak Surat Cuti
+                                  </button>
+                                )}
+                              </div>
                             ) : isPending ? (
                               /* KASUS NORMAL: Admin (@admin/HRD) menyetujui pengajuan pegawai lain */
                               <div className="btn-group btn-group-sm shadow-sm">
@@ -1676,11 +1964,24 @@ export default function SdmTab({
                               </div>
                             ) : (
                               /* SUDAH DIPROSES OLEH ADMIN / HRD */
-                              <div className="small text-muted">
-                                <span>Selesai Ditinjau:</span>
-                                <strong className="d-block text-truncate" style={{ maxWidth: "160px" }}>
-                                  {leave.disetujuiOleh || "Kasubbag Kepegawaian"}
-                                </strong>
+                              <div className="d-flex flex-column align-items-end gap-1">
+                                <div className="small text-muted">
+                                  <span>Selesai Ditinjau:</span>
+                                  <strong className="d-block text-truncate" style={{ maxWidth: "160px" }}>
+                                    {leave.disetujuiOleh || "Kasubbag Kepegawaian"}
+                                  </strong>
+                                </div>
+                                {leave.status === "Disetujui" && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleOpenLeaveLetter(leave)}
+                                    className="btn btn-xs btn-outline-success rounded-pill py-0 px-2 fw-semibold mt-1"
+                                    style={{ fontSize: "0.72rem" }}
+                                    title="Cetak Surat Izin Cuti Resmi BKN/RSJ"
+                                  >
+                                    📜 Cetak Surat Cuti
+                                  </button>
+                                )}
                               </div>
                             )}
                           </td>
@@ -1751,15 +2052,25 @@ export default function SdmTab({
                     </ul>
                   </div>
 
-                  <div className="d-flex align-items-center justify-content-between pt-3 border-top">
+                  <div className="d-flex align-items-center justify-content-between pt-3 border-top gap-2 flex-wrap">
                     <span className="small fw-semibold text-success">👥 {trn.pesertaTerdaftar} Peserta Terdaftar</span>
-                    <button
-                      type="button"
-                      onClick={() => showToast?.("Registrasi Diklat", `Pendaftaran untuk ${trn.namaPelatihan} telah diverifikasi.`, "success")}
-                      className="btn btn-sm btn-outline-primary"
-                    >
-                      Daftarkan Peserta Nakes
-                    </button>
+                    <div className="d-flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleOpenCertificate(trn)}
+                        className="btn btn-sm btn-outline-info fw-semibold"
+                        title="Lihat & Cetak E-Sertifikat Terakreditasi Kemenkes / PPNI"
+                      >
+                        📜 E-Sertifikat
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => showToast?.("Registrasi Diklat", `Pendaftaran untuk ${trn.namaPelatihan} telah diverifikasi.`, "success")}
+                        className="btn btn-sm btn-primary fw-semibold"
+                      >
+                        Daftarkan Nakes
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1864,6 +2175,38 @@ export default function SdmTab({
         onSaveDossier={handleSaveDossier}
         darkMode={darkMode}
       />
+
+      {/* NEW FEATURE MODALS */}
+      <SdmIdCardModal
+        isOpen={isIdCardModalOpen}
+        onClose={() => setIsIdCardModalOpen(false)}
+        employee={selectedIdCardEmployee}
+        darkMode={darkMode}
+      />
+
+      <SdmShiftSwapModal
+        isOpen={isShiftSwapModalOpen}
+        onClose={() => setIsShiftSwapModalOpen(false)}
+        employees={employees}
+        onSubmitSwap={handleSubmitSwap}
+        darkMode={darkMode}
+      />
+
+      <SdmLeaveLetterModal
+        isOpen={isLeaveLetterModalOpen}
+        onClose={() => setIsLeaveLetterModalOpen(false)}
+        leave={selectedLeaveLetter}
+        darkMode={darkMode}
+      />
+
+      <SdmCertificateModal
+        isOpen={isCertificateModalOpen}
+        onClose={() => setIsCertificateModalOpen(false)}
+        training={selectedCertificateTraining}
+        employeeName={selectedCertificateEmployee}
+        darkMode={darkMode}
+      />
     </div>
   );
 }
+

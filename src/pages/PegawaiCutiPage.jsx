@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { getEmployeeForUser, isAdminOrHrd } from "../utils/authHelpers";
+import SdmLeaveLetterModal from "../components/SdmLeaveLetterModal";
 
 export default function PegawaiCutiPage({
   currentUser,
@@ -41,6 +42,10 @@ export default function PegawaiCutiPage({
   const [statusFilter, setStatusFilter] = useState("semua");
   const [searchQuery, setSearchQuery] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Leave letter modal state
+  const [isLeaveLetterOpen, setIsLeaveLetterOpen] = useState(false);
+  const [selectedLeaveForLetter, setSelectedLeaveForLetter] = useState(null);
 
   // Filter Riwayat Cuti HANYA milik user/pegawai yang sedang login
   const myLeaveRequests = useMemo(() => {
@@ -861,6 +866,20 @@ export default function PegawaiCutiPage({
                               {isPending ? "⏳ " : isApproved ? "✅ " : "❌ "}
                               {leave.status}
                             </span>
+                            {isApproved && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSelectedLeaveForLetter(leave);
+                                  setIsLeaveLetterOpen(true);
+                                }}
+                                className="btn btn-xs btn-outline-success d-block mx-auto mt-1 rounded-pill py-0 px-2 fw-semibold"
+                                style={{ fontSize: "0.72rem" }}
+                                title="Lihat & Cetak Surat Izin Cuti Resmi BKN/RSJ Tampan"
+                              >
+                                📜 Cetak Surat
+                              </button>
+                            )}
                           </td>
                           <td className="px-3">
                             <div className="small" style={{ color: textPrimary }}>
@@ -880,6 +899,14 @@ export default function PegawaiCutiPage({
           </div>
         )}
       </div>
+
+      {/* MODAL SURAT IZIN CUTI RESMI */}
+      <SdmLeaveLetterModal
+        isOpen={isLeaveLetterOpen}
+        onClose={() => setIsLeaveLetterOpen(false)}
+        leave={selectedLeaveForLetter}
+        darkMode={darkMode}
+      />
     </div>
   );
 }

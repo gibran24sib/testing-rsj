@@ -11,6 +11,7 @@ export default function RegisterPage({
   cardBg,
 }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const onSubmit = async (e) => {
     e.preventDefault();
@@ -31,6 +32,23 @@ export default function RegisterPage({
       email: prev.email && !prev.email.endsWith("@rsjtampan.riau.go.id") ? prev.email : (cleanUser ? `${cleanUser}@rsjtampan.riau.go.id` : ""),
     }));
   };
+
+  // Calculate password strength
+  const getPasswordStrength = (pwd = "") => {
+    if (!pwd) return { score: 0, text: "", color: "" };
+    if (pwd.length < 6) return { score: 1, text: "Sangat Lemah", color: "bg-danger" };
+    let score = 1;
+    if (pwd.length >= 8) score++;
+    if (/[A-Z]/.test(pwd)) score++;
+    if (/[0-9]/.test(pwd)) score++;
+    if (/[^A-Za-z0-9]/.test(pwd)) score++;
+
+    if (score <= 2) return { score: 2, text: "Cukup", color: "bg-warning" };
+    if (score <= 3) return { score: 3, text: "Kuat", color: "bg-info" };
+    return { score: 4, text: "Sangat Kuat", color: "bg-success" };
+  };
+
+  const strength = getPasswordStrength(authInput.password);
 
   const inputClass = `form-control form-control-sm ${
     darkMode ? "bg-dark text-white border-secondary" : ""
@@ -202,20 +220,47 @@ export default function RegisterPage({
                   <label className="form-label small fw-semibold" style={{ color: labelColor }}>
                     Password (Minimal 6 Karakter) <span className="text-danger">*</span>
                   </label>
-                  <input
-                    type="password"
-                    placeholder="••••••••"
-                    className={inputClass}
-                    required
-                    minLength={6}
-                    value={authInput.password || ""}
-                    onChange={(e) =>
-                      setAuthInput({
-                        ...authInput,
-                        password: e.target.value,
-                      })
-                    }
-                  />
+                  <div className="input-group input-group-sm">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      className={inputClass}
+                      required
+                      minLength={6}
+                      value={authInput.password || ""}
+                      onChange={(e) =>
+                        setAuthInput({
+                          ...authInput,
+                          password: e.target.value,
+                        })
+                      }
+                    />
+                    <button
+                      type="button"
+                      className={`btn btn-outline-secondary ${darkMode ? "border-secondary text-white" : ""}`}
+                      onClick={() => setShowPassword(!showPassword)}
+                      title={showPassword ? "Sembunyikan password" : "Tampilkan password"}
+                    >
+                      {showPassword ? "👁️" : "👁️‍🗨️"}
+                    </button>
+                  </div>
+
+                  {/* PASSWORD STRENGTH BAR */}
+                  {authInput.password && (
+                    <div className="mt-2">
+                      <div className="d-flex justify-content-between align-items-center mb-1">
+                        <small style={{ fontSize: "0.7rem", color: labelColor }}>Kekuatan Password:</small>
+                        <small className="fw-semibold" style={{ fontSize: "0.7rem" }}>{strength.text}</small>
+                      </div>
+                      <div className="progress" style={{ height: "4px" }}>
+                        <div
+                          className={`progress-bar ${strength.color}`}
+                          role="progressbar"
+                          style={{ width: `${(strength.score / 4) * 100}%` }}
+                        ></div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
