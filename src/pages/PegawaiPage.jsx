@@ -5,6 +5,7 @@ import SdmIdCardModal from "../components/SdmIdCardModal";
 import SdmShiftSwapModal from "../components/SdmShiftSwapModal";
 import SdmCertificateModal from "../components/SdmCertificateModal";
 import SdmLiveCameraPresensiModal from "../components/SdmLiveCameraPresensiModal";
+import SdmDocumentPreviewModal from "../components/SdmDocumentPreviewModal";
 
 export default function PegawaiPage({
   activeTab = "profil",
@@ -73,12 +74,21 @@ export default function PegawaiPage({
     }
   }, [myDossier]);
 
-  // FORM UPLOAD BERKAS BARU
-  const [docCategory, setDocCategory] = useState("SK Pengangkatan");
+  // FORM UPLOAD BERKAS BARU & KATEGORI FLEKSIBEL
+  const [docCategory, setDocCategory] = useState("Ijazah & Transkrip Terakhir");
+  const [customCategoryName, setCustomCategoryName] = useState("");
   const [docCustomTitle, setDocCustomTitle] = useState("");
+  const [docNomor, setDocNomor] = useState("");
+  const [docTahun, setDocTahun] = useState("");
+  const [docKeterangan, setDocKeterangan] = useState("");
   const [selectedUploadFile, setSelectedUploadFile] = useState(null);
+  const [selectedUploadPreviewData, setSelectedUploadPreviewData] = useState(null);
   const [isUploadingDoc, setIsUploadingDoc] = useState(false);
   const uploadFileInputRef = useRef(null);
+
+  // DOSSIER DOCUMENT PREVIEW MODAL STATE
+  const [isDocPreviewOpen, setIsDocPreviewOpen] = useState(false);
+  const [selectedDocForPreview, setSelectedDocForPreview] = useState(null);
 
   // REFS & STATES UNTUK UPLOAD FOTO PROFIL DARI FILE PERANGKAT
   const avatarDirectInputRef = useRef(null);
@@ -308,7 +318,7 @@ export default function PegawaiPage({
   }, [myLeaveRequests, sisaCuti]);
 
   // =========================================================================
-  // HANDLERS: E-BERKAS UPLOAD MANDIRI
+  // HANDLERS: E-BERKAS UPLOAD MANDIRI & PREVIEW DIGITAL
   // =========================================================================
   const handleUploadFileChange = (e) => {
     const file = e.target.files?.[0];
@@ -317,6 +327,13 @@ export default function PegawaiPage({
       if (!docCustomTitle) {
         setDocCustomTitle(file.name.replace(/\.[^/.]+$/, ""));
       }
+
+      // Read as Data URL for instant pre-upload preview
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setSelectedUploadPreviewData(event.target?.result);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -336,44 +353,80 @@ export default function PegawaiPage({
         : `${(sizeInKb / 1024).toFixed(1)} MB`;
 
     const extension = selectedUploadFile.name.split(".").pop().toUpperCase() || "PDF";
-    const displayName = docCustomTitle.trim() || `${docCategory} - ${selectedUploadFile.name}`;
-    const fileBlobUrl = URL.createObjectURL(selectedUploadFile);
+    
+    // Tentukan nama kategori akhir (preset atau kustom sendiri)
+    const finalCategory =
+      docCategory === "Kategori Lainnya (Input Kustom)"
+        ? customCategoryName.trim() || "Kategori Kustom"
+        : docCategory;
 
-    const newDoc = {
-      id: `DOC-${Date.now()}`,
-      nama: displayName,
-      kategori: docCategory,
-      tipe: extension,
-      ukuran: formattedSize,
-      tanggalUpload: new Date().toISOString().split("T")[0],
-      status: "Terverifikasi",
-      fileUrl: fileBlobUrl,
-      realFileName: selectedUploadFile.name,
+    const displayName =
+      docCustomTitle.trim() || `${finalCategory} - ${selectedUploadFile.name}`;
+
+    const processUploadWithBase64 = (base64Url) => {
+      const newDoc = {
+        id: `DOC-${Date.now()}`,
+        nama: displayName,
+        kategori: finalCategory,
+        tipe: extension,
+        ukuran: formattedSize,
+        tanggalUpload: new Date().toISOString().split("T")[0],
+        status: "Terverifikasi",
+        fileUrl: base64Url || selectedUploadPreviewData || URL.createObjectURL(selectedUploadFile),
+        realFileName: selectedUploadFile.name,
+        nomorDokumen: docNomor.trim() || "-",
+        tahunTerbit: docTahun.trim() || new Date().getFullYear().toString(),
+        keterangan: docKeterangan.trim() || "",
+      };
+
+      const updatedDocs = [newDoc, ...myDocList];
+      setMyDocList(updatedDocs);
+
+      const newCompleteness = Math.min(100, Math.round((updatedDocs.length / 5) * 100));
+
+      const updatedDossier = {
+        ...myDossier,
+        persentaseLengkap: newCompleteness,
+        dokumen: updatedDocs,
+      };
+
+      onSaveDossier?.(updatedDossier);
+
+      // Reset form
+      setSelectedUploadFile(null);
+      setSelectedUploadPreviewData(null);
+      setDocCustomTitle("");
+      setCustomCategoryName("");
+      setDocNomor("");
+      setDocTahun("");
+      setDocKeterangan("");
+      if (uploadFileInputRef.current) uploadFileInputRef.current.value = "";
+      setIsUploadingDoc(false);
+
+      showToast?.(
+        "Berkas Terunggah",
+        `Dokumen "${displayName}" berhasil ditambahkan ke e-Berkas Anda.`,
+        "success"
+      );
     };
 
-    const updatedDocs = [newDoc, ...myDocList];
-    setMyDocList(updatedDocs);
+    if (selectedUploadPreviewData) {
+      processUploadWithBase64(selectedUploadPreviewData);
+    } else {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        processUploadWithBase64(event.target?.result);
+      };
+      reader.onerror = () => {
+        processUploadWithBase64(URL.createObjectURL(selectedUploadFile));
+      };
+      reader.readAsDataURL(selectedUploadFile);
+    }
+  };
 
-    const newCompleteness = Math.min(100, Math.round((updatedDocs.length / 5) * 100));
-
-    const updatedDossier = {
-      ...myDossier,
-      persentaseLengkap: newCompleteness,
-      dokumen: updatedDocs,
-    };
-
-    onSaveDossier?.(updatedDossier);
-
-    setSelectedUploadFile(null);
-    setDocCustomTitle("");
-    if (uploadFileInputRef.current) uploadFileInputRef.current.value = "";
-    setIsUploadingDoc(false);
-
-    showToast?.(
-      "Berkas Terunggah",
-      `Dokumen "${displayName}" berhasil ditambahkan ke e-Berkas Anda.`,
-      "success"
-    );
+  const handleOpenDocPreview = (doc) => {
+    setSelectedDocForPreview(doc);
+    setIsDocPreviewOpen(true);
   };
 
   const handleDeleteMyDoc = (docIndex) => {
@@ -397,12 +450,12 @@ export default function PegawaiPage({
     if (doc.fileUrl) {
       const a = document.createElement("a");
       a.href = doc.fileUrl;
-      a.download = doc.realFileName || `${doc.nama}.${doc.tipe.toLowerCase()}`;
+      a.download = doc.realFileName || `${doc.nama}.${(doc.tipe || "pdf").toLowerCase()}`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
     } else {
-      const dummyContent = `Dokumen Resmi Kepegawaian RSJ Tampan Riau\nNama Berkas: ${doc.nama}\nPegawai: ${employeeName}\nNIP: ${employeeNip}\nTgl Upload: ${doc.tanggalUpload}\nStatus: ${doc.status}`;
+      const dummyContent = `Dokumen Resmi Kepegawaian RSJ Tampan Riau\nNama Berkas: ${doc.nama}\nKategori: ${doc.kategori || "Kepegawaian"}\nPegawai: ${employeeName}\nNIP: ${employeeNip}\nTgl Upload: ${doc.tanggalUpload}\nStatus: ${doc.status}`;
       const blob = new Blob([dummyContent], { type: "text/plain;charset=utf-8" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -1077,7 +1130,7 @@ export default function PegawaiPage({
               <div>
                 <h5 className="fw-bold mb-1">📁 Arsip Digital Dokumen Pegawai (e-Dossier)</h5>
                 <p className="small text-muted mb-0">
-                  Unggah berkas resmi kepegawaian Anda seperti SK CPNS/PNS, Ijazah, STR, SIP, KTP, KK, dan Sertifikat Pelatihan.
+                  Unggah dan kelola berkas resmi kepegawaian Anda seperti Ijazah (SD/SMP/SMA/S1/Profesi), SK, STR, SIP, KTP, KK, dan Sertifikat Pelatihan.
                 </p>
               </div>
               <div className="d-flex align-items-center gap-2">
@@ -1114,34 +1167,131 @@ export default function PegawaiPage({
                 </h6>
 
                 <form onSubmit={handleExecuteUploadDoc} className="d-flex flex-column gap-3">
+                  {/* KATEGORI DOKUMEN DENGAN GROUPING LENGKAP & KUSTOM */}
                   <div>
-                    <label className="form-label small fw-semibold">Kategori Dokumen</label>
+                    <label className="form-label small fw-semibold d-flex justify-content-between">
+                      <span>Pilih Kategori Dokumen *</span>
+                      <span className="text-success small fw-normal">SD, SMP, SMA, Ijazah, SK, STR, dll</span>
+                    </label>
                     <select
                       className={`form-select ${darkMode ? "bg-dark text-white border-secondary" : ""}`}
                       value={docCategory}
-                      onChange={(e) => setDocCategory(e.target.value)}
+                      onChange={(e) => {
+                        setDocCategory(e.target.value);
+                        if (e.target.value !== "Kategori Lainnya (Input Kustom)") {
+                          if (!docCustomTitle || docCustomTitle.startsWith("Ijazah") || docCustomTitle.startsWith("SK")) {
+                            setDocCustomTitle(`${e.target.value} - ${employeeName}`);
+                          }
+                        }
+                      }}
                     >
-                      <option value="SK Pengangkatan">SK Pengangkatan (CPNS/PNS/PPPK/BLUD)</option>
-                      <option value="Ijazah & Transkrip">Ijazah & Transkrip Nilai Terakhir</option>
-                      <option value="STR Nakes">Surat Tanda Registrasi (STR)</option>
-                      <option value="SIP Praktik">Surat Izin Praktik (SIP)</option>
-                      <option value="KTP & Kartu Keluarga">KTP / Kartu Keluarga</option>
-                      <option value="Sertifikat BTCLS / Jiwa">Sertifikat BTCLS / Pelatihan Jiwa</option>
-                      <option value="SPK & RKK Kredensialing">Surat Penugasan Klinis (SPK/RKK)</option>
-                      <option value="Pas Foto Resmi">Pas Foto Resmi 4x6</option>
-                      <option value="Curriculum Vitae (CV)">Curriculum Vitae (CV)</option>
-                      <option value="Dokumen Lainnya">Dokumen Tambahan Lainnya</option>
+                      <optgroup label="🎓 Riwayat Pendidikan Formal">
+                        <option value="Ijazah & Transkrip Terakhir">Ijazah & Transkrip Nilai Terakhir</option>
+                        <option value="Ijazah SD / Sederajat">Ijazah SD / MI / Sederajat</option>
+                        <option value="Ijazah SMP / MTs">Ijazah SMP / MTs / Sederajat</option>
+                        <option value="Ijazah SMA / SMK / MA">Ijazah SMA / SMK / MA / Sederajat</option>
+                        <option value="Ijazah Diploma III (D3)">Ijazah Diploma III (D3)</option>
+                        <option value="Ijazah Sarjana (S1 / D4)">Ijazah Sarjana (S1 / D4)</option>
+                        <option value="Ijazah Profesi (Ners / Dokter / Apoteker)">Ijazah Profesi (Ners / Dokter / Apoteker)</option>
+                        <option value="Ijazah Magister (S2)">Ijazah Magister (S2)</option>
+                        <option value="Ijazah Spesialis / Doktor (S3)">Ijazah Spesialis / Doktor (S3)</option>
+                        <option value="Transkrip Nilai Akademik">Transkrip Nilai Akademik Lengkap</option>
+                      </optgroup>
+
+                      <optgroup label="📜 SK & Legalitas Kepegawaian">
+                        <option value="SK Pengangkatan">SK Pengangkatan (CPNS/PNS/PPPK/BLUD)</option>
+                        <option value="SK Kenaikan Pangkat">SK Kenaikan Pangkat / Golongan</option>
+                        <option value="STR Nakes">Surat Tanda Registrasi (STR Nakes)</option>
+                        <option value="SIP Praktik">Surat Izin Praktik (SIP Nakes)</option>
+                        <option value="SPK & RKK Kredensialing">Surat Penugasan Klinis (SPK/RKK KARS)</option>
+                        <option value="SK Jabatan Fungsional">SK Jabatan Fungsional Pegawai</option>
+                      </optgroup>
+
+                      <optgroup label="🪪 Identitas & Kependudukan">
+                        <option value="KTP & Kartu Keluarga">KTP / Kartu Keluarga (KK)</option>
+                        <option value="NPWP Pribadi">NPWP Pribadi Pegawai</option>
+                        <option value="BPJS Kesehatan & Ketenagakerjaan">BPJS Kesehatan / Ketenagakerjaan</option>
+                        <option value="Pas Foto Resmi">Pas Foto Resmi (Background Merah/Biru)</option>
+                        <option value="Buku Tabungan Gaji">Buku Tabungan Gaji Bank Riau Kepri</option>
+                      </optgroup>
+
+                      <optgroup label="🎖️ Pelatihan, Diklat Jiwa & Sertifikasi">
+                        <option value="Sertifikat BTCLS / Jiwa">Sertifikat BTCLS / Pelatihan Jiwa</option>
+                        <option value="Sertifikat De-eskalasi Krisis">Sertifikat De-eskalasi Agresi & Fiksasi</option>
+                        <option value="Piagam Penghargaan / SKP">Piagam Penghargaan / Evaluasi SKP</option>
+                        <option value="Curriculum Vitae (CV)">Curriculum Vitae (CV) & Portofolio</option>
+                      </optgroup>
+
+                      <optgroup label="✨ Kustom / Lainnya">
+                        <option value="Kategori Lainnya (Input Kustom)">➕ Kategori Lainnya (Input Kustom Sendiri)</option>
+                      </optgroup>
                     </select>
                   </div>
 
+                  {/* INPUT KATEGORI KUSTOM JIKA DIPILIH */}
+                  {docCategory === "Kategori Lainnya (Input Kustom)" && (
+                    <div className="p-3 rounded-3 border bg-success-subtle border-success-subtle animate-fade-in">
+                      <label className="form-label small fw-bold text-success">
+                        🏷️ Tuliskan Nama Kategori Dokumen Anda Sendiri *
+                      </label>
+                      <input
+                        type="text"
+                        className={`form-control ${darkMode ? "bg-dark text-white border-success" : ""}`}
+                        placeholder="Contoh: Ijazah SD, Sertifikat TOEFL, Surat Bebas Narkoba, dll"
+                        value={customCategoryName}
+                        onChange={(e) => setCustomCategoryName(e.target.value)}
+                        required
+                        autoFocus
+                      />
+                      <small className="text-muted d-block mt-1" style={{ fontSize: "0.72rem" }}>
+                        Kategori kustom ini akan disimpan otomatis dan ditampilkan pada label berkas Anda.
+                      </small>
+                    </div>
+                  )}
+
                   <div>
-                    <label className="form-label small fw-semibold">Nama / Judul Dokumen (Kustom)</label>
+                    <label className="form-label small fw-semibold">Nama / Judul Dokumen</label>
                     <input
                       type="text"
                       className={`form-control ${darkMode ? "bg-dark text-white border-secondary" : ""}`}
-                      placeholder="Contoh: Ijazah Profesi Ners FK UNRI"
+                      placeholder="Contoh: Ijazah SMA Negeri 1 Pekanbaru / SK Pangkat III/a"
                       value={docCustomTitle}
                       onChange={(e) => setDocCustomTitle(e.target.value)}
+                    />
+                  </div>
+
+                  {/* METADATA TAMBAHAN (NOMOR SURAT & TAHUN) */}
+                  <div className="row g-2">
+                    <div className="col-7">
+                      <label className="form-label small fw-semibold">No. Dokumen / No. Ijazah (Opsional)</label>
+                      <input
+                        type="text"
+                        className={`form-control form-control-sm ${darkMode ? "bg-dark text-white border-secondary" : ""}`}
+                        placeholder="Contoh: DN-09/D-SD/06/0012934"
+                        value={docNomor}
+                        onChange={(e) => setDocNomor(e.target.value)}
+                      />
+                    </div>
+                    <div className="col-5">
+                      <label className="form-label small fw-semibold">Tahun Terbit / Lulus</label>
+                      <input
+                        type="text"
+                        className={`form-control form-control-sm ${darkMode ? "bg-dark text-white border-secondary" : ""}`}
+                        placeholder="Contoh: 2014"
+                        value={docTahun}
+                        onChange={(e) => setDocTahun(e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="form-label small fw-semibold">Catatan / Keterangan Berkas (Opsional)</label>
+                    <input
+                      type="text"
+                      className={`form-control form-control-sm ${darkMode ? "bg-dark text-white border-secondary" : ""}`}
+                      placeholder="Contoh: Akreditasi A, Legalisir Basah Kepala Sekolah/Dekan"
+                      value={docKeterangan}
+                      onChange={(e) => setDocKeterangan(e.target.value)}
                     />
                   </div>
 
@@ -1152,18 +1302,44 @@ export default function PegawaiPage({
                       ref={uploadFileInputRef}
                       onChange={handleUploadFileChange}
                       className={`form-control ${darkMode ? "bg-dark text-white border-secondary" : ""}`}
-                      accept=".pdf,.png,.jpg,.jpeg,.doc,.docx"
+                      accept=".pdf,.png,.jpg,.jpeg,.webp,.doc,.docx"
                       required
                     />
                     <small className="text-muted d-block mt-1" style={{ fontSize: "0.72rem" }}>
-                      Mendukung format PDF, PNG, JPG, DOCX (Maksimal 10 MB).
+                      Mendukung format PDF, PNG, JPG, WEBP, DOCX (Maksimal 15 MB).
                     </small>
                   </div>
 
+                  {/* PREVIEW STATUS BERKAS TERPILIH SEBELUM UPLOAD */}
                   {selectedUploadFile && (
-                    <div className="p-3 rounded-3 bg-success-subtle text-success small border border-success-subtle">
-                      <div className="fw-bold">📄 Berkas Terpilih:</div>
-                      <div>{selectedUploadFile.name} ({(selectedUploadFile.size / 1024).toFixed(1)} KB)</div>
+                    <div className="p-3 rounded-3 bg-success-subtle text-success small border border-success-subtle d-flex align-items-center justify-content-between flex-wrap gap-2 animate-fade-in">
+                      <div>
+                        <div className="fw-bold">📄 Berkas Terpilih Siap Diunggah:</div>
+                        <div>{selectedUploadFile.name} ({(selectedUploadFile.size / 1024).toFixed(1)} KB)</div>
+                      </div>
+                      {selectedUploadPreviewData && (
+                        <button
+                          type="button"
+                          className="btn btn-xs btn-outline-success rounded-pill px-3 py-1 fw-bold hover-lift"
+                          onClick={() => {
+                            handleOpenDocPreview({
+                              nama: docCustomTitle || selectedUploadFile.name,
+                              kategori: docCategory === "Kategori Lainnya (Input Kustom)" ? customCategoryName || "Kategori Kustom" : docCategory,
+                              tipe: selectedUploadFile.name.split(".").pop().toUpperCase() || "PDF",
+                              ukuran: `${(selectedUploadFile.size / 1024).toFixed(1)} KB`,
+                              tanggalUpload: new Date().toISOString().split("T")[0],
+                              status: "Pratinjau (Sebelum Unggah)",
+                              fileUrl: selectedUploadPreviewData,
+                              realFileName: selectedUploadFile.name,
+                              nomorDokumen: docNomor,
+                              tahunTerbit: docTahun,
+                              keterangan: docKeterangan,
+                            });
+                          }}
+                        >
+                          👁️ Cek / Preview File
+                        </button>
+                      )}
                     </div>
                   )}
 
@@ -1188,7 +1364,7 @@ export default function PegawaiPage({
               </div>
             </div>
 
-            {/* DAFTAR DOKUMEN TERUNGGAH */}
+            {/* DAFTAR DOKUMEN TERUNGGAH DENGAN TOMBOL PREVIEW & UNDUH */}
             <div className="col-lg-7">
               <div
                 className={`p-4 rounded-4 shadow-sm h-100 ${
@@ -1201,7 +1377,7 @@ export default function PegawaiPage({
                     <span>📑</span>
                     <span>Dokumen Digital Saya ({myDocList.length} Berkas)</span>
                   </h6>
-                  <span className="badge badge-soft-success">Tersinkronisasi</span>
+                  <span className="badge badge-soft-success">Tersinkronisasi Cloud</span>
                 </div>
 
                 {myDocList.length === 0 ? (
@@ -1214,19 +1390,28 @@ export default function PegawaiPage({
                     {myDocList.map((doc, idx) => (
                       <div
                         key={doc.id || idx}
-                        className="p-3 rounded-3 d-flex align-items-center justify-content-between border hover-lift"
+                        className="p-3 rounded-3 d-flex align-items-center justify-content-between border hover-lift gap-3"
                         style={{
                           backgroundColor: darkMode ? "#151b2d" : "#f8fafc",
                           borderColor: cardBorder,
                         }}
                       >
-                        <div className="d-flex align-items-center gap-3 overflow-hidden">
+                        <div
+                          className="d-flex align-items-center gap-3 overflow-hidden cursor-pointer"
+                          onClick={() => handleOpenDocPreview(doc)}
+                          title="Klik untuk melihat / pratinjau dokumen ini"
+                        >
                           <div
-                            className="rounded-3 d-flex align-items-center justify-content-center text-white fw-bold"
+                            className="rounded-3 d-flex align-items-center justify-content-center text-white fw-bold shadow-sm"
                             style={{
-                              width: "42px",
-                              height: "42px",
-                              backgroundColor: doc.tipe === "PDF" ? "#ef4444" : "#3b82f6",
+                              width: "44px",
+                              height: "44px",
+                              backgroundColor:
+                                doc.tipe === "PDF"
+                                  ? "#ef4444"
+                                  : doc.tipe === "PNG" || doc.tipe === "JPG" || doc.tipe === "JPEG"
+                                  ? "#10b981"
+                                  : "#3b82f6",
                               fontSize: "0.75rem",
                               flexShrink: 0,
                             }}
@@ -1234,9 +1419,16 @@ export default function PegawaiPage({
                             {doc.tipe || "PDF"}
                           </div>
                           <div className="overflow-hidden">
-                            <h6 className="mb-0 fw-semibold text-truncate" style={{ fontSize: "0.88rem" }} title={doc.nama}>
-                              {doc.nama}
-                            </h6>
+                            <div className="d-flex align-items-center gap-2 flex-wrap">
+                              <h6 className="mb-0 fw-semibold text-truncate" style={{ fontSize: "0.88rem" }} title={doc.nama}>
+                                {doc.nama}
+                              </h6>
+                              {doc.kategori && (
+                                <span className="badge bg-primary-subtle text-primary" style={{ fontSize: "0.68rem" }}>
+                                  {doc.kategori}
+                                </span>
+                              )}
+                            </div>
                             <small className="text-muted d-block" style={{ fontSize: "0.72rem" }}>
                               {doc.ukuran || "1.2 MB"} &bull; Diunggah: {doc.tanggalUpload} &bull;{" "}
                               <span className="text-success fw-semibold">{doc.status || "Terverifikasi"}</span>
@@ -1246,11 +1438,19 @@ export default function PegawaiPage({
 
                         <div className="d-flex align-items-center gap-1 flex-shrink-0">
                           <button
-                            className="btn btn-sm btn-outline-success p-1 px-2 rounded-2 hover-lift"
-                            onClick={() => handleDownloadMyDoc(doc)}
-                            title="Unduh / Preview Berkas"
+                            className="btn btn-sm btn-success p-1 px-2 rounded-2 hover-lift d-flex align-items-center gap-1 shadow-sm"
+                            onClick={() => handleOpenDocPreview(doc)}
+                            title="Lihat / Preview Dokumen untuk Memastikan Kebenarannya"
                           >
-                            📥 Unduh
+                            <span>👁️</span>
+                            <span className="d-none d-sm-inline">Preview</span>
+                          </button>
+                          <button
+                            className="btn btn-sm btn-outline-secondary p-1 px-2 rounded-2 hover-lift"
+                            onClick={() => handleDownloadMyDoc(doc)}
+                            title="Unduh Berkas Ini"
+                          >
+                            📥
                           </button>
                           <button
                             className="btn btn-sm btn-outline-danger p-1 px-2 rounded-2 hover-lift"
@@ -2048,6 +2248,17 @@ export default function PegawaiPage({
           </div>
         </div>
       )}
+
+      {/* MODAL PREVIEW DOKUMEN DIGITAL (IJAZAH, SK, STR, SERTIFIKAT, DLL) */}
+      <SdmDocumentPreviewModal
+        isOpen={isDocPreviewOpen}
+        onClose={() => setIsDocPreviewOpen(false)}
+        doc={selectedDocForPreview}
+        employeeName={employeeName}
+        employeeNip={employeeNip}
+        employeeUnit={employeeUnit}
+        darkMode={darkMode}
+      />
     </div>
   );
 }
