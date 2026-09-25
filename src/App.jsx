@@ -902,7 +902,7 @@ function App() {
       {/* 1. ADMIN DASHBOARD VIEW (KHUSUS ADMINISTRATOR SDM)       */}
       {/* ======================================================== */}
       {currentView === "admin" ? (
-        <div className="d-flex w-100 min-vh-100">
+        <div className="d-flex flex-column flex-md-row w-100 min-vh-100 app-layout-wrapper">
           {/* SIDEBAR ADMIN LENGKAP */}
           <Sidebar
             activeTab={activeTab}
@@ -918,7 +918,7 @@ function App() {
           />
 
           {/* MAIN CONTENT ADMIN */}
-          <main className="flex-grow-1 w-100 d-flex flex-column min-vh-100 overflow-auto">
+          <main className="flex-grow-1 w-100 d-flex flex-column min-vh-100 overflow-auto main-content-pane">
             <div className="flex-grow-1 px-3 px-md-4 py-3">
               <AdminPage
                 activeTab={activeTab}
@@ -953,7 +953,7 @@ function App() {
         /* ======================================================== */
         /* 2. PEGAWAI PORTAL VIEW (KHUSUS LAYANAN MANDIRI PEGAWAI) */
         /* ======================================================== */
-        <div className="d-flex w-100 min-vh-100">
+        <div className="d-flex flex-column flex-md-row w-100 min-vh-100 app-layout-wrapper">
           {/* SIDEBAR PEGAWAI MANDIRI */}
           <SidebarPegawai
             activeTab={activePegawaiTab}
@@ -971,7 +971,7 @@ function App() {
           />
 
           {/* MAIN CONTENT PEGAWAI */}
-          <main className="flex-grow-1 w-100 d-flex flex-column min-vh-100 overflow-auto">
+          <main className="flex-grow-1 w-100 d-flex flex-column min-vh-100 overflow-auto main-content-pane">
             <div className="flex-grow-1 px-3 px-md-4 py-3">
               <PegawaiPage
                 activeTab={activePegawaiTab}

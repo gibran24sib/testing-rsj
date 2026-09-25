@@ -27,7 +27,7 @@ export default function Navbar({
         zIndex: 1030,
       }}
     >
-      <div className="container-fluid px-0">
+      <div className="container-fluid px-0 d-flex flex-wrap align-items-center justify-content-between gap-2">
         <div
           className="d-flex align-items-center gap-2"
           style={{ cursor: "pointer" }}
