@@ -95,6 +95,31 @@ export async function tambahDataSupabase(namaTabel = "employees", record = {}) {
   }
 }
 
+// 5b. Fungsi Memperbarui Data di Tabel Supabase (Default: 'employees')
+export async function updateDataSupabase(namaTabel = "employees", record = {}, matchField = "id") {
+  if (!isSupabaseConfigured() || !record[matchField]) {
+    return { success: true, localOnly: true };
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from(namaTabel)
+      .update(record)
+      .eq(matchField, record[matchField])
+      .select();
+
+    if (error) {
+      console.warn(`Gagal memperbarui tabel "${namaTabel}":`, error.message);
+      return { success: false, error };
+    }
+
+    return { success: true, data };
+  } catch (err) {
+    console.warn(`Koneksi Supabase update "${namaTabel}" error:`, err);
+    return { success: false, error: err };
+  }
+}
+
 // ============================================================================
 // 6. FUNGSI KHUSUS MANAJEMEN CUTI DENGAN VALIDASI ROLE & KEBIJAKAN RLS
 // ============================================================================

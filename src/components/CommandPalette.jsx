@@ -18,83 +18,109 @@ export default function CommandPalette({
   if (!isOpen) return null;
 
   const commands = [
+    // LAYANAN MANDIRI PEGAWAI
     {
-      id: "direktori",
-      label: "Buka Direktori & Master Pegawai Medis",
-      category: "Modul SDM",
-      icon: "👥",
-      action: () => onSelectAction({ type: "navigate_tab", tab: "direktori" }),
+      id: "pegawai_profil",
+      label: "Buka Data Diri & Profil Pegawai Saya",
+      category: "Layanan Mandiri Pegawai",
+      icon: "👤",
+      action: () => onSelectAction({ type: "navigate_pegawai", tab: "profil" }),
     },
     {
-      id: "roster",
-      label: "Buka Roster Shift Jaga Bangsal 24/7",
-      category: "Modul SDM",
-      icon: "📅",
-      action: () => onSelectAction({ type: "navigate_tab", tab: "roster" }),
-    },
-    {
-      id: "abk_wisn",
-      label: "Kalkulator Analisis Beban Kerja (WISN Kemenkes)",
-      category: "Akreditasi KARS",
-      icon: "🧮",
-      action: () => onSelectAction({ type: "navigate_tab", tab: "abk_wisn" }),
-    },
-    {
-      id: "kredensialing",
-      label: "Jenjang Karir Perawat Jiwa & SPK/RKK Komite",
-      category: "Akreditasi KARS",
-      icon: "🎖️",
-      action: () => onSelectAction({ type: "navigate_tab", tab: "kredensialing" }),
-    },
-    {
-      id: "presensi",
-      label: "Simulasi E-Presensi Shift Geolocation & Swafoto",
-      category: "Operasional Modern",
-      icon: "⏱️",
-      action: () => onSelectAction({ type: "navigate_tab", tab: "presensi" }),
-    },
-    {
-      id: "dossier",
-      label: "E-Berkas & Arsip Digital Dossier Pegawai",
-      category: "Operasional Modern",
+      id: "pegawai_berkas",
+      label: "Upload & E-Berkas Dokumen Digital Mandiri",
+      category: "Layanan Mandiri Pegawai",
       icon: "📁",
-      action: () => onSelectAction({ type: "navigate_tab", tab: "dossier" }),
+      action: () => onSelectAction({ type: "navigate_pegawai", tab: "berkas" }),
     },
     {
-      id: "legalitas",
-      label: "Audit Masa Berlaku STR & SIP Nakes",
-      category: "Modul SDM",
-      icon: "📜",
-      action: () => onSelectAction({ type: "navigate_tab", tab: "legalitas" }),
-    },
-    {
-      id: "cuti_pegawai",
-      label: "Portal Pengajuan Cuti Mandiri Nakes (/cuti/pengajuan)",
+      id: "pegawai_cuti",
+      label: "Pengajuan & Riwayat Cuti Mandiri Nakes",
       category: "Layanan Mandiri Pegawai",
       icon: "🏖️",
-      action: () => onSelectAction({ type: "navigate_view", view: "cuti_pegawai" }),
+      action: () => onSelectAction({ type: "navigate_pegawai", tab: "cuti" }),
+    },
+    {
+      id: "pegawai_roster",
+      label: "Jadwal Shift Jaga Bangsal Saya",
+      category: "Layanan Mandiri Pegawai",
+      icon: "📅",
+      action: () => onSelectAction({ type: "navigate_pegawai", tab: "roster" }),
+    },
+    {
+      id: "pegawai_presensi",
+      label: "E-Presensi Shift Geolocation Pegawai",
+      category: "Layanan Mandiri Pegawai",
+      icon: "⏱️",
+      action: () => onSelectAction({ type: "navigate_pegawai", tab: "presensi" }),
+    },
+    {
+      id: "pegawai_legalitas",
+      label: "Masa Berlaku STR & SIP Izin Praktik Saya",
+      category: "Layanan Mandiri Pegawai",
+      icon: "📜",
+      action: () => onSelectAction({ type: "navigate_pegawai", tab: "legalitas" }),
+    },
+    {
+      id: "pegawai_diklat",
+      label: "Sertifikat & Diklat Khusus Jiwa Saya",
+      category: "Layanan Mandiri Pegawai",
+      icon: "🎓",
+      action: () => onSelectAction({ type: "navigate_pegawai", tab: "diklat" }),
+    },
+
+    // PANEL ADMIN KEPEGAWAIAN
+    {
+      id: "admin_direktori",
+      label: "Direktori Seluruh Pegawai & Nakes Medis (Admin)",
+      category: "Panel Admin SDM",
+      icon: "👥",
+      action: () => onSelectAction({ type: "navigate_admin", tab: "direktori" }),
     },
     {
       id: "admin_cuti",
-      label: "Manajemen & Persetujuan Cuti Seluruh Pegawai (HRD/Admin)",
-      category: "Modul SDM Admin",
+      label: "Approval & Manajemen Cuti Pegawai (Admin HRD)",
+      category: "Panel Admin SDM",
       icon: "📋",
-      action: () => onSelectAction({ type: "navigate_tab", tab: "cuti" }),
+      action: () => onSelectAction({ type: "navigate_admin", tab: "cuti" }),
     },
     {
-      id: "diklat",
-      label: "Program Diklat & Kredensialing Khusus Jiwa",
-      category: "Modul SDM",
-      icon: "🎓",
-      action: () => onSelectAction({ type: "navigate_tab", tab: "diklat" }),
+      id: "admin_roster",
+      label: "Roster Shift Jaga 24/7 Seluruh Bangsal (Admin)",
+      category: "Panel Admin SDM",
+      icon: "📅",
+      action: () => onSelectAction({ type: "navigate_admin", tab: "roster" }),
     },
     {
-      id: "analitik",
-      label: "Dashboard Analitik Kinerja SDM (SKP)",
-      category: "Modul SDM",
+      id: "admin_abk_wisn",
+      label: "Kalkulator Analisis Beban Kerja WISN Kemenkes (Admin)",
+      category: "Panel Admin SDM",
+      icon: "🧮",
+      action: () => onSelectAction({ type: "navigate_admin", tab: "abk_wisn" }),
+    },
+    {
+      id: "admin_dossier",
+      label: "Master Arsip Digital e-Dossier Semua Pegawai (Admin)",
+      category: "Panel Admin SDM",
+      icon: "📁",
+      action: () => onSelectAction({ type: "navigate_admin", tab: "dossier" }),
+    },
+    {
+      id: "admin_legalitas",
+      label: "Audit Kepatuhan STR & SIP Tenaga Medis (Admin)",
+      category: "Panel Admin SDM",
+      icon: "📜",
+      action: () => onSelectAction({ type: "navigate_admin", tab: "legalitas" }),
+    },
+    {
+      id: "admin_analitik",
+      label: "Dashboard Analitik Kinerja SDM & SKP (Admin)",
+      category: "Panel Admin SDM",
       icon: "📊",
-      action: () => onSelectAction({ type: "navigate_tab", tab: "analitik" }),
+      action: () => onSelectAction({ type: "navigate_admin", tab: "analitik" }),
     },
+
+    // PORTAL & UTILITY
     {
       id: "portal_publik",
       label: "Lihat Portal Informasi SDM Publik",
@@ -105,14 +131,14 @@ export default function CommandPalette({
     {
       id: "toggle_theme",
       label: "Ganti Tema Tampilan (Dark / Light Mode)",
-      category: "Preferensi",
+      category: "Pengaturan Tampilan",
       icon: darkMode ? "☀️" : "🌙",
       action: () => onSelectAction({ type: "toggle_theme" }),
     },
     {
       id: "logout",
-      label: "Logout & Keluar dari SIM-SDM",
-      category: "Akun Petugas",
+      label: "Keluar Sesi Akun (Logout)",
+      category: "Akun Pengguna",
       icon: "🚪",
       action: () => onSelectAction({ type: "logout" }),
     },
@@ -125,110 +151,125 @@ export default function CommandPalette({
   );
 
   return (
-    <div className="cmd-palette-backdrop" onClick={onClose}>
+    <div
+      className="modal-backdrop-custom d-flex align-items-start justify-content-center pt-5 animate-fade-in"
+      style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: "rgba(0, 0, 0, 0.65)",
+        backdropFilter: "blur(6px)",
+        zIndex: 1070,
+        padding: "1rem",
+      }}
+      onClick={onClose}
+    >
       <div
-        className={`cmd-palette-box ${
-          darkMode ? "bg-dark text-white border border-secondary" : "bg-white text-dark border"
-        }`}
-        onClick={(e) => e.stopPropagation()}
+        className="rounded-4 shadow-lg overflow-hidden animate-scale-up"
         style={{
-          backgroundColor: darkMode ? "#0c101d" : "#ffffff",
-          borderColor: darkMode ? "#222c45" : "#cbd5e1",
-          borderRadius: "16px",
-          overflow: "hidden",
-          maxWidth: "580px",
-          width: "90%",
-          boxShadow: "0 20px 40px rgba(0, 0, 0, 0.4)",
+          width: "100%",
+          maxWidth: "600px",
+          backgroundColor: darkMode ? "#111624" : "#ffffff",
+          color: darkMode ? "#ffffff" : "#0f172a",
+          border: darkMode ? "1px solid #1e293b" : "1px solid #e2e8f0",
+          boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.35)",
         }}
+        onClick={(e) => e.stopPropagation()}
       >
-        {/* INPUT BOX */}
+        {/* INPUT SEARCH HEADER */}
         <div
-          className="d-flex align-items-center px-3 py-3 border-bottom"
-          style={{ borderColor: darkMode ? "#1a2238" : "#e2e8f0" }}
+          className="d-flex align-items-center gap-2 p-3 border-bottom"
+          style={{ borderColor: darkMode ? "#1e293b" : "#e2e8f0" }}
         >
-          <span className="fs-5 me-2 text-muted">🔍</span>
+          <span className="fs-5">🔍</span>
           <input
             ref={inputRef}
             type="text"
-            className="form-control border-0 shadow-none bg-transparent"
+            className="form-control border-0 bg-transparent shadow-none"
             style={{
               color: darkMode ? "#ffffff" : "#0f172a",
               fontSize: "1rem",
             }}
-            placeholder="Cari modul SDM, WISN, SPK/RKK, presensi, cuti (Ctrl+K)..."
+            placeholder="Ketik modul, aksi, atau fitur (contoh: berkas, cuti, roster)..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
           <kbd
-            className="px-2 py-1 rounded"
+            className="px-2 py-1 rounded small"
             style={{
-              fontSize: "0.7rem",
-              backgroundColor: darkMode ? "#1a2238" : "#f1f5f9",
-              color: darkMode ? "#8e94a4" : "#64748b",
+              backgroundColor: darkMode ? "#182035" : "#f1f5f9",
+              color: darkMode ? "#94a3b8" : "#64748b",
+              fontSize: "0.75rem",
             }}
           >
             ESC
           </kbd>
         </div>
 
-        {/* COMMAND LIST */}
-        <div className="p-2" style={{ maxHeight: "350px", overflowY: "auto" }}>
+        {/* LIST COMMAND RESULTS */}
+        <div style={{ maxHeight: "380px", overflowY: "auto" }} className="p-2">
           {filteredCommands.length === 0 ? (
             <div className="text-center py-4 text-muted small">
-              Tidak ada modul SDM yang sesuai dengan "<strong>{query}</strong>"
+              Tidak ada perintah atau modul yang cocok dengan &quot;{query}&quot;.
             </div>
           ) : (
-            filteredCommands.map((cmd) => (
+            filteredCommands.map((item) => (
               <button
-                key={cmd.id}
-                className="w-100 btn text-start d-flex align-items-center justify-content-between p-2 rounded-3 border-0 mb-1"
+                key={item.id}
+                onClick={() => {
+                  item.action();
+                  onClose();
+                }}
+                className="btn w-100 text-start d-flex align-items-center justify-content-between p-2 rounded-3 border-0 transition-all mb-1 hover-lift"
                 style={{
                   backgroundColor: "transparent",
                   color: darkMode ? "#cbd5e1" : "#334155",
-                  fontSize: "0.88rem",
-                  transition: "background-color 0.15s ease",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = darkMode ? "#182035" : "#f1f5f9";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = "transparent";
-                }}
-                onClick={() => {
-                  cmd.action();
-                  onClose();
                 }}
               >
                 <div className="d-flex align-items-center gap-3">
-                  <span style={{ fontSize: "1.1rem" }}>{cmd.icon}</span>
-                  <span className="fw-medium">{cmd.label}</span>
+                  <span className="fs-5">{item.icon}</span>
+                  <div>
+                    <div className="fw-medium small">{item.label}</div>
+                    <small
+                      className="d-block"
+                      style={{
+                        fontSize: "0.68rem",
+                        color: darkMode ? "#64748b" : "#94a3b8",
+                      }}
+                    >
+                      {item.category}
+                    </small>
+                  </div>
                 </div>
                 <span
                   className="badge rounded-pill"
                   style={{
-                    fontSize: "0.68rem",
-                    backgroundColor: darkMode ? "#1a2238" : "#e2e8f0",
-                    color: darkMode ? "#8e94a4" : "#64748b",
+                    fontSize: "0.65rem",
+                    backgroundColor: darkMode ? "#182035" : "#f1f5f9",
+                    color: darkMode ? "#94a3b8" : "#64748b",
                   }}
                 >
-                  {cmd.category}
+                  Buka &rarr;
                 </span>
               </button>
             ))
           )}
         </div>
 
-        {/* FOOTER */}
+        {/* FOOTER SHORTCUT HINT */}
         <div
-          className="d-flex align-items-center justify-content-between px-3 py-2 border-top text-muted"
+          className="p-2 px-3 border-top d-flex align-items-center justify-content-between"
           style={{
-            borderColor: darkMode ? "#1a2238" : "#e2e8f0",
-            backgroundColor: darkMode ? "#080c18" : "#f8fafc",
+            borderColor: darkMode ? "#1e293b" : "#e2e8f0",
+            backgroundColor: darkMode ? "#0c101a" : "#f8fafc",
             fontSize: "0.72rem",
+            color: darkMode ? "#64748b" : "#94a3b8",
           }}
         >
-          <span>SIM-SDM RS Jiwa Tampan</span>
-          <span>Tekan ↵ untuk memilih &bull; ESC untuk batal</span>
+          <span>Gunakan Ctrl+K di mana saja untuk membuka menu cepat</span>
+          <span>RSJ Tampan SIM-SDM</span>
         </div>
       </div>
     </div>

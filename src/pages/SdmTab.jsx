@@ -28,6 +28,8 @@ export default function SdmTab({
   shiftRoster = [],
   leaveRequests = [],
   trainings = [],
+  dossiersList: propDossiersList,
+  onSaveDossier: propOnSaveDossier,
   currentUser,
   setCurrentView,
   onAddEmployee,
@@ -56,7 +58,7 @@ export default function SdmTab({
   const [credentialsList] = useState(initialCredentials);
   const [attendanceLogs, setAttendanceLogs] = useState(initialAttendanceLogs);
   const [attendanceRecap] = useState(initialAttendanceRecap);
-  const [dossiersList, setDossiersList] = useState(() => {
+  const [internalDossiersList, setInternalDossiersList] = useState(() => {
     try {
       const saved = localStorage.getItem("rsj_dossiers");
       return saved ? JSON.parse(saved) : initialDossiers;
@@ -64,6 +66,8 @@ export default function SdmTab({
       return initialDossiers;
     }
   });
+
+  const dossiersList = propDossiersList || internalDossiersList;
 
   // MODAL STATES
   const [isEmployeeModalOpen, setIsEmployeeModalOpen] = useState(false);
@@ -272,22 +276,26 @@ export default function SdmTab({
   };
 
   const handleSaveDossier = (updatedDossier) => {
-    setDossiersList((prev) => {
-      const idx = prev.findIndex((d) => d.employeeId === updatedDossier.employeeId);
-      let updated;
-      if (idx >= 0) {
-        updated = [...prev];
-        updated[idx] = updatedDossier;
-      } else {
-        updated = [updatedDossier, ...prev];
-      }
-      try {
-        localStorage.setItem("rsj_dossiers", JSON.stringify(updated));
-      } catch (e) {
-        console.error("Gagal simpan dossiers:", e);
-      }
-      return updated;
-    });
+    if (propOnSaveDossier) {
+      propOnSaveDossier(updatedDossier);
+    } else {
+      setInternalDossiersList((prev) => {
+        const idx = prev.findIndex((d) => d.employeeId === updatedDossier.employeeId);
+        let updated;
+        if (idx >= 0) {
+          updated = [...prev];
+          updated[idx] = updatedDossier;
+        } else {
+          updated = [updatedDossier, ...prev];
+        }
+        try {
+          localStorage.setItem("rsj_dossiers", JSON.stringify(updated));
+        } catch (e) {
+          console.error("Gagal simpan dossiers:", e);
+        }
+        return updated;
+      });
+    }
     setSelectedDossier(updatedDossier);
     showToast?.("Arsip Diperbarui", `Dokumen digital untuk ${updatedDossier.nama} berhasil disimpan.`, "success");
   };
@@ -339,27 +347,44 @@ export default function SdmTab({
 
   return (
     <div className="d-flex flex-column gap-4 animate-fade-in">
-      {/* 1. TOP SUMMARY STAT CARDS */}
+      {/* 1. TOP SUMMARY STAT CARDS (INTERACTIVE & GLASSMORPHIC) */}
       <div className="row g-3">
         <div className="col-12 col-sm-6 col-xl-3">
           <div
-            className="p-3 rounded-4 h-100 d-flex align-items-center gap-3 shadow-sm transition-all"
-            style={{ backgroundColor: cardBg, border: `1px solid ${cardBorder}` }}
+            onClick={() => handleTabChange("direktori")}
+            className={`p-3 rounded-4 h-100 d-flex align-items-center gap-3 shadow-sm stat-card-modern hover-lift ${
+              darkMode ? "glass-panel-dark" : "glass-panel"
+            }`}
+            style={{
+              backgroundColor: cardBg,
+              border: `1px solid ${subTab === "direktori" ? "#10b981" : cardBorder}`,
+              cursor: "pointer",
+            }}
+            title="Klik untuk membuka Direktori Pegawai"
           >
             <div
-              className="rounded-3 d-flex align-items-center justify-content-center fs-4"
-              style={{ width: "48px", height: "48px", backgroundColor: "rgba(16, 185, 129, 0.12)", color: "#10b981" }}
+              className="icon-gradient-box"
+              style={{
+                backgroundColor: "rgba(16, 185, 129, 0.15)",
+                color: "#10b981",
+                boxShadow: "0 4px 12px rgba(16, 185, 129, 0.15)",
+              }}
             >
               👥
             </div>
-            <div>
-              <span className="small fw-semibold d-block" style={{ color: textMuted }}>
-                Total SDM & Nakes
-              </span>
-              <h4 className="fw-bold mb-0" style={{ letterSpacing: "-0.02em" }}>
+            <div className="flex-grow-1 overflow-hidden">
+              <div className="d-flex align-items-center justify-content-between">
+                <span className="small fw-semibold d-block text-truncate" style={{ color: textMuted }}>
+                  Total SDM & Nakes
+                </span>
+                <span className="badge rounded-pill badge-soft-success" style={{ fontSize: "0.62rem" }}>
+                  Aktif
+                </span>
+              </div>
+              <h4 className="fw-bold mb-0 text-truncate" style={{ letterSpacing: "-0.02em" }}>
                 {stats.total} <span className="fs-6 fw-normal text-muted">Pegawai</span>
               </h4>
-              <small className="text-success fw-medium" style={{ fontSize: "0.72rem" }}>
+              <small className="text-success fw-semibold d-block text-truncate" style={{ fontSize: "0.72rem" }}>
                 {stats.medis} Dokter &bull; {stats.keperawatan} Ners Jiwa
               </small>
             </div>
@@ -368,24 +393,41 @@ export default function SdmTab({
 
         <div className="col-12 col-sm-6 col-xl-3">
           <div
-            className="p-3 rounded-4 h-100 d-flex align-items-center gap-3 shadow-sm transition-all"
-            style={{ backgroundColor: cardBg, border: `1px solid ${cardBorder}` }}
+            onClick={() => handleTabChange("abk_wisn")}
+            className={`p-3 rounded-4 h-100 d-flex align-items-center gap-3 shadow-sm stat-card-modern hover-lift ${
+              darkMode ? "glass-panel-dark" : "glass-panel"
+            }`}
+            style={{
+              backgroundColor: cardBg,
+              border: `1px solid ${subTab === "abk_wisn" ? "#ef4444" : cardBorder}`,
+              cursor: "pointer",
+            }}
+            title="Klik untuk membuka Analisis Beban Kerja (WISN)"
           >
             <div
-              className="rounded-3 d-flex align-items-center justify-content-center fs-4"
-              style={{ width: "48px", height: "48px", backgroundColor: "rgba(239, 68, 68, 0.12)", color: "#ef4444" }}
+              className="icon-gradient-box"
+              style={{
+                backgroundColor: "rgba(239, 68, 68, 0.15)",
+                color: "#ef4444",
+                boxShadow: "0 4px 12px rgba(239, 68, 68, 0.15)",
+              }}
             >
               🧮
             </div>
-            <div>
-              <span className="small fw-semibold d-block" style={{ color: textMuted }}>
-                Defisit Nakes (WISN)
-              </span>
-              <h4 className="fw-bold mb-0 text-danger" style={{ letterSpacing: "-0.02em" }}>
+            <div className="flex-grow-1 overflow-hidden">
+              <div className="d-flex align-items-center justify-content-between">
+                <span className="small fw-semibold d-block text-truncate" style={{ color: textMuted }}>
+                  Defisit Nakes (WISN)
+                </span>
+                <span className="badge rounded-pill badge-soft-danger" style={{ fontSize: "0.62rem" }}>
+                  Defisit
+                </span>
+              </div>
+              <h4 className="fw-bold mb-0 text-danger text-truncate" style={{ letterSpacing: "-0.02em" }}>
                 -{stats.totalDefisitWisn} <span className="fs-6 fw-normal text-muted">Formasi Ners</span>
               </h4>
-              <small className="text-danger fw-semibold" style={{ fontSize: "0.72rem" }}>
-                Kebutuhan Bangsal Kampar & IGD
+              <small className="text-danger fw-semibold d-block text-truncate" style={{ fontSize: "0.72rem" }}>
+                Bangsal Kampar & IGD Jiwa
               </small>
             </div>
           </div>
@@ -393,23 +435,40 @@ export default function SdmTab({
 
         <div className="col-12 col-sm-6 col-xl-3">
           <div
-            className="p-3 rounded-4 h-100 d-flex align-items-center gap-3 shadow-sm transition-all"
-            style={{ backgroundColor: cardBg, border: `1px solid ${cardBorder}` }}
+            onClick={() => handleTabChange("kredensialing")}
+            className={`p-3 rounded-4 h-100 d-flex align-items-center gap-3 shadow-sm stat-card-modern hover-lift ${
+              darkMode ? "glass-panel-dark" : "glass-panel"
+            }`}
+            style={{
+              backgroundColor: cardBg,
+              border: `1px solid ${subTab === "kredensialing" ? "#8b5cf6" : cardBorder}`,
+              cursor: "pointer",
+            }}
+            title="Klik untuk membuka Jenjang Karir & SPK/RKK"
           >
             <div
-              className="rounded-3 d-flex align-items-center justify-content-center fs-4"
-              style={{ width: "48px", height: "48px", backgroundColor: "rgba(139, 92, 246, 0.12)", color: "#8b5cf6" }}
+              className="icon-gradient-box"
+              style={{
+                backgroundColor: "rgba(139, 92, 246, 0.15)",
+                color: "#8b5cf6",
+                boxShadow: "0 4px 12px rgba(139, 92, 246, 0.15)",
+              }}
             >
               🎖️
             </div>
-            <div>
-              <span className="small fw-semibold d-block" style={{ color: textMuted }}>
-                Kredensialing PK Jiwa
-              </span>
-              <h4 className="fw-bold mb-0" style={{ letterSpacing: "-0.02em" }}>
+            <div className="flex-grow-1 overflow-hidden">
+              <div className="d-flex align-items-center justify-content-between">
+                <span className="small fw-semibold d-block text-truncate" style={{ color: textMuted }}>
+                  Kredensialing PK Jiwa
+                </span>
+                <span className="badge rounded-pill badge-soft-purple" style={{ fontSize: "0.62rem" }}>
+                  KARS
+                </span>
+              </div>
+              <h4 className="fw-bold mb-0 text-truncate" style={{ letterSpacing: "-0.02em" }}>
                 {credentialsList.length} <span className="fs-6 fw-normal text-muted">SPK Terbit</span>
               </h4>
-              <small className="text-purple fw-semibold" style={{ fontSize: "0.72rem", color: "#8b5cf6" }}>
+              <small className="fw-semibold d-block text-truncate" style={{ fontSize: "0.72rem", color: "#8b5cf6" }}>
                 Jenjang Karir PK I s/d PK IV
               </small>
             </div>
@@ -418,23 +477,40 @@ export default function SdmTab({
 
         <div className="col-12 col-sm-6 col-xl-3">
           <div
-            className="p-3 rounded-4 h-100 d-flex align-items-center gap-3 shadow-sm transition-all"
-            style={{ backgroundColor: cardBg, border: `1px solid ${cardBorder}` }}
+            onClick={() => handleTabChange("presensi")}
+            className={`p-3 rounded-4 h-100 d-flex align-items-center gap-3 shadow-sm stat-card-modern hover-lift ${
+              darkMode ? "glass-panel-dark" : "glass-panel"
+            }`}
+            style={{
+              backgroundColor: cardBg,
+              border: `1px solid ${subTab === "presensi" ? "#f59e0b" : cardBorder}`,
+              cursor: "pointer",
+            }}
+            title="Klik untuk membuka E-Presensi Shift"
           >
             <div
-              className="rounded-3 d-flex align-items-center justify-content-center fs-4"
-              style={{ width: "48px", height: "48px", backgroundColor: "rgba(245, 158, 11, 0.12)", color: "#f59e0b" }}
+              className="icon-gradient-box"
+              style={{
+                backgroundColor: "rgba(245, 158, 11, 0.15)",
+                color: "#f59e0b",
+                boxShadow: "0 4px 12px rgba(245, 158, 11, 0.15)",
+              }}
             >
               ⏱️
             </div>
-            <div>
-              <span className="small fw-semibold d-block" style={{ color: textMuted }}>
-                Presensi Shift Hari Ini
-              </span>
-              <h4 className="fw-bold mb-0" style={{ letterSpacing: "-0.02em" }}>
+            <div className="flex-grow-1 overflow-hidden">
+              <div className="d-flex align-items-center justify-content-between">
+                <span className="small fw-semibold d-block text-truncate" style={{ color: textMuted }}>
+                  Presensi Shift Hari Ini
+                </span>
+                <span className="badge rounded-pill badge-soft-warning" style={{ fontSize: "0.62rem" }}>
+                  Live GPS
+                </span>
+              </div>
+              <h4 className="fw-bold mb-0 text-truncate" style={{ letterSpacing: "-0.02em" }}>
                 {attendanceLogs.length} <span className="fs-6 fw-normal text-muted">Clock-In</span>
               </h4>
-              <small className="text-warning fw-semibold" style={{ fontSize: "0.72rem" }}>
+              <small className="text-warning fw-semibold d-block text-truncate" style={{ fontSize: "0.72rem" }}>
                 Presensi Digital Geolocation
               </small>
             </div>
@@ -442,9 +518,11 @@ export default function SdmTab({
         </div>
       </div>
 
-      {/* 2. SUB-TAB NAVIGATION PILLS */}
+      {/* 2. SUB-TAB NAVIGATION PILLS (GLASSMORPHIC & SLEEK) */}
       <div
-        className="d-flex flex-wrap align-items-center justify-content-between gap-2 p-2 rounded-4 shadow-sm"
+        className={`d-flex flex-wrap align-items-center justify-content-between gap-2 p-2 rounded-4 shadow-sm ${
+          darkMode ? "glass-panel-dark" : "glass-panel"
+        }`}
         style={{
           backgroundColor: cardBg,
           border: `1px solid ${cardBorder}`,
@@ -470,12 +548,12 @@ export default function SdmTab({
                 type="button"
                 onClick={() => handleTabChange(tab.id)}
                 className={`btn btn-sm d-flex align-items-center gap-2 px-3 py-2 rounded-3 transition-all ${
-                  isActive ? "btn-success fw-semibold shadow-sm" : ""
+                  isActive ? "btn-success fw-semibold active-glow" : "hover-lift"
                 }`}
                 style={{
-                  backgroundColor: isActive ? "#10b981" : darkMode ? "#181f33" : "#f1f5f9",
+                  backgroundColor: isActive ? "#10b981" : darkMode ? "rgba(24, 31, 51, 0.7)" : "rgba(241, 245, 249, 0.85)",
                   color: isActive ? "#ffffff" : darkMode ? "#e2e8f0" : "#334155",
-                  border: "none",
+                  border: isActive ? "1px solid rgba(16, 185, 129, 0.4)" : `1px solid ${cardBorder}`,
                   fontSize: "0.8rem",
                 }}
               >

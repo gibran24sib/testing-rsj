@@ -4,6 +4,7 @@ import "./App.css";
 // Layouts
 import Navbar from "./layouts/Navbar";
 import Sidebar from "./layouts/Sidebar";
+import SidebarPegawai from "./layouts/SidebarPegawai";
 import BannerSub from "./layouts/BannerSub";
 import Footer from "./layouts/Footer";
 
@@ -12,7 +13,7 @@ import GuestPage from "./pages/GuestPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import AdminPage from "./pages/AdminPage";
-import PegawaiCutiPage from "./pages/PegawaiCutiPage";
+import PegawaiPage from "./pages/PegawaiPage";
 
 // Modals / Components
 import CommandPalette from "./components/CommandPalette";
@@ -28,7 +29,7 @@ import {
 } from "./utils/navigation";
 
 // Auth & Permissions
-import { isAdminOrHrd, isLeaveApplicant } from "./utils/authHelpers";
+import { isAdminOrHrd, isLeaveApplicant, getEmployeeForUser } from "./utils/authHelpers";
 
 // Data
 import { initialUsers } from "./data/initialData";
@@ -37,6 +38,7 @@ import {
   initialShiftRoster,
   initialLeaveRequests,
   initialTrainings,
+  initialDossiers,
 } from "./data/sdmData";
 
 // Supabase Integration
@@ -45,6 +47,7 @@ import {
   isSupabaseConfigured,
   ambilDataSupabase,
   tambahDataSupabase,
+  updateDataSupabase,
   tambahCutiSupabase,
   updateStatusCutiSupabase,
   registerUserSupabase,
@@ -59,6 +62,7 @@ function App() {
   const [currentView, setCurrentView] = useState(initialRoute.view);
   const [activeTab, setActiveTab] = useState(initialRoute.adminTab || "direktori");
   const [activePortalTab, setActivePortalTab] = useState(initialRoute.portalTab || "tenaga_medis");
+  const [activePegawaiTab, setActivePegawaiTab] = useState(initialRoute.pegawaiTab || "profil");
 
   const [currentUser, setCurrentUser] = useState(() => {
     const savedUser = localStorage.getItem("rsj_current_user");
@@ -79,7 +83,7 @@ function App() {
         employeeId: "EMP-004",
       };
     }
-    // Jika user mengakses rute /cuti langsung dan belum login, pasang sesi demo nakes perawat
+    // Jika user mengakses rute /cuti atau /pegawai langsung dan belum login, pasang sesi demo nakes perawat
     if (window.location.pathname.startsWith("/cuti") || window.location.pathname.startsWith("/pegawai")) {
       return {
         nama: "Ns. Budi Setiawan, S.Kep",
@@ -102,18 +106,18 @@ function App() {
 
   // SINKRONISASI OTOMATIS: STATE -> URL BROWSER & DOCUMENT TITLE
   useEffect(() => {
-    const targetPath = getPathForState(currentView, activeTab, activePortalTab);
-    const targetTitle = getTitleForState(currentView, activeTab, activePortalTab);
+    const targetPath = getPathForState(currentView, activeTab, activePortalTab, activePegawaiTab);
+    const targetTitle = getTitleForState(currentView, activeTab, activePortalTab, activePegawaiTab);
 
     if (window.location.pathname !== targetPath) {
       window.history.pushState(
-        { view: currentView, adminTab: activeTab, portalTab: activePortalTab },
+        { view: currentView, adminTab: activeTab, portalTab: activePortalTab, pegawaiTab: activePegawaiTab },
         "",
         targetPath
       );
     }
     document.title = targetTitle;
-  }, [currentView, activeTab, activePortalTab]);
+  }, [currentView, activeTab, activePortalTab, activePegawaiTab]);
 
   // SINKRONISASI BROWSER BACK / FORWARD (POPSTATE) -> STATE
   useEffect(() => {
@@ -122,12 +126,28 @@ function App() {
       setCurrentView(state.view);
       if (state.adminTab) setActiveTab(state.adminTab);
       if (state.portalTab) setActivePortalTab(state.portalTab);
-      document.title = getTitleForState(state.view, state.adminTab, state.portalTab);
+      if (state.pegawaiTab) setActivePegawaiTab(state.pegawaiTab);
+      document.title = getTitleForState(state.view, state.adminTab, state.portalTab, state.pegawaiTab);
     };
 
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
   }, []);
+
+  // ROLE ACCESS GUARD UNTUK HALAMAN ADMIN
+  useEffect(() => {
+    if (currentView === "admin") {
+      if (currentUser && !isAdminOrHrd(currentUser)) {
+        setCurrentView("pegawai");
+        setActivePegawaiTab("profil");
+        showToast(
+          "Akses Terbatas",
+          "Halaman Panel Admin hanya untuk Kasubbag Kepegawaian & HRD. Anda dialihkan ke Portal Mandiri Pegawai.",
+          "warning"
+        );
+      }
+    }
+  }, [currentView, currentUser]);
 
   // STATE THEMA (DARK / LIGHT MODE)
   const [darkMode, setDarkMode] = useState(() => {
@@ -274,21 +294,53 @@ function App() {
     return saved ? JSON.parse(saved) : initialTrainings;
   });
 
-  // ==========================================================================
-  // PENGAMBILAN DATA DARI SUPABASE (REAL-TIME FETCH PADA SAAT HALAMAN DIMUAT)
-  // ==========================================================================
-  // KODE BARU (SUDAH DIPERBAIKI):
+  const [dossiersList, setDossiersList] = useState(() => {
+    try {
+      const saved = localStorage.getItem("rsj_dossiers");
+      return saved ? JSON.parse(saved) : initialDossiers;
+    } catch {
+      return initialDossiers;
+    }
+  });
+
+  // PENGAMBILAN DATA DARI SUPABASE DENGAN MERGE CERDAS (MENCEGAH OVERWRITE FOTO LOKAL)
   useEffect(() => {
     async function loadDataFromSupabase() {
       if (isSupabaseConfigured()) {
-        console.log("🔄 Menghubungkan ke database Supabase...");
-
-        // Ambil data dari tabel 'employees'
         const dataEmployees = await ambilDataSupabase("employees");
-
         if (dataEmployees && dataEmployees.length > 0) {
-          console.log("✅ Berhasil memuat data pegawai:", dataEmployees);
-          setEmployees(dataEmployees);
+          setEmployees((prevLocal) => {
+            const savedLocal = localStorage.getItem("rsj_employees");
+            const localList = savedLocal ? JSON.parse(savedLocal) : prevLocal;
+
+            // Merge data remote dengan mempertahankan foto atau pembaruan lokal terbaru
+            const merged = dataEmployees.map((remoteEmp) => {
+              const matchedLocal = localList.find(
+                (l) => l.id === remoteEmp.id || (l.nip && l.nip === remoteEmp.nip)
+              );
+              if (matchedLocal) {
+                return {
+                  ...remoteEmp,
+                  ...matchedLocal,
+                  foto: matchedLocal.foto || remoteEmp.foto,
+                };
+              }
+              return remoteEmp;
+            });
+
+            localList.forEach((localEmp) => {
+              if (!merged.some((m) => m.id === localEmp.id)) {
+                merged.push(localEmp);
+              }
+            });
+
+            try {
+              localStorage.setItem("rsj_employees", JSON.stringify(merged));
+            } catch (e) {
+              console.error("Gagal simpan merged employees:", e);
+            }
+            return merged;
+          });
           showToast(
             "Supabase Terhubung",
             `Berhasil memuat ${dataEmployees.length} data pegawai dari Supabase.`,
@@ -297,9 +349,25 @@ function App() {
         }
       }
     }
-
     loadDataFromSupabase();
   }, [showToast]);
+
+  // SINKRONISASI FOTO & BIODATA ANTARA EMPLOYEES & CURRENTUSER (AGAR TETAP STAY SAAT REFRESH)
+  useEffect(() => {
+    if (currentUser && employees.length > 0) {
+      const matched = getEmployeeForUser(currentUser, employees);
+      if (matched && matched.foto && matched.foto !== currentUser.foto) {
+        setCurrentUser((prev) => {
+          const updated = {
+            ...prev,
+            foto: matched.foto,
+          };
+          localStorage.setItem("rsj_current_user", JSON.stringify(updated));
+          return updated;
+        });
+      }
+    }
+  }, [employees, currentUser]);
 
   useEffect(() => {
     localStorage.setItem("rsj_employees", JSON.stringify(employees));
@@ -317,19 +385,87 @@ function App() {
     localStorage.setItem("rsj_trainings", JSON.stringify(trainings));
   }, [trainings]);
 
-  // SDM HANDLERS
+  useEffect(() => {
+    localStorage.setItem("rsj_dossiers", JSON.stringify(dossiersList));
+  }, [dossiersList]);
+
+  // SDM & DOSSIER HANDLERS
+  const handleSaveDossier = useCallback((updatedDossier) => {
+    setDossiersList((prev) => {
+      const idx = prev.findIndex((d) => d.employeeId === updatedDossier.employeeId);
+      let updated;
+      if (idx >= 0) {
+        updated = [...prev];
+        updated[idx] = updatedDossier;
+      } else {
+        updated = [updatedDossier, ...prev];
+      }
+      try {
+        localStorage.setItem("rsj_dossiers", JSON.stringify(updated));
+      } catch (e) {
+        console.error("Gagal simpan dossiers:", e);
+      }
+      return updated;
+    });
+  }, []);
+
   const handleAddEmployee = useCallback((newEmp) => {
-    setEmployees((prev) => [newEmp, ...prev]);
-    // Sinkronisasi otomatis ke tabel 'employees' Supabase jika aktif
+    setEmployees((prev) => {
+      const updated = [newEmp, ...prev];
+      try {
+        localStorage.setItem("rsj_employees", JSON.stringify(updated));
+      } catch (e) {
+        console.error("Gagal simpan add employee:", e);
+      }
+      return updated;
+    });
     if (isSupabaseConfigured()) {
       tambahDataSupabase("employees", newEmp);
     }
   }, []);
 
   const handleUpdateEmployee = useCallback((updatedEmp) => {
-    setEmployees((prev) =>
-      prev.map((emp) => (emp.id === updatedEmp.id ? updatedEmp : emp))
-    );
+    // 1. Simpan ke master state employees & LocalStorage
+    setEmployees((prev) => {
+      const updated = prev.map((emp) => (emp.id === updatedEmp.id ? updatedEmp : emp));
+      try {
+        localStorage.setItem("rsj_employees", JSON.stringify(updated));
+      } catch (e) {
+        console.error("Gagal simpan employees ke LocalStorage:", e);
+      }
+      return updated;
+    });
+
+    // 2. Simpan juga langsung ke currentUser & LocalStorage agar sesi user aktif tidak ter-reset
+    setCurrentUser((prevUser) => {
+      if (!prevUser) return prevUser;
+      const isCurrent =
+        (prevUser.employeeId && (prevUser.employeeId === updatedEmp.id || prevUser.employeeId === updatedEmp.employeeId)) ||
+        (prevUser.id && prevUser.id === updatedEmp.id) ||
+        (prevUser.nip && updatedEmp.nip && prevUser.nip.replace(/\s+/g, "") === updatedEmp.nip.replace(/\s+/g, "")) ||
+        (prevUser.nama && updatedEmp.nama && prevUser.nama.toLowerCase().trim() === updatedEmp.nama.toLowerCase().trim()) ||
+        (prevUser.username && updatedEmp.username && prevUser.username.toLowerCase() === updatedEmp.username.toLowerCase());
+
+      if (isCurrent) {
+        const newCurrentUser = {
+          ...prevUser,
+          ...updatedEmp,
+          foto: updatedEmp.foto || prevUser.foto,
+        };
+        try {
+          localStorage.setItem("rsj_current_user", JSON.stringify(newCurrentUser));
+        } catch (e) {
+          console.error("Gagal simpan current_user ke LocalStorage:", e);
+        }
+        return newCurrentUser;
+      }
+      return prevUser;
+    });
+
+    // 3. Sinkronkan pembaruan ke tabel 'employees' Supabase jika aktif
+    if (isSupabaseConfigured()) {
+      updateDataSupabase("employees", updatedEmp, "id");
+    }
   }, []);
 
   const handleDeleteEmployee = useCallback((empId) => {
@@ -344,7 +480,6 @@ function App() {
   }, []);
 
   const handleApproveLeave = useCallback((leaveId) => {
-    // 1. Pengecekan tegas username & role Admin / HRD
     const cleanUsername = (currentUser?.username || "").toLowerCase().trim().replace(/^@/, "");
     const cleanRole = (currentUser?.role || "").toLowerCase().trim();
     const isAuthorized =
@@ -365,9 +500,8 @@ function App() {
     const targetLeave = leaveRequests.find((l) => l.id === leaveId);
     if (!targetLeave) return;
 
-    // 2. Validasi pencegahan Self-Approval
     if (isLeaveApplicant(currentUser, targetLeave, employees)) {
-      alert("Akses Ditolak: Anda tidak dapat menyetujui pengajuan cuti Anda sendiri. Wajib melalui atasan/pimpinan.");
+      alert("Akses Ditolak: Anda tidak dapat menyetujui permohonan cuti Anda sendiri. Wajib melalui atasan/pimpinan.");
       showToast(
         "Akses Ditolak",
         "Anda tidak dapat menyetujui permohonan cuti Anda sendiri. Wajib melalui atasan/pimpinan.",
@@ -392,7 +526,6 @@ function App() {
       )
     );
 
-    // Sinkronkan ke Supabase jika aktif
     if (isSupabaseConfigured()) {
       updateStatusCutiSupabase({
         leaveId,
@@ -406,7 +539,6 @@ function App() {
   }, [currentUser, leaveRequests, employees, showToast]);
 
   const handleRejectLeave = useCallback((leaveId, customReason = "") => {
-    // 1. Pengecekan tegas username & role Admin / HRD
     const cleanUsername = (currentUser?.username || "").toLowerCase().trim().replace(/^@/, "");
     const cleanRole = (currentUser?.role || "").toLowerCase().trim();
     const isAuthorized =
@@ -427,7 +559,6 @@ function App() {
     const targetLeave = leaveRequests.find((l) => l.id === leaveId);
     if (!targetLeave) return;
 
-    // 2. Validasi pencegahan Self-Approval
     if (isLeaveApplicant(currentUser, targetLeave, employees)) {
       alert("Akses Ditolak: Anda tidak dapat mengubah status permohonan cuti Anda sendiri.");
       showToast(
@@ -454,7 +585,6 @@ function App() {
       )
     );
 
-    // Sinkronkan ke Supabase jika aktif
     if (isSupabaseConfigured()) {
       updateStatusCutiSupabase({
         leaveId,
@@ -492,9 +622,9 @@ function App() {
     );
   }, []);
 
-  // KONFIRMASI KEMBALI KE PORTAL UTAMA / GUEST DARI ADMIN
+  // KONFIRMASI KEMBALI KE PORTAL UTAMA / GUEST
   const handleRequestBackToPortal = useCallback(() => {
-    if (currentView === "admin") {
+    if (currentView === "admin" || currentView === "pegawai") {
       setIsConfirmPortalOpen(true);
     } else {
       setCurrentView("guest");
@@ -511,10 +641,10 @@ function App() {
   const handleCommandAction = useCallback(
     (action) => {
       switch (action.type) {
-        case "navigate_tab":
+        case "navigate_admin":
           if (currentView !== "admin") {
             setCurrentView("admin");
-            if (!currentUser) {
+            if (!currentUser || !isAdminOrHrd(currentUser)) {
               setCurrentUser({
                 nama: "Agus Pratondo, S.Sos",
                 role: "Kasubbag Kepegawaian & SDM",
@@ -524,8 +654,23 @@ function App() {
           }
           setActiveTab(action.tab);
           break;
+        case "navigate_pegawai":
+          if (currentView !== "pegawai") {
+            setCurrentView("pegawai");
+            if (!currentUser) {
+              setCurrentUser({
+                nama: "Ns. Budi Setiawan, S.Kep",
+                role: "Perawat Pelaksana IGD Jiwa",
+                username: "budi",
+                nip: "19920817 201902 1 004",
+                employeeId: "EMP-006",
+              });
+            }
+          }
+          setActivePegawaiTab(action.tab);
+          break;
         case "navigate_view":
-          if (action.view === "guest" && currentView === "admin") {
+          if ((action.view === "guest") && (currentView === "admin" || currentView === "pegawai")) {
             setIsConfirmPortalOpen(true);
           } else {
             setCurrentView(action.view);
@@ -566,13 +711,9 @@ function App() {
       });
 
       if (res.success && res.user) {
-        setCurrentUser(res.user);
-        localStorage.setItem("rsj_current_user", JSON.stringify(res.user));
-
-        // Layout Terpadu (Unified Layout):
-        // Seluruh user yang login (Admin maupun Pegawai/Nakes) masuk ke Dashboard Terpadu dengan Sidebar Lengkap
-        setCurrentView("admin");
-        setActiveTab("direktori");
+        const loggedUser = res.user;
+        setCurrentUser(loggedUser);
+        localStorage.setItem("rsj_current_user", JSON.stringify(loggedUser));
 
         setAuthInput({
           nama: "",
@@ -583,10 +724,19 @@ function App() {
           email: "",
           password: "",
         });
-        showToast("Login Berhasil", `Selamat bertugas di SIM-SDM, ${res.user.nama}!`, "success");
+
+        // Pisahkan tampilan: Admin vs Pegawai
+        if (isAdminOrHrd(loggedUser)) {
+          setCurrentView("admin");
+          setActiveTab("direktori");
+          showToast("Login Berhasil", `Selamat datang di Panel Admin SIM-SDM, ${loggedUser.nama}!`, "success");
+        } else {
+          setCurrentView("pegawai");
+          setActivePegawaiTab("profil");
+          showToast("Login Berhasil", `Selamat bertugas di Portal SIM-SDM, ${loggedUser.nama}!`, "success");
+        }
         return;
       } else if (res.error && !res.localOnly) {
-        // Cek apakah ada akun lokal demo yang cocok jika password demo dimasukkan
         const foundLocal = users.find(
           (u) =>
             (u.username?.toLowerCase() === loginIdentifier.toLowerCase() ||
@@ -597,8 +747,13 @@ function App() {
         if (foundLocal) {
           setCurrentUser(foundLocal);
           localStorage.setItem("rsj_current_user", JSON.stringify(foundLocal));
-          setCurrentView("admin");
-          setActiveTab("direktori");
+          if (isAdminOrHrd(foundLocal)) {
+            setCurrentView("admin");
+            setActiveTab("direktori");
+          } else {
+            setCurrentView("pegawai");
+            setActivePegawaiTab("profil");
+          }
           showToast("Login Berhasil (Akun Demo)", `Selamat bertugas di SIM-SDM, ${foundLocal.nama}!`, "success");
           return;
         }
@@ -619,8 +774,7 @@ function App() {
     if (foundUser) {
       setCurrentUser(foundUser);
       localStorage.setItem("rsj_current_user", JSON.stringify(foundUser));
-      setCurrentView("admin");
-      setActiveTab("direktori");
+
       setAuthInput({
         nama: "",
         nip: "",
@@ -630,7 +784,16 @@ function App() {
         email: "",
         password: "",
       });
-      showToast("Login Berhasil", `Selamat bertugas di SIM-SDM, ${foundUser.nama}!`, "success");
+
+      if (isAdminOrHrd(foundUser)) {
+        setCurrentView("admin");
+        setActiveTab("direktori");
+        showToast("Login Berhasil", `Selamat datang di Panel Admin SIM-SDM, ${foundUser.nama}!`, "success");
+      } else {
+        setCurrentView("pegawai");
+        setActivePegawaiTab("profil");
+        showToast("Login Berhasil", `Selamat bertugas di Portal SIM-SDM, ${foundUser.nama}!`, "success");
+      }
     } else {
       setAuthError("Email/Username atau Password tidak sesuai. Silakan periksa kembali atau gunakan akun demo terdaftar.");
     }
@@ -736,19 +899,14 @@ function App() {
       }}
     >
       {/* ======================================================== */}
-      {/* 1. UNIFIED PORTAL & DASHBOARD VIEW (2-COLUMN LAYOUT)     */}
+      {/* 1. ADMIN DASHBOARD VIEW (KHUSUS ADMINISTRATOR SDM)       */}
       {/* ======================================================== */}
-      {currentView === "admin" || currentView === "cuti_pegawai" ? (
+      {currentView === "admin" ? (
         <div className="d-flex w-100 min-vh-100">
-          {/* SIDEBAR NAVIGASI KIRI LENGKAP */}
+          {/* SIDEBAR ADMIN LENGKAP */}
           <Sidebar
-            activeTab={currentView === "cuti_pegawai" ? "cuti" : activeTab}
-            setActiveTab={(tab) => {
-              if (currentView === "cuti_pegawai") {
-                setCurrentView("admin");
-              }
-              setActiveTab(tab);
-            }}
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
             currentUser={currentUser}
             darkMode={darkMode}
             toggleTheme={toggleTheme}
@@ -759,16 +917,18 @@ function App() {
             onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
           />
 
-          {/* MAIN CONTENT DI SISI KANAN */}
+          {/* MAIN CONTENT ADMIN */}
           <main className="flex-grow-1 w-100 d-flex flex-column min-vh-100 overflow-auto">
             <div className="flex-grow-1 px-3 px-md-4 py-3">
               <AdminPage
-                activeTab={currentView === "cuti_pegawai" ? "cuti" : activeTab}
+                activeTab={activeTab}
                 setActiveTab={setActiveTab}
                 employees={employees}
                 shiftRoster={shiftRoster}
                 leaveRequests={leaveRequests}
                 trainings={trainings}
+                dossiersList={dossiersList}
+                onSaveDossier={handleSaveDossier}
                 currentUser={currentUser}
                 setCurrentView={setCurrentView}
                 onAddEmployee={handleAddEmployee}
@@ -789,6 +949,51 @@ function App() {
             <Footer isAdmin={true} darkMode={darkMode} />
           </main>
         </div>
+      ) : currentView === "pegawai" || currentView === "cuti_pegawai" ? (
+        /* ======================================================== */
+        /* 2. PEGAWAI PORTAL VIEW (KHUSUS LAYANAN MANDIRI PEGAWAI) */
+        /* ======================================================== */
+        <div className="d-flex w-100 min-vh-100">
+          {/* SIDEBAR PEGAWAI MANDIRI */}
+          <SidebarPegawai
+            activeTab={activePegawaiTab}
+            setActiveTab={setActivePegawaiTab}
+            currentUser={currentUser}
+            darkMode={darkMode}
+            toggleTheme={toggleTheme}
+            handleLogout={handleRequestLogout}
+            setCurrentView={setCurrentView}
+            onBackToPortal={handleRequestBackToPortal}
+            onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
+            dossierCount={
+              dossiersList.find((d) => d.employeeId === (currentUser?.employeeId || currentUser?.id))?.dokumen?.length || 0
+            }
+          />
+
+          {/* MAIN CONTENT PEGAWAI */}
+          <main className="flex-grow-1 w-100 d-flex flex-column min-vh-100 overflow-auto">
+            <div className="flex-grow-1 px-3 px-md-4 py-3">
+              <PegawaiPage
+                activeTab={activePegawaiTab}
+                setActiveTab={setActivePegawaiTab}
+                currentUser={currentUser}
+                employees={employees}
+                shiftRoster={shiftRoster}
+                leaveRequests={leaveRequests}
+                trainings={trainings}
+                dossiersList={dossiersList}
+                onSaveDossier={handleSaveDossier}
+                onUpdateEmployee={handleUpdateEmployee}
+                onSubmitLeave={handleSubmitLeave}
+                darkMode={darkMode}
+                showToast={showToast}
+                onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
+                onBackToPortal={handleRequestBackToPortal}
+              />
+            </div>
+            <Footer isAdmin={false} darkMode={darkMode} />
+          </main>
+        </div>
       ) : (
         /* ======================================================== */
         /* 3. GUEST / PUBLIC VIEW                                  */
@@ -798,10 +1003,12 @@ function App() {
             <Navbar
               currentView={currentView}
               setCurrentView={setCurrentView}
+              currentUser={currentUser}
               darkMode={darkMode}
               toggleTheme={toggleTheme}
               navBg={navBg}
               onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
+              onOpenLogoutModal={handleRequestLogout}
             />
 
             <BannerSub currentView={currentView} darkMode={darkMode} />
@@ -870,7 +1077,7 @@ function App() {
         darkMode={darkMode}
       />
 
-      {/* MODAL KONFIRMASI LOGOUT DARI ADMIN */}
+      {/* MODAL KONFIRMASI LOGOUT */}
       <ConfirmLogoutModal
         isOpen={isConfirmLogoutOpen}
         onClose={() => setIsConfirmLogoutOpen(false)}

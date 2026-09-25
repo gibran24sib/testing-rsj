@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 export default function SdmEmployeeModal({
   isOpen,
@@ -8,6 +8,8 @@ export default function SdmEmployeeModal({
   onSave,
   darkMode,
 }) {
+  const adminPhotoInputRef = useRef(null);
+
   const [formData, setFormData] = useState({
     id: "",
     nip: "",
@@ -22,6 +24,7 @@ export default function SdmEmployeeModal({
     email: "",
     noHp: "",
     alamat: "",
+    foto: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=150&auto=format&fit=crop&q=80",
     tanggalBergabung: new Date().toISOString().split("T")[0],
     strNomor: "",
     strMasaBerlaku: "",
@@ -50,6 +53,7 @@ export default function SdmEmployeeModal({
         email: employee.email || "",
         noHp: employee.noHp || "",
         alamat: employee.alamat || "",
+        foto: employee.foto || "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=150&auto=format&fit=crop&q=80",
         tanggalBergabung: employee.tanggalBergabung || "",
         strNomor: employee.str?.nomor || "",
         strMasaBerlaku: employee.str?.masaBerlaku || "",
@@ -76,6 +80,7 @@ export default function SdmEmployeeModal({
         email: "",
         noHp: "",
         alamat: "Pekanbaru, Riau",
+        foto: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=150&auto=format&fit=crop&q=80",
         tanggalBergabung: new Date().toISOString().split("T")[0],
         strNomor: "STR-PPNI-14-" + Math.floor(1000 + Math.random() * 9000),
         strMasaBerlaku: "2028-12-31",
@@ -95,6 +100,30 @@ export default function SdmEmployeeModal({
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handlePhotoUploadFromFile = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      alert("Mohon pilih file gambar (JPG, PNG, WEBP, atau GIF).");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Ukuran foto maksimal 5 MB.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const base64Url = event.target?.result;
+      if (base64Url) {
+        setFormData((prev) => ({ ...prev, foto: base64Url }));
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleSubmit = (e) => {
@@ -133,9 +162,7 @@ export default function SdmEmployeeModal({
       sisaCuti: Number(formData.sisaCuti),
       skpSkor: Number(formData.skpSkor),
       statusAktif: formData.statusAktif,
-      foto:
-        employee?.foto ||
-        "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+      foto: formData.foto || employee?.foto || "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=150&auto=format&fit=crop&q=80",
     };
 
     onSave(payload, mode);
@@ -258,21 +285,19 @@ export default function SdmEmployeeModal({
                       className={`badge rounded-pill px-2 py-1 ${
                         employee?.statusAktif === "Aktif" ? "bg-success" : "bg-warning text-dark"
                       }`}
-                      style={{ fontSize: "0.72rem" }}
                     >
                       {employee?.statusAktif}
                     </span>
                   </div>
-                  <p className="mb-1 text-muted" style={{ fontSize: "0.88rem" }}>
-                    <strong>NIP/NRK:</strong> {employee?.nip} &bull; <strong>Golongan:</strong> {employee?.golongan}
+                  <p className="mb-0 small" style={{ color: labelColor }}>
+                    NIP: {employee?.nip} &bull; {employee?.profesi} ({employee?.golongan})
                   </p>
-                  <p className="mb-0 fw-medium" style={{ color: "#10b981", fontSize: "0.9rem" }}>
-                    {employee?.jabatan} &bull; <span style={{ color: labelColor }}>{employee?.unitPenempatan}</span>
-                  </p>
+                  <small className="d-block text-success fw-semibold mt-1">
+                    📍 {employee?.unitPenempatan} &bull; {employee?.jabatan}
+                  </small>
                 </div>
               </div>
 
-              {/* DETAIL GRID */}
               <div className="row g-3">
                 <div className="col-md-6">
                   <div
@@ -283,7 +308,7 @@ export default function SdmEmployeeModal({
                     }}
                   >
                     <h6 className="fw-bold text-primary mb-3 d-flex align-items-center gap-2">
-                      <span>🩺</span> Informasi Profesi & Penempatan
+                      <span>🏥</span> Kualifikasi & Penempatan
                     </h6>
                     <ul className="list-unstyled mb-0 d-flex flex-column gap-2" style={{ fontSize: "0.85rem" }}>
                       <li>
@@ -389,6 +414,50 @@ export default function SdmEmployeeModal({
           ) : (
             /* FORM ADD / EDIT */
             <form id="sdmEmployeeForm" onSubmit={handleSubmit} className="d-flex flex-column gap-3">
+              {/* UPLOAD FOTO PROFIL DARI FILE PERANGKAT */}
+              <div
+                className="p-3 rounded-3 border d-flex flex-wrap align-items-center justify-content-between gap-3"
+                style={{
+                  backgroundColor: darkMode ? "#181f33" : "#f1f5f9",
+                  borderColor: inputBorder,
+                }}
+              >
+                <div className="d-flex align-items-center gap-3">
+                  <img
+                    src={formData.foto}
+                    alt="Preview Foto"
+                    className="rounded-circle shadow-sm border border-2 border-success"
+                    style={{ width: "65px", height: "65px", objectFit: "cover" }}
+                  />
+                  <div>
+                    <strong className="d-block small" style={{ color: modalText }}>
+                      Foto Profil Pegawai
+                    </strong>
+                    <small style={{ color: labelColor, fontSize: "0.75rem" }}>
+                      Pilih file gambar dari komputer/HP (JPG, PNG, WEBP maks. 5MB)
+                    </small>
+                  </div>
+                </div>
+
+                <div>
+                  <input
+                    type="file"
+                    ref={adminPhotoInputRef}
+                    onChange={handlePhotoUploadFromFile}
+                    accept="image/*"
+                    style={{ display: "none" }}
+                  />
+                  <button
+                    type="button"
+                    className="btn btn-outline-success btn-sm d-flex align-items-center gap-2 px-3 py-2 rounded-3 hover-lift fw-semibold"
+                    onClick={() => adminPhotoInputRef.current?.click()}
+                  >
+                    <span>📁</span>
+                    <span>Pilih Foto dari File</span>
+                  </button>
+                </div>
+              </div>
+
               <div className="row g-3">
                 <div className="col-md-6">
                   <label className="form-label small fw-semibold" style={{ color: labelColor }}>
@@ -456,9 +525,9 @@ export default function SdmEmployeeModal({
                     style={{ backgroundColor: inputBg, color: modalText, borderColor: inputBorder }}
                   >
                     <option value="PNS">PNS (Pegawai Negeri Sipil)</option>
-                    <option value="PPPK">PPPK (Pegawai Pemerintah dengan PK)</option>
-                    <option value="Pegawai BLUD">Pegawai Tetap BLUD</option>
-                    <option value="Kontrak">Pegawai Kontrak / Outsourcing</option>
+                    <option value="PPPK">PPPK (P3K Tenaga Kesehatan)</option>
+                    <option value="Kontrak BLUD">Pegawai Kontrak BLUD</option>
+                    <option value="Mitra Klinis">Mitra Klinis / Dokter Tamu</option>
                   </select>
                 </div>
 
@@ -479,7 +548,29 @@ export default function SdmEmployeeModal({
 
                 <div className="col-md-6">
                   <label className="form-label small fw-semibold" style={{ color: labelColor }}>
-                    Jabatan Fungsional / Struktural
+                    Unit Penempatan Bangsal / Poli
+                  </label>
+                  <select
+                    name="unitPenempatan"
+                    value={formData.unitPenempatan}
+                    onChange={handleChange}
+                    className="form-select"
+                    style={{ backgroundColor: inputBg, color: modalText, borderColor: inputBorder }}
+                  >
+                    <option value="Bangsal Kampar (Akut Pria)">Bangsal Kampar (Akut Pria)</option>
+                    <option value="Bangsal Siak (Wanita)">Bangsal Siak (Wanita)</option>
+                    <option value="Bangsal Rokan (Rehabilitasi NAPZA)">Bangsal Rokan (NAPZA)</option>
+                    <option value="IGD Jiwa & Krisis 24 Jam">IGD Jiwa & Krisis 24 Jam</option>
+                    <option value="Poliklinik Jiwa Dewasa & Lansia">Poliklinik Jiwa Dewasa & Lansia</option>
+                    <option value="Klinik Psikologi & Visum Jiwa">Klinik Psikologi & Visum Jiwa</option>
+                    <option value="Instalasi Farmasi Jiwa">Instalasi Farmasi Jiwa</option>
+                    <option value="Subbag Kepegawaian & SDM">Subbag Kepegawaian & SDM</option>
+                  </select>
+                </div>
+
+                <div className="col-md-6">
+                  <label className="form-label small fw-semibold" style={{ color: labelColor }}>
+                    Jabatan Struktural / Fungsional
                   </label>
                   <input
                     type="text"
@@ -494,100 +585,51 @@ export default function SdmEmployeeModal({
 
                 <div className="col-md-6">
                   <label className="form-label small fw-semibold" style={{ color: labelColor }}>
-                    Unit Penempatan / Bangsal
+                    Pendidikan Terakhir
                   </label>
-                  <select
-                    name="unitPenempatan"
-                    value={formData.unitPenempatan}
+                  <input
+                    type="text"
+                    name="pendidikan"
+                    value={formData.pendidikan}
                     onChange={handleChange}
-                    className="form-select"
+                    placeholder="Contoh: S1 Keperawatan + Profesi Ners"
+                    className="form-control"
                     style={{ backgroundColor: inputBg, color: modalText, borderColor: inputBorder }}
-                  >
-                    <option value="Bangsal Kampar (Akut Pria)">Bangsal Kampar (Akut Pria)</option>
-                    <option value="Bangsal Siak (Wanita)">Bangsal Siak (Wanita)</option>
-                    <option value="Bangsal Indragiri (Tenang & Isolasi)">Bangsal Indragiri (Tenang & Isolasi)</option>
-                    <option value="Bangsal Rokan (Rehabilitasi NAPZA)">Bangsal Rokan (Rehabilitasi NAPZA)</option>
-                    <option value="IGD Jiwa & Krisis 24 Jam">IGD Jiwa & Krisis 24 Jam</option>
-                    <option value="Poli Jiwa & Klinik Spesialis">Poli Jiwa & Klinik Spesialis</option>
-                    <option value="Instalasi Farmasi & Gudang Sentral">Instalasi Farmasi & Gudang Sentral</option>
-                    <option value="Bagian Tata Usaha & SDM RSJ">Bagian Tata Usaha & SDM RSJ</option>
-                  </select>
-                </div>
-
-                {/* STR & SIP SECTION */}
-                <div className="col-12">
-                  <div
-                    className="p-3 rounded-3 border"
-                    style={{
-                      backgroundColor: darkMode ? "#141a29" : "#f1f5f9",
-                      borderColor: darkMode ? "#1e293b" : "#cbd5e1",
-                    }}
-                  >
-                    <h6 className="fw-bold mb-3" style={{ fontSize: "0.9rem", color: "#10b981" }}>
-                      📜 Legalitas Praktik Nakes (STR & SIP)
-                    </h6>
-                    <div className="row g-2">
-                      <div className="col-md-6">
-                        <label className="form-label small" style={{ color: labelColor }}>
-                          Nomor STR
-                        </label>
-                        <input
-                          type="text"
-                          name="strNomor"
-                          value={formData.strNomor}
-                          onChange={handleChange}
-                          placeholder="Nomor STR Kemenkes/PPNI/IDI"
-                          className="form-control form-control-sm"
-                          style={{ backgroundColor: inputBg, color: modalText, borderColor: inputBorder }}
-                        />
-                      </div>
-                      <div className="col-md-6">
-                        <label className="form-label small" style={{ color: labelColor }}>
-                          Masa Berlaku STR
-                        </label>
-                        <input
-                          type="date"
-                          name="strMasaBerlaku"
-                          value={formData.strMasaBerlaku}
-                          onChange={handleChange}
-                          className="form-control form-control-sm"
-                          style={{ backgroundColor: inputBg, color: modalText, borderColor: inputBorder }}
-                        />
-                      </div>
-                      <div className="col-md-6 mt-2">
-                        <label className="form-label small" style={{ color: labelColor }}>
-                          Nomor SIP / SIPP
-                        </label>
-                        <input
-                          type="text"
-                          name="sipNomor"
-                          value={formData.sipNomor}
-                          onChange={handleChange}
-                          placeholder="Nomor Izin Praktik Dinkes"
-                          className="form-control form-control-sm"
-                          style={{ backgroundColor: inputBg, color: modalText, borderColor: inputBorder }}
-                        />
-                      </div>
-                      <div className="col-md-6 mt-2">
-                        <label className="form-label small" style={{ color: labelColor }}>
-                          Masa Berlaku SIP
-                        </label>
-                        <input
-                          type="date"
-                          name="sipMasaBerlaku"
-                          value={formData.sipMasaBerlaku}
-                          onChange={handleChange}
-                          className="form-control form-control-sm"
-                          style={{ backgroundColor: inputBg, color: modalText, borderColor: inputBorder }}
-                        />
-                      </div>
-                    </div>
-                  </div>
+                  />
                 </div>
 
                 <div className="col-md-6">
                   <label className="form-label small fw-semibold" style={{ color: labelColor }}>
-                    Email Kedinasan
+                    TMT Tanggal Bergabung
+                  </label>
+                  <input
+                    type="date"
+                    name="tanggalBergabung"
+                    value={formData.tanggalBergabung}
+                    onChange={handleChange}
+                    className="form-control"
+                    style={{ backgroundColor: inputBg, color: modalText, borderColor: inputBorder }}
+                  />
+                </div>
+
+                <div className="col-md-6">
+                  <label className="form-label small fw-semibold" style={{ color: labelColor }}>
+                    No. WhatsApp / HP Aktif
+                  </label>
+                  <input
+                    type="text"
+                    name="noHp"
+                    value={formData.noHp}
+                    onChange={handleChange}
+                    placeholder="0812-xxxx-xxxx"
+                    className="form-control"
+                    style={{ backgroundColor: inputBg, color: modalText, borderColor: inputBorder }}
+                  />
+                </div>
+
+                <div className="col-md-6">
+                  <label className="form-label small fw-semibold" style={{ color: labelColor }}>
+                    Email Resmi Pegawai
                   </label>
                   <input
                     type="email"
@@ -600,16 +642,79 @@ export default function SdmEmployeeModal({
                   />
                 </div>
 
+                {/* STR & SIP FIELDS */}
+                <div className="col-12 mt-3 pt-3 border-top" style={{ borderColor: darkMode ? "#1f273d" : "#e2e8f0" }}>
+                  <h6 className="fw-bold text-success mb-2 small">📜 LEGALITAS STR & SIP IZIN PRAKTIK</h6>
+                </div>
+
                 <div className="col-md-6">
                   <label className="form-label small fw-semibold" style={{ color: labelColor }}>
-                    No. Handphone / WhatsApp
+                    Nomor STR
                   </label>
                   <input
                     type="text"
-                    name="noHp"
-                    value={formData.noHp}
+                    name="strNomor"
+                    value={formData.strNomor}
                     onChange={handleChange}
-                    placeholder="0812-xxxx-xxxx"
+                    placeholder="STR-KKI / STR-PPNI..."
+                    className="form-control"
+                    style={{ backgroundColor: inputBg, color: modalText, borderColor: inputBorder }}
+                  />
+                </div>
+
+                <div className="col-md-6">
+                  <label className="form-label small fw-semibold" style={{ color: labelColor }}>
+                    Masa Berlaku STR
+                  </label>
+                  <input
+                    type="date"
+                    name="strMasaBerlaku"
+                    value={formData.strMasaBerlaku}
+                    onChange={handleChange}
+                    className="form-control"
+                    style={{ backgroundColor: inputBg, color: modalText, borderColor: inputBorder }}
+                  />
+                </div>
+
+                <div className="col-md-6">
+                  <label className="form-label small fw-semibold" style={{ color: labelColor }}>
+                    Nomor SIP / SIPP
+                  </label>
+                  <input
+                    type="text"
+                    name="sipNomor"
+                    value={formData.sipNomor}
+                    onChange={handleChange}
+                    placeholder="SIP.446/DS/RSJ-TPN/2024..."
+                    className="form-control"
+                    style={{ backgroundColor: inputBg, color: modalText, borderColor: inputBorder }}
+                  />
+                </div>
+
+                <div className="col-md-6">
+                  <label className="form-label small fw-semibold" style={{ color: labelColor }}>
+                    Masa Berlaku SIP
+                  </label>
+                  <input
+                    type="date"
+                    name="sipMasaBerlaku"
+                    value={formData.sipMasaBerlaku}
+                    onChange={handleChange}
+                    className="form-control"
+                    style={{ backgroundColor: inputBg, color: modalText, borderColor: inputBorder }}
+                  />
+                </div>
+
+                <div className="col-12">
+                  <label className="form-label small fw-semibold" style={{ color: labelColor }}>
+                    Alamat Lengkap Domisili
+                  </label>
+                  <textarea
+                    rows={2}
+                    name="alamat"
+                    value={formData.alamat}
+                    onChange={handleChange}
+                    placeholder="Alamat tempat tinggal pegawai di Pekanbaru..."
                     className="form-control"
                     style={{ backgroundColor: inputBg, color: modalText, borderColor: inputBorder }}
                   />
@@ -624,17 +729,16 @@ export default function SdmEmployeeModal({
           className="d-flex align-items-center justify-content-end gap-2 px-4 py-3 border-top"
           style={{ borderColor: darkMode ? "#1e293b" : "#e2e8f0" }}
         >
-          <button type="button" className="btn btn-secondary px-4" onClick={onClose}>
+          <button type="button" className="btn btn-outline-secondary px-3" onClick={onClose}>
             {mode === "view" ? "Tutup" : "Batal"}
           </button>
           {mode !== "view" && (
             <button
               type="submit"
               form="sdmEmployeeForm"
-              className="btn btn-success px-4 d-flex align-items-center gap-2"
+              className="btn btn-success px-4 fw-bold shadow-sm hover-lift"
             >
-              <span>💾</span>
-              <span>{mode === "add" ? "Simpan Pegawai" : "Perbarui Data"}</span>
+              {mode === "add" ? "💾 Simpan Pegawai Baru" : "💾 Simpan Perubahan Profil"}
             </button>
           )}
         </div>

@@ -82,21 +82,36 @@ export default function GuestPage({
       <section
         className="py-5 px-3 px-md-4 mb-4 border-bottom position-relative overflow-hidden"
         style={{
-          backgroundColor: darkMode ? "#080a10" : "#ffffff",
+          backgroundColor: darkMode ? "#07090e" : "#ffffff",
           color: textPrimary,
           borderColor: darkMode ? "#1c2338" : "#e2e8f0",
         }}
       >
-        {/* Glow Accent */}
+        {/* Glow Accent 1 */}
         <div
           style={{
             position: "absolute",
             top: "-120px",
             right: "-100px",
-            width: "420px",
-            height: "420px",
+            width: "450px",
+            height: "450px",
             borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(16, 185, 129, 0.18) 0%, rgba(16, 185, 129, 0) 70%)",
+            background: "radial-gradient(circle, rgba(16, 185, 129, 0.22) 0%, rgba(16, 185, 129, 0) 70%)",
+            pointerEvents: "none",
+            zIndex: 0,
+          }}
+        ></div>
+
+        {/* Glow Accent 2 */}
+        <div
+          style={{
+            position: "absolute",
+            bottom: "-100px",
+            left: "-50px",
+            width: "350px",
+            height: "350px",
+            borderRadius: "50%",
+            background: "radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, rgba(99, 102, 241, 0) 70%)",
             pointerEvents: "none",
             zIndex: 0,
           }}
@@ -105,7 +120,7 @@ export default function GuestPage({
         <div className="container position-relative py-3" style={{ zIndex: 1 }}>
           <div className="row align-items-center g-4">
             <div className="col-lg-7">
-              <div className="d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill mb-3 badge-soft-success">
+              <div className="d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill mb-3 badge-soft-success shimmer-badge">
                 <span className="pulse-dot"></span>
                 <span className="small fw-semibold">Portal Informasi SDM & Kepegawaian RSJ Tampan Riau</span>
               </div>
@@ -136,15 +151,15 @@ export default function GuestPage({
               {/* QUICK ACTION BUTTONS */}
               <div className="d-flex flex-wrap gap-2 pt-1">
                 <button
-                  className="btn btn-success px-4 py-2 fw-semibold d-flex align-items-center gap-2 shadow-sm"
+                  className="btn btn-success px-4 py-2 fw-semibold d-flex align-items-center gap-2 shadow-sm hover-lift active-glow"
                   onClick={() => setCurrentView("login")}
                 >
                   <span>🔐 Masuk Portal SIM-SDM</span>
                 </button>
                 <button
-                  className="btn px-3 py-2 fw-medium d-flex align-items-center gap-2 border"
+                  className="btn px-3 py-2 fw-medium d-flex align-items-center gap-2 border hover-lift"
                   style={{
-                    backgroundColor: darkMode ? "#161c2d" : "#f8fafc",
+                    backgroundColor: darkMode ? "rgba(22, 28, 45, 0.8)" : "rgba(248, 250, 252, 0.9)",
                     color: textPrimary,
                     borderColor: cardBorderColor,
                   }}
@@ -153,9 +168,9 @@ export default function GuestPage({
                   <span>📅 Jadwal Praktik Dokter</span>
                 </button>
                 <button
-                  className="btn px-3 py-2 fw-medium d-flex align-items-center gap-2 border"
+                  className="btn px-3 py-2 fw-medium d-flex align-items-center gap-2 border hover-lift"
                   style={{
-                    backgroundColor: darkMode ? "#161c2d" : "#f8fafc",
+                    backgroundColor: darkMode ? "rgba(22, 28, 45, 0.8)" : "rgba(248, 250, 252, 0.9)",
                     color: textPrimary,
                     borderColor: cardBorderColor,
                   }}
@@ -169,9 +184,10 @@ export default function GuestPage({
             {/* HERO STATS OVERVIEW */}
             <div className="col-lg-5">
               <div
-                className="p-4 rounded-4 shadow-sm border"
+                className={`p-4 rounded-4 shadow-sm border ${
+                  darkMode ? "glass-panel-dark" : "glass-panel"
+                }`}
                 style={{
-                  backgroundColor: darkMode ? "#0f1424" : "#f8fafc",
                   borderColor: cardBorderColor,
                 }}
               >
@@ -182,7 +198,7 @@ export default function GuestPage({
                 <div className="row g-3">
                   <div className="col-6">
                     <div
-                      className="p-3 rounded-3 border"
+                      className="p-3 rounded-3 border hover-lift"
                       style={{
                         backgroundColor: cardSurfaceBg,
                         borderColor: cardBorderColor,
@@ -200,7 +216,7 @@ export default function GuestPage({
 
                   <div className="col-6">
                     <div
-                      className="p-3 rounded-3 border"
+                      className="p-3 rounded-3 border hover-lift"
                       style={{
                         backgroundColor: cardSurfaceBg,
                         borderColor: cardBorderColor,
@@ -218,7 +234,7 @@ export default function GuestPage({
 
                   <div className="col-6">
                     <div
-                      className="p-3 rounded-3 border"
+                      className="p-3 rounded-3 border hover-lift"
                       style={{
                         backgroundColor: cardSurfaceBg,
                         borderColor: cardBorderColor,
@@ -236,7 +252,7 @@ export default function GuestPage({
 
                   <div className="col-6">
                     <div
-                      className="p-3 rounded-3 border"
+                      className="p-3 rounded-3 border hover-lift"
                       style={{
                         backgroundColor: cardSurfaceBg,
                         borderColor: cardBorderColor,
@@ -262,9 +278,10 @@ export default function GuestPage({
       <div className="container">
         {/* NAV PILLS */}
         <div
-          className="d-flex flex-wrap gap-2 p-2 rounded-4 mb-4 border shadow-sm"
+          className={`d-flex flex-wrap gap-2 p-2 rounded-4 mb-4 border shadow-sm ${
+            darkMode ? "glass-panel-dark" : "glass-panel"
+          }`}
           style={{
-            backgroundColor: darkMode ? "#111624" : "#ffffff",
             borderColor: cardBorderColor,
           }}
         >
@@ -282,10 +299,10 @@ export default function GuestPage({
                 key={tab.id}
                 onClick={() => setActivePortalTab(tab.id)}
                 className={`btn btn-sm d-flex align-items-center gap-2 px-3 py-2 rounded-3 border-0 transition-all ${
-                  isActive ? "btn-success fw-bold shadow-sm" : ""
+                  isActive ? "btn-success fw-bold active-glow" : "hover-lift"
                 }`}
                 style={{
-                  backgroundColor: isActive ? "#10b981" : darkMode ? "#1c2338" : "#f1f5f9",
+                  backgroundColor: isActive ? "#10b981" : darkMode ? "rgba(28, 35, 56, 0.7)" : "rgba(241, 245, 249, 0.85)",
                   color: isActive ? "#ffffff" : darkMode ? "#e2e8f0" : "#334155",
                   fontSize: "0.83rem",
                   fontWeight: isActive ? 600 : 500,

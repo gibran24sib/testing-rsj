@@ -17,6 +17,17 @@ export const ADMIN_TAB_ROUTES = {
   analitik: "/admin/analitik",
 };
 
+// Tab Portal Mandiri Pegawai (Employee Self-Service / ESS)
+export const PEGAWAI_TAB_ROUTES = {
+  profil: "/pegawai/profil",
+  berkas: "/pegawai/berkas",
+  cuti: "/pegawai/cuti",
+  roster: "/pegawai/roster",
+  presensi: "/pegawai/presensi",
+  legalitas: "/pegawai/legalitas",
+  diklat: "/pegawai/diklat",
+};
+
 // Tab Portal Publik
 export const PORTAL_TAB_ROUTES = {
   tenaga_medis: "/portal/tenaga-medis",
@@ -29,7 +40,6 @@ export const PORTAL_TAB_ROUTES = {
 export const PAGE_TITLES = {
   login: "Masuk SIM-SDM • RSJ Tampan Riau",
   register: "Registrasi Petugas SIM-SDM • RSJ Tampan",
-  cuti_pegawai: "Portal Pengajuan Cuti Mandiri Nakes • SIM-SDM RSJ Tampan",
   portal_tenaga_medis: "Portal Informasi Tenaga Medis • RSJ Tampan",
   portal_rekrutmen: "Informasi Rekrutmen & Formasi Nakes • RSJ Tampan",
   portal_diklat: "Program Diklat & Kredensialing Jiwa • RSJ Tampan",
@@ -45,17 +55,30 @@ export const PAGE_TITLES = {
   admin_cuti: "Approval & Manajemen Cuti HRD • SIM-SDM RSJ Tampan",
   admin_diklat: "Diklat & Sertifikasi Jiwa • SIM-SDM RSJ Tampan",
   admin_analitik: "Analitik Kinerja SDM & SKP • SIM-SDM RSJ Tampan",
+  pegawai_profil: "Data Diri & Profil Saya • Portal Pegawai RSJ Tampan",
+  pegawai_berkas: "E-Berkas & Dokumen Mandiri • Portal Pegawai RSJ Tampan",
+  pegawai_cuti: "Pengajuan & Riwayat Cuti Mandiri • Portal Pegawai RSJ Tampan",
+  pegawai_roster: "Jadwal Shift Bangsal Saya • Portal Pegawai RSJ Tampan",
+  pegawai_presensi: "E-Presensi Shift Geolocation • Portal Pegawai RSJ Tampan",
+  pegawai_legalitas: "Legalitas STR & SIP Saya • Portal Pegawai RSJ Tampan",
+  pegawai_diklat: "Sertifikat & Pelatihan Saya • Portal Pegawai RSJ Tampan",
+  pegawai_default: "Portal Mandiri Pegawai (ESS) • SIM-SDM RSJ Tampan",
 };
 
 /**
  * Menghasilkan URL path berdasarkan state aplikasi saat ini
  */
-export function getPathForState(view, adminTab = "direktori", portalTab = "tenaga_medis") {
-  if (view === "cuti_pegawai") {
-    return "/cuti/pengajuan";
-  }
+export function getPathForState(
+  view,
+  adminTab = "direktori",
+  portalTab = "tenaga_medis",
+  pegawaiTab = "profil"
+) {
   if (view === "admin") {
     return ADMIN_TAB_ROUTES[adminTab] || `/admin/${adminTab.replace("_", "-")}`;
+  }
+  if (view === "pegawai" || view === "cuti_pegawai") {
+    return PEGAWAI_TAB_ROUTES[pegawaiTab] || `/pegawai/${pegawaiTab.replace("_", "-")}`;
   }
   if (view === "login") {
     return "/login";
@@ -75,12 +98,17 @@ export function getPathForState(view, adminTab = "direktori", portalTab = "tenag
 /**
  * Menghasilkan judul halaman untuk title browser tab
  */
-export function getTitleForState(view, adminTab = "direktori", portalTab = "tenaga_medis") {
-  if (view === "cuti_pegawai") {
-    return PAGE_TITLES.cuti_pegawai;
-  }
+export function getTitleForState(
+  view,
+  adminTab = "direktori",
+  portalTab = "tenaga_medis",
+  pegawaiTab = "profil"
+) {
   if (view === "admin") {
     return PAGE_TITLES[`admin_${adminTab}`] || "Panel Admin SIM-SDM • RSJ Tampan";
+  }
+  if (view === "pegawai" || view === "cuti_pegawai") {
+    return PAGE_TITLES[`pegawai_${pegawaiTab}`] || PAGE_TITLES.pegawai_default;
   }
   if (view === "login") {
     return PAGE_TITLES.login;
@@ -106,6 +134,7 @@ export function getStateFromPath(pathname = window.location.pathname) {
       view: "login",
       adminTab: "direktori",
       portalTab: "tenaga_medis",
+      pegawaiTab: "profil",
     };
   }
   if (cleanPath === "/register") {
@@ -113,20 +142,47 @@ export function getStateFromPath(pathname = window.location.pathname) {
       view: "register",
       adminTab: "direktori",
       portalTab: "tenaga_medis",
+      pegawaiTab: "profil",
     };
   }
 
-  // 2. RUTE CUTI PEGAWAI / NAKES MANDIRI
+  // 2. RUTE PORTAL PEGAWAI MANDIRI
   if (
-    cleanPath === "/cuti/pengajuan" ||
-    cleanPath === "/cuti" ||
-    cleanPath === "/pegawai/cuti" ||
-    cleanPath === "/nakes/cuti"
+    cleanPath.startsWith("/pegawai") ||
+    cleanPath.startsWith("/cuti") ||
+    cleanPath.startsWith("/nakes")
   ) {
+    const parts = cleanPath.split("/").filter(Boolean);
+    let tab = "profil";
+
+    if (cleanPath === "/cuti/pengajuan" || cleanPath === "/cuti") {
+      tab = "cuti";
+    } else if (parts[1]) {
+      const sub = parts[1].replace("-", "_");
+      if (sub === "profil" || sub === "biodata" || sub === "datadiri") {
+        tab = "profil";
+      } else if (sub === "berkas" || sub === "dossier" || sub === "dokumen" || sub === "arsip") {
+        tab = "berkas";
+      } else if (sub === "cuti" || sub === "izin" || sub === "pengajuan") {
+        tab = "cuti";
+      } else if (sub === "roster" || sub === "shift" || sub === "jadwal") {
+        tab = "roster";
+      } else if (sub === "presensi" || sub === "absensi" || sub === "gps") {
+        tab = "presensi";
+      } else if (sub === "legalitas" || sub === "str" || sub === "sip") {
+        tab = "legalitas";
+      } else if (sub === "diklat" || sub === "pelatihan" || sub === "sertifikat") {
+        tab = "diklat";
+      } else {
+        tab = sub;
+      }
+    }
+
     return {
-      view: "cuti_pegawai",
-      adminTab: "cuti",
+      view: "pegawai",
+      adminTab: "direktori",
       portalTab: "tenaga_medis",
+      pegawaiTab: tab,
     };
   }
 
@@ -137,7 +193,6 @@ export function getStateFromPath(pathname = window.location.pathname) {
 
     if (parts[1]) {
       const sub = parts[1].replace("-", "_");
-      // Map alias URL ke id tab yang sesuai
       if (sub === "wisn" || sub === "abk_wisn" || sub === "abk") {
         tab = "abk_wisn";
       } else if (sub === "roster" || sub === "shift" || sub === "jadwal") {
@@ -167,6 +222,7 @@ export function getStateFromPath(pathname = window.location.pathname) {
       view: "admin",
       adminTab: tab,
       portalTab: "tenaga_medis",
+      pegawaiTab: "profil",
     };
   }
 
@@ -192,6 +248,7 @@ export function getStateFromPath(pathname = window.location.pathname) {
       view: "guest",
       adminTab: "direktori",
       portalTab: portalTab,
+      pegawaiTab: "profil",
     };
   }
 
@@ -200,5 +257,6 @@ export function getStateFromPath(pathname = window.location.pathname) {
     view: "guest",
     adminTab: "direktori",
     portalTab: "tenaga_medis",
+    pegawaiTab: "profil",
   };
 }

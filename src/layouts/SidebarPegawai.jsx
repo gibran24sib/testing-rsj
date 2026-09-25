@@ -1,8 +1,7 @@
 import React from "react";
-import { isAdminOrHrd } from "../utils/authHelpers";
 
-export default function Sidebar({
-  activeTab,
+export default function SidebarPegawai({
+  activeTab = "profil",
   setActiveTab,
   currentUser,
   darkMode,
@@ -11,34 +10,32 @@ export default function Sidebar({
   setCurrentView,
   onBackToPortal,
   onOpenCommandPalette,
-  employeeCount = 0,
+  dossierCount = 0,
 }) {
-  const isAdmin = isAdminOrHrd(currentUser);
-
   const menuItems = [
     {
-      id: "direktori",
-      label: "Direktori Pegawai",
-      icon: "👥",
-      badge: `${employeeCount || 12} Nakes`,
+      id: "profil",
+      label: "Data Diri & Profil",
+      icon: "👤",
+      badge: "Biodata",
+    },
+    {
+      id: "berkas",
+      label: "E-Berkas & Dokumen",
+      icon: "📁",
+      badge: dossierCount ? `${dossierCount} File` : "Upload DMS",
+    },
+    {
+      id: "cuti",
+      label: "Pengajuan Cuti",
+      icon: "🏖️",
+      badge: "Mandiri",
     },
     {
       id: "roster",
-      label: "Roster Shift 24/7",
+      label: "Jadwal Shift Jaga",
       icon: "📅",
-      badge: "Duty Shift",
-    },
-    {
-      id: "abk_wisn",
-      label: "Beban Kerja (WISN)",
-      icon: "🧮",
-      badge: "Kemenkes",
-    },
-    {
-      id: "kredensialing",
-      label: "Jenjang Karir & SPK",
-      icon: "🎖️",
-      badge: "KARS",
+      badge: "Bangsal",
     },
     {
       id: "presensi",
@@ -47,34 +44,16 @@ export default function Sidebar({
       badge: "Live GPS",
     },
     {
-      id: "dossier",
-      label: "Master E-Berkas Digital",
-      icon: "📁",
-      badge: "DMS",
-    },
-    {
       id: "legalitas",
-      label: "Audit Legalitas STR/SIP",
+      label: "Legalitas STR & SIP",
       icon: "📜",
-      badge: "Audit Izin",
-    },
-    {
-      id: "cuti",
-      label: "Approval & Kelola Cuti",
-      icon: "🏖️",
-      badge: "Approval HRD",
+      badge: "Masa Izin",
     },
     {
       id: "diklat",
-      label: "Diklat Jiwa & KARS",
+      label: "Pelatihan & Sertifikat",
       icon: "🎓",
       badge: "KARS",
-    },
-    {
-      id: "analitik",
-      label: "Analitik Kinerja SDM",
-      icon: "📊",
-      badge: "KPI",
     },
   ];
 
@@ -104,7 +83,7 @@ export default function Sidebar({
             border: darkMode ? "1px solid #1d253b" : "1px solid #e2e8f0",
           }}
           onClick={onBackToPortal ? onBackToPortal : () => setCurrentView("guest")}
-          title="Kembali ke Portal Publik"
+          title="Kembali ke Portal Publik RSJ Tampan"
         >
           <div
             className="rounded-3 fs-5 d-flex align-items-center justify-content-center"
@@ -116,20 +95,20 @@ export default function Sidebar({
               boxShadow: "0 2px 8px rgba(16, 185, 129, 0.2)",
             }}
           >
-            🏛️
+            🩺
           </div>
           <div>
             <h6 className="mb-0 fw-bold" style={{ letterSpacing: "-0.02em", fontSize: "0.95rem" }}>
               RSJ TAMPAN
             </h6>
             <small
-              className="d-block text-warning fw-semibold"
+              className="d-block text-success fw-semibold"
               style={{
                 fontSize: "0.68rem",
                 letterSpacing: "0.02em",
               }}
             >
-              PANEL ADMIN KEPEGAWAIAN
+              PORTAL PEGAWAI (ESS)
             </small>
           </div>
         </div>
@@ -147,7 +126,7 @@ export default function Sidebar({
         >
           <div className="d-flex align-items-center gap-2">
             <span>🔍</span>
-            <span>Cari modul SDM...</span>
+            <span>Cari modul mandiri...</span>
           </div>
           <kbd
             className="px-1 py-0 rounded"
@@ -161,7 +140,7 @@ export default function Sidebar({
           </kbd>
         </button>
 
-        {/* SECTION HEADER: MODUL SDM */}
+        {/* SECTION HEADER: MENU MANDIRI */}
         <div className="mb-2 px-2">
           <small
             className="text-uppercase fw-semibold"
@@ -171,7 +150,7 @@ export default function Sidebar({
               color: darkMode ? "#505769" : "#94a3b8",
             }}
           >
-            Modul Manajemen SDM
+            Layanan Mandiri Pegawai
           </small>
         </div>
 
@@ -189,17 +168,17 @@ export default function Sidebar({
                 style={{
                   backgroundColor: isActive
                     ? darkMode
-                      ? "rgba(245, 158, 11, 0.16)"
-                      : "#fffbeb"
+                      ? "rgba(16, 185, 129, 0.16)"
+                      : "#ecfdf5"
                     : "transparent",
                   color: isActive
-                    ? "#f59e0b"
+                    ? "#10b981"
                     : darkMode
                     ? "#94a3b8"
                     : "#475569",
                   fontWeight: isActive ? 600 : 500,
                   fontSize: "0.83rem",
-                  borderLeft: isActive ? "3px solid #f59e0b" : "3px solid transparent",
+                  borderLeft: isActive ? "3px solid #10b981" : "3px solid transparent",
                 }}
               >
                 <div className="d-flex align-items-center gap-2">
@@ -212,12 +191,12 @@ export default function Sidebar({
                     fontSize: "0.62rem",
                     fontWeight: 500,
                     backgroundColor: isActive
-                      ? "rgba(245, 158, 11, 0.25)"
+                      ? "rgba(16, 185, 129, 0.25)"
                       : darkMode
                       ? "#1b2133"
                       : "#f1f5f9",
                     color: isActive
-                      ? "#f59e0b"
+                      ? "#10b981"
                       : darkMode
                       ? "#8e94a4"
                       : "#64748b",
@@ -237,22 +216,23 @@ export default function Sidebar({
         <div
           className="px-3 py-2 rounded-3 mb-2 d-flex align-items-center justify-content-between border"
           style={{
-            backgroundColor: darkMode ? "rgba(245, 158, 11, 0.12)" : "#fffbeb",
-            borderColor: darkMode ? "#b45309" : "#fde68a",
+            backgroundColor: darkMode ? "rgba(16, 185, 129, 0.12)" : "#ecfdf5",
+            borderColor: darkMode ? "#059669" : "#a7f3d0",
             fontSize: "0.74rem",
             fontWeight: 600,
-            color: "#f59e0b",
+            color: "#10b981",
           }}
         >
           <div className="d-flex align-items-center gap-1">
-            <span>🛡️</span>
-            <span>Mode Administrator SDM</span>
+            <span>🩺</span>
+            <span>Portal Pegawai & Nakes</span>
           </div>
-          <span className="badge rounded-pill bg-warning text-dark" style={{ fontSize: "0.62rem" }}>
-            HRD
+          <span className="badge rounded-pill bg-success" style={{ fontSize: "0.62rem" }}>
+            Mandiri
           </span>
         </div>
 
+        {/* USER PROFILE INFO */}
         <div
           className="p-3 rounded-3 mb-2 d-flex align-items-center justify-content-between"
           style={{
@@ -261,26 +241,40 @@ export default function Sidebar({
           }}
         >
           <div className="d-flex align-items-center gap-2 overflow-hidden">
-            <div
-              className="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold shadow-sm"
-              style={{
-                width: "36px",
-                height: "36px",
-                backgroundColor: "#f59e0b",
-                fontSize: "0.85rem",
-                flexShrink: 0,
-                boxShadow: "0 2px 8px rgba(245, 158, 11, 0.3)",
-              }}
-            >
-              {currentUser?.nama ? currentUser.nama.charAt(0).toUpperCase() : "A"}
-            </div>
+            {currentUser?.foto ? (
+              <img
+                src={currentUser.foto}
+                alt={currentUser?.nama || "Pegawai"}
+                className="rounded-circle shadow-sm border border-success"
+                style={{
+                  width: "36px",
+                  height: "36px",
+                  objectFit: "cover",
+                  flexShrink: 0,
+                }}
+              />
+            ) : (
+              <div
+                className="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold shadow-sm"
+                style={{
+                  width: "36px",
+                  height: "36px",
+                  backgroundColor: "#10b981",
+                  fontSize: "0.85rem",
+                  flexShrink: 0,
+                  boxShadow: "0 2px 8px rgba(16, 185, 129, 0.3)",
+                }}
+              >
+                {currentUser?.nama ? currentUser.nama.charAt(0).toUpperCase() : "P"}
+              </div>
+            )}
             <div className="overflow-hidden">
               <div
                 className="fw-semibold text-truncate"
                 style={{ fontSize: "0.82rem" }}
                 title={currentUser?.nama}
               >
-                {currentUser?.nama || "Agus Pratondo, S.Sos"}
+                {currentUser?.nama || "Pegawai RSJ Tampan"}
               </div>
               <small
                 className="d-block text-truncate"
@@ -288,9 +282,9 @@ export default function Sidebar({
                   fontSize: "0.68rem",
                   color: darkMode ? "#7e8699" : "#64748b",
                 }}
-                title={currentUser?.role}
+                title={currentUser?.role || currentUser?.profesi}
               >
-                {currentUser?.role || "Kasubbag Kepegawaian & SDM"}
+                {currentUser?.role || currentUser?.profesi || "Tenaga Medis"}
               </small>
             </div>
           </div>
@@ -310,6 +304,7 @@ export default function Sidebar({
           </button>
         </div>
 
+        {/* TOMBOL LOGOUT */}
         <button
           onClick={handleLogout}
           className="btn btn-sm w-100 d-flex align-items-center justify-content-center gap-2 py-2 rounded-3 border-0 shadow-sm hover-lift"
@@ -321,7 +316,7 @@ export default function Sidebar({
           }}
         >
           <span>🚪</span>
-          <span>Keluar Sesi Admin</span>
+          <span>Keluar Sesi</span>
         </button>
       </div>
     </aside>
