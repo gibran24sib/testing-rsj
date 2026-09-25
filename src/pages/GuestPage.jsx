@@ -292,6 +292,7 @@ export default function GuestPage({
             { id: "diklat", label: "Diklat & Kredensialing", icon: "🎓" },
             { id: "organisasi", label: "Struktur Organisasi SDM", icon: "🏛️" },
             { id: "layanan_sdm", label: "Panduan & FAQ Layanan", icon: "📋" },
+            { id: "tentang_kami", label: "Tentang RSJ & Logo", icon: "🏥", badge: "Profil" },
           ].map((tab) => {
             const isActive = activePortalTab === tab.id;
             return (
@@ -857,6 +858,150 @@ export default function GuestPage({
                     </div>
                   );
                 })}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 7: TENTANG KAMI, LOGO & MOTTO RESMI RSJ TAMPAN */}
+        {activePortalTab === "tentang_kami" && (
+          <div
+            className="p-4 p-md-5 rounded-4 border shadow-sm animate-fade-in"
+            style={{
+              backgroundColor: darkMode ? "#111624" : "#ffffff",
+              borderColor: cardBorderColor,
+            }}
+          >
+            {/* HEADER LOGO & PROFIL */}
+            <div className="row align-items-center g-4 mb-5 pb-4 border-bottom" style={{ borderColor: cardBorderColor }}>
+              <div className="col-md-4 text-center">
+                <div
+                  className="p-4 rounded-4 d-inline-block shadow-sm mb-3"
+                  style={{
+                    backgroundColor: darkMode ? "rgba(255, 255, 255, 0.05)" : "#f8fafc",
+                    border: `1px solid ${cardBorderColor}`,
+                  }}
+                >
+                  <img
+                    src="/logo-rsj.png"
+                    alt="Logo Resmi RS Jiwa Tampan Provinsi Riau"
+                    className="img-fluid animate-float"
+                    style={{ maxHeight: "180px", objectFit: "contain" }}
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = "https://rsjiwatampan.riau.go.id/landing/images/Logo.png";
+                    }}
+                  />
+                </div>
+                <div className="badge bg-success-subtle text-success px-3 py-2 rounded-pill d-block mx-auto" style={{ maxWidth: "220px" }}>
+                  ⭐ Bintang 5 Paripurna KARS
+                </div>
+              </div>
+
+              <div className="col-md-8">
+                <span className="badge bg-primary-subtle text-primary mb-2">Profil Resmi Rumah Sakit</span>
+                <h3 className="fw-bold mb-2" style={{ color: textPrimary }}>
+                  Rumah Sakit Jiwa Tampan Provinsi Riau
+                </h3>
+                <p className="lead fs-6 mb-3 text-success fw-semibold">
+                  "Melayani Dengan Sepenuh Hati" &bull; RS Jiwa Kelas A Rujukan Regional
+                </p>
+                <p className="small mb-3" style={{ color: textSecondary, lineHeight: "1.7" }}>
+                  Rumah Sakit Jiwa Tampan Provinsi Riau dibangun pada tahun 1980 dan mulai beroperasi tanggal 5 Juli 1984, diresmikan pada 21 Maret 1987 oleh Menteri Kesehatan RI (dr. Soewardjono Soerjaningrat). Merupakan rumah sakit rujukan utama pelayanan kesehatan jiwa dan penapisan adiksi narkoba bagi masyarakat Riau dan Kepulauan Riau dengan status Pola Pengelolaan Keuangan Badan Layanan Umum Daerah (PPK-BLUD).
+                </p>
+                <div className="d-flex flex-wrap gap-2">
+                  <a
+                    href="https://rsjiwatampan.riau.go.id/profil/tentang-kami"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-sm btn-outline-success d-inline-flex align-items-center gap-1 hover-lift"
+                  >
+                    <span>🌐</span>
+                    <span>Kunjungi Website Resmi rsjiwatampan.riau.go.id &rarr;</span>
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            {/* ARTI LAMBANG & MAKNA LOGO */}
+            <div className="row g-4 mb-4">
+              <div className="col-lg-6">
+                <div
+                  className="p-4 rounded-4 border h-100"
+                  style={{
+                    backgroundColor: cardSurfaceBg,
+                    borderColor: cardBorderColor,
+                  }}
+                >
+                  <h5 className="fw-bold mb-3 text-success d-flex align-items-center gap-2">
+                    <span>🍃</span>
+                    <span>Makna & Filosofi Logo RSJ Tampan</span>
+                  </h5>
+                  <ul className="list-unstyled d-flex flex-column gap-3 small mb-0" style={{ color: textSecondary, lineHeight: "1.6" }}>
+                    <li className="d-flex gap-3">
+                      <span className="fs-5">💚</span>
+                      <div>
+                        <strong style={{ color: textPrimary }}>Daun Hijau Berbentuk Hati:</strong> Wadah yang menyejukkan atau memberikan kasih sayang dan keteduhan yang selalu hidup dan tumbuh berkembang dengan semangat energi segar.
+                      </div>
+                    </li>
+                    <li className="d-flex gap-3">
+                      <span className="fs-5">🙌</span>
+                      <div>
+                        <strong style={{ color: textPrimary }}>Gambar Orang Besar dan Kecil Tangan ke Atas:</strong> Mengartikan setiap orang dewasa maupun anak-anak dapat mengalami masalah kejiwaan yang memerlukan kebebasan, perlakuan yang setara, serta wajib kita lindungi dan kasihi bersama.
+                      </div>
+                    </li>
+                    <li className="d-flex gap-3">
+                      <span className="fs-5">🎨</span>
+                      <div>
+                        <strong style={{ color: textPrimary }}>Warna Kuning, Hijau, dan Merah:</strong> Representasi warna-warna sakral dan dominan adat budaya Melayu Riau.
+                      </div>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              {/* NILAI-NILAI BUDAYA KERJA KEJIWAAN */}
+              <div className="col-lg-6">
+                <div
+                  className="p-4 rounded-4 border h-100"
+                  style={{
+                    backgroundColor: cardSurfaceBg,
+                    borderColor: cardBorderColor,
+                  }}
+                >
+                  <h5 className="fw-bold mb-3 text-primary d-flex align-items-center gap-2">
+                    <span>💎</span>
+                    <span>Tata Nilai Budaya Kerja "KEJIWAAN"</span>
+                  </h5>
+                  <div className="row g-2">
+                    {[
+                      { huruf: "K", judul: "Kekerabatan", desc: "Membangun hubungan kekeluargaan yang erat dengan pasien dan rekan kerja." },
+                      { huruf: "E", judul: "Empati", desc: "Memahami dan merasakan kebutuhan batiniah pasien asuhan jiwa." },
+                      { huruf: "J", judul: "Jujur", desc: "Integritas tinggi dalam rekam medis, asuhan klinis, dan logistik." },
+                      { huruf: "I", judul: "Ibadah", desc: "Melaksanakan tugas pelayanan medis sebagai ladang pengabdian ibadah." },
+                      { huruf: "W", judul: "Wirausaha", desc: "Inovatif, adaptif terhadap kemajuan teknologi kesehatan modern." },
+                      { huruf: "A", judul: "Amanah", desc: "Menjaga kerahasiaan data medis dan kepercayaan publik secara profesional." },
+                      { huruf: "A", judul: "Adil", desc: "Memberikan perlakuan medis setara tanpa diskriminasi kepada seluruh pasien." },
+                      { huruf: "N", judul: "Nurani", desc: "Bekerja dengan keikhlasan hati nurani demi kesembuhan jiwa raga pasien." },
+                    ].map((val, vIdx) => (
+                      <div key={vIdx} className="col-6">
+                        <div
+                          className="p-2 rounded-3 border d-flex align-items-start gap-2 h-100"
+                          style={{
+                            backgroundColor: darkMode ? "#182035" : "#f8fafc",
+                            borderColor: cardBorderColor,
+                          }}
+                        >
+                          <span className="badge bg-success fw-bold fs-6 px-2">{val.huruf}</span>
+                          <div>
+                            <strong className="d-block small" style={{ color: textPrimary }}>{val.judul}</strong>
+                            <small className="text-muted d-block" style={{ fontSize: "0.7rem", lineHeight: "1.3" }}>{val.desc}</small>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
           </div>

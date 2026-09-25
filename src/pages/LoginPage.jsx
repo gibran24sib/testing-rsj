@@ -75,16 +75,24 @@ export default function LoginPage({
           >
             <div className="text-center mb-4">
               <div
-                className="d-inline-flex p-3 rounded-4 fs-2 mb-3 icon-gradient-box animate-float"
+                className="d-inline-flex p-2 rounded-4 mb-3 icon-gradient-box animate-float align-items-center justify-content-center"
                 style={{
-                  width: "64px",
-                  height: "64px",
-                  backgroundColor: "rgba(16, 185, 129, 0.15)",
-                  color: "#10b981",
-                  boxShadow: "0 8px 20px rgba(16, 185, 129, 0.25)",
+                  width: "72px",
+                  height: "72px",
+                  backgroundColor: darkMode ? "rgba(255, 255, 255, 0.08)" : "rgba(16, 185, 129, 0.12)",
+                  boxShadow: "0 8px 25px rgba(16, 185, 129, 0.25)",
+                  border: darkMode ? "1px solid rgba(255,255,255,0.12)" : "1px solid rgba(16,185,129,0.25)",
                 }}
               >
-                🏥
+                <img
+                  src="/logo-rsj.png"
+                  alt="Logo RSJ Tampan"
+                  style={{ width: "100%", height: "100%", objectFit: "contain" }}
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = "https://rsjiwatampan.riau.go.id/landing/images/Logo.png";
+                  }}
+                />
               </div>
               <h4 className="fw-bold mb-1" style={{ letterSpacing: "-0.02em" }}>
                 Masuk SIM-SDM

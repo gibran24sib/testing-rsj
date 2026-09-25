@@ -70,13 +70,24 @@ export default function RegisterPage({
           >
             <div className="text-center mb-4">
               <div
-                className="d-inline-flex p-3 rounded-4 fs-3 mb-2"
+                className="d-inline-flex p-2 rounded-4 mb-2 align-items-center justify-content-center"
                 style={{
-                  backgroundColor: "rgba(99, 102, 241, 0.12)",
-                  color: "#6366f1",
+                  width: "68px",
+                  height: "68px",
+                  backgroundColor: darkMode ? "rgba(255, 255, 255, 0.08)" : "rgba(16, 185, 129, 0.12)",
+                  boxShadow: "0 6px 20px rgba(16, 185, 129, 0.2)",
+                  border: darkMode ? "1px solid rgba(255,255,255,0.12)" : "1px solid rgba(16,185,129,0.2)",
                 }}
               >
-                📝
+                <img
+                  src="/logo-rsj.png"
+                  alt="Logo RSJ Tampan"
+                  style={{ width: "100%", height: "100%", objectFit: "contain" }}
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = "https://rsjiwatampan.riau.go.id/landing/images/Logo.png";
+                  }}
+                />
               </div>
               <h4 className="fw-bold mb-1">Registrasi Petugas SIM-SDM</h4>
               <small className="opacity-75">

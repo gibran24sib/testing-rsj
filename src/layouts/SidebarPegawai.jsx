@@ -86,16 +86,24 @@ export default function SidebarPegawai({
           title="Kembali ke Portal Publik RSJ Tampan"
         >
           <div
-            className="rounded-3 fs-5 d-flex align-items-center justify-content-center"
+            className="rounded-3 d-flex align-items-center justify-content-center overflow-hidden p-1"
             style={{
-              backgroundColor: "rgba(16, 185, 129, 0.15)",
-              color: "#10b981",
+              backgroundColor: darkMode ? "rgba(255, 255, 255, 0.08)" : "rgba(16, 185, 129, 0.1)",
               width: "38px",
               height: "38px",
               boxShadow: "0 2px 8px rgba(16, 185, 129, 0.2)",
+              border: darkMode ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(16,185,129,0.2)",
             }}
           >
-            🩺
+            <img
+              src="/logo-rsj.png"
+              alt="Logo RSJ Tampan"
+              style={{ width: "100%", height: "100%", objectFit: "contain" }}
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = "https://rsjiwatampan.riau.go.id/landing/images/Logo.png";
+              }}
+            />
           </div>
           <div>
             <h6 className="mb-0 fw-bold" style={{ letterSpacing: "-0.02em", fontSize: "0.95rem" }}>

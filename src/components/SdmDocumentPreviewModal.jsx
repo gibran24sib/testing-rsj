@@ -271,17 +271,32 @@ export default function SdmDocumentPreviewModal({
                   left: "10%",
                   right: "10%",
                   bottom: "15%",
-                  opacity: darkMode ? 0.04 : 0.05,
-                  fontSize: "12rem",
+                  opacity: darkMode ? 0.06 : 0.08,
                 }}
               >
-                🏥
+                <img
+                  src="/logo-rsj.png"
+                  alt="Watermark Logo RSJ Tampan"
+                  style={{ width: "240px", height: "240px", objectFit: "contain", filter: "grayscale(30%)" }}
+                  onError={(e) => {
+                    e.target.onerror = null;
+                    e.target.src = "https://rsjiwatampan.riau.go.id/landing/images/Logo.png";
+                  }}
+                />
               </div>
 
               {/* KOP SURAT RESMI */}
               <div className="text-center pb-3 border-bottom mb-3" style={{ borderColor }}>
                 <div className="d-flex align-items-center justify-content-center gap-3 mb-1">
-                  <span className="fs-2">🏥</span>
+                  <img
+                    src="/logo-rsj.png"
+                    alt="Logo RSJ Tampan"
+                    style={{ width: "48px", height: "48px", objectFit: "contain" }}
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = "https://rsjiwatampan.riau.go.id/landing/images/Logo.png";
+                    }}
+                  />
                   <div>
                     <h6 className="fw-bold mb-0 text-uppercase" style={{ letterSpacing: "0.5px" }}>
                       Pemerintah Provinsi Riau &bull; Dinas Kesehatan
