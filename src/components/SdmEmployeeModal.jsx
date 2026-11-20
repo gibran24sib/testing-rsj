@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { compressImage, saveUserPhoto } from "../utils/imageHelpers";
 
 export default function SdmEmployeeModal({
   isOpen,
@@ -102,7 +103,7 @@ export default function SdmEmployeeModal({
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handlePhotoUploadFromFile = (e) => {
+  const handlePhotoUploadFromFile = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -111,19 +112,20 @@ export default function SdmEmployeeModal({
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      alert("Ukuran foto maksimal 5 MB.");
+    if (file.size > 10 * 1024 * 1024) {
+      alert("Ukuran foto maksimal 10 MB.");
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const base64Url = event.target?.result;
+    try {
+      const base64Url = await compressImage(file, 400, 400, 0.82);
       if (base64Url) {
         setFormData((prev) => ({ ...prev, foto: base64Url }));
       }
-    };
-    reader.readAsDataURL(file);
+    } catch (err) {
+      console.error("Gagal memproses foto:", err);
+      alert("Gagal memproses file foto.");
+    }
   };
 
   const handleSubmit = (e) => {
@@ -165,6 +167,7 @@ export default function SdmEmployeeModal({
       foto: formData.foto || employee?.foto || "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=150&auto=format&fit=crop&q=80",
     };
 
+    saveUserPhoto(payload.foto, null, payload);
     onSave(payload, mode);
     onClose();
   };

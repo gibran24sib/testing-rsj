@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from "react";
 import { getEmployeeForUser } from "../utils/authHelpers";
+import { compressImage, getSavedUserPhoto, saveUserPhoto } from "../utils/imageHelpers";
 import SdmLeaveLetterModal from "../components/SdmLeaveLetterModal";
 import SdmIdCardModal from "../components/SdmIdCardModal";
 import SdmShiftSwapModal from "../components/SdmShiftSwapModal";
@@ -44,7 +45,14 @@ export default function PegawaiPage({
   const employeeGolongan = matchedEmp?.golongan || "Penata Muda (III/a)";
   const employeeTanggalBergabung = matchedEmp?.tanggalBergabung || "2019-02-01";
   const employeeSkpSkor = matchedEmp?.skpSkor || 94.2;
-  const employeeFoto = matchedEmp?.foto || "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=150&auto=format&fit=crop&q=80";
+  const persistentSavedPhoto = useMemo(() => {
+    return getSavedUserPhoto(currentUser, matchedEmp);
+  }, [currentUser, matchedEmp]);
+  const employeeFoto =
+    persistentSavedPhoto ||
+    currentUser?.foto ||
+    matchedEmp?.foto ||
+    "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=150&auto=format&fit=crop&q=80";
   const sisaCuti = matchedEmp?.sisaCuti !== undefined ? matchedEmp.sisaCuti : 12;
 
   // DOSSIER STATE PEGAWAI AKTIF
@@ -121,8 +129,8 @@ export default function PegawaiPage({
     });
   }, [employeeName, employeeNoHp, employeeEmail, employeeAlamat, employeePendidikan, employeeFoto, matchedEmp]);
 
-  // UPLOAD FOTO PROFIL LANGSUNG DARI FILE KOMPUTER/HP (BASE64)
-  const handleDirectAvatarUpload = (e) => {
+  // UPLOAD FOTO PROFIL LANGSUNG DARI FILE KOMPUTER/HP (BASE64 TERKOMPRESI RINGAN)
+  const handleDirectAvatarUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -131,17 +139,17 @@ export default function PegawaiPage({
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      alert("Ukuran foto maksimal 5 MB.");
+    if (file.size > 10 * 1024 * 1024) {
+      alert("Ukuran foto maksimal 10 MB.");
       return;
     }
 
     setIsPhotoUploading(true);
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const base64Url = event.target?.result;
+    try {
+      const base64Url = await compressImage(file, 400, 400, 0.82);
       if (base64Url) {
         setProfileFormData((prev) => ({ ...prev, foto: base64Url }));
+        saveUserPhoto(base64Url, currentUser, matchedEmp);
         const updatedEmp = {
           ...(matchedEmp || {}),
           id: employeeId,
@@ -162,18 +170,17 @@ export default function PegawaiPage({
           statusAktif: "Aktif",
         };
         onUpdateEmployee?.(updatedEmp);
-        showToast?.("Foto Profil Diperbarui", "Foto profil Anda berhasil diunggah dari file perangkat.", "success");
+        showToast?.("Foto Profil Diperbarui", "Foto profil Anda berhasil diunggah dan disimpan permanen.", "success");
       }
+    } catch (err) {
+      console.error("Gagal kompresi foto profil:", err);
+      alert("Gagal memproses file foto. Pastikan format file gambar valid.");
+    } finally {
       setIsPhotoUploading(false);
-    };
-    reader.onerror = () => {
-      alert("Gagal membaca file gambar.");
-      setIsPhotoUploading(false);
-    };
-    reader.readAsDataURL(file);
+    }
   };
 
-  const handleFormPhotoFileSelect = (e) => {
+  const handleFormPhotoFileSelect = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -182,20 +189,37 @@ export default function PegawaiPage({
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      alert("Ukuran foto maksimal 5 MB.");
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const base64Url = event.target?.result;
+    try {
+      const base64Url = await compressImage(file, 400, 400, 0.82);
       if (base64Url) {
         setProfileFormData((prev) => ({ ...prev, foto: base64Url }));
-        showToast?.("Foto Terpilih", "Foto profil baru siap disimpan bersama biodata.", "info");
+        saveUserPhoto(base64Url, currentUser, matchedEmp);
+        const updatedEmp = {
+          ...(matchedEmp || {}),
+          id: employeeId,
+          nip: employeeNip,
+          nama: profileFormData.nama || employeeName,
+          foto: base64Url,
+          profesi: employeeProfesi,
+          jabatan: employeeJabatan,
+          unitPenempatan: employeeUnit,
+          statusKepegawaian: employeeStatusKepegawaian,
+          golongan: employeeGolongan,
+          email: profileFormData.email || employeeEmail,
+          noHp: profileFormData.noHp || employeeNoHp,
+          alamat: profileFormData.alamat || employeeAlamat,
+          pendidikan: profileFormData.pendidikan || employeePendidikan,
+          sisaCuti: sisaCuti,
+          skpSkor: employeeSkpSkor,
+          statusAktif: "Aktif",
+        };
+        onUpdateEmployee?.(updatedEmp);
+        showToast?.("Foto Profil Tersimpan", "Foto profil baru berhasil diunggah dan disimpan permanen.", "success");
       }
-    };
-    reader.readAsDataURL(file);
+    } catch (err) {
+      console.error("Gagal memproses foto:", err);
+      alert("Gagal memproses file foto.");
+    }
   };
 
   // FORM PENGAJUAN CUTI MANDIRI
@@ -500,6 +524,7 @@ export default function PegawaiPage({
       statusAktif: "Aktif",
     };
 
+    saveUserPhoto(updatedEmp.foto, currentUser, matchedEmp);
     onUpdateEmployee?.(updatedEmp);
     setIsEditingProfile(false);
     showToast?.("Data Diri Tersimpan", "Perubahan data diri Anda telah berhasil diperbarui.", "success");

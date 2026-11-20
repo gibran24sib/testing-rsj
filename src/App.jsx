@@ -30,6 +30,7 @@ import {
 
 // Auth & Permissions
 import { isAdminOrHrd, isLeaveApplicant, getEmployeeForUser } from "./utils/authHelpers";
+import { getSavedUserPhoto, saveUserPhoto } from "./utils/imageHelpers";
 
 // Data
 import { initialUsers } from "./data/initialData";
@@ -123,7 +124,15 @@ function App() {
       if (typeof window !== "undefined") {
         const savedUser = sessionStorage.getItem("rsj_current_user");
         if (savedUser) {
-          return JSON.parse(savedUser);
+          const parsed = JSON.parse(savedUser);
+          try {
+            const savedPhotos = JSON.parse(localStorage.getItem("rsj_saved_photos") || "{}");
+            const photoKey = (parsed.nip || "").replace(/\s+/g, "") || parsed.id || parsed.username?.toLowerCase();
+            if (savedPhotos[photoKey]) {
+              parsed.foto = savedPhotos[photoKey];
+            }
+          } catch {}
+          return parsed;
         }
       }
     } catch (e) {
@@ -280,6 +289,15 @@ function App() {
           if (session?.user) {
             const profile = await ambilProfilUserSupabase(session.user.id);
             const meta = session.user.user_metadata || {};
+            let userPhoto = profile?.avatar_url || profile?.foto || meta.avatar_url || null;
+            try {
+              const savedPhotos = JSON.parse(localStorage.getItem("rsj_saved_photos") || "{}");
+              const photoKey = (profile?.nip || meta.nip || "").replace(/\s+/g, "") || session.user.id || profile?.username;
+              if (savedPhotos[photoKey]) {
+                userPhoto = savedPhotos[photoKey];
+              }
+            } catch {}
+
             const activeUser = {
               id: session.user.id,
               email: session.user.email,
@@ -289,6 +307,7 @@ function App() {
               nip: profile?.nip || meta.nip || "-",
               unit: profile?.unit || meta.unit || "Unit Pelayanan RSJ Tampan",
               profesi: profile?.profesi || profile?.role || meta.profesi || meta.role || "Tenaga Medis",
+              foto: userPhoto,
             };
             setCurrentUser(activeUser);
             sessionStorage.setItem("rsj_current_user", JSON.stringify(activeUser));
@@ -307,6 +326,15 @@ function App() {
         if (event === "SIGNED_IN" && session?.user) {
           const profile = await ambilProfilUserSupabase(session.user.id);
           const meta = session.user.user_metadata || {};
+          let userPhoto = profile?.avatar_url || profile?.foto || meta.avatar_url || null;
+          try {
+            const savedPhotos = JSON.parse(localStorage.getItem("rsj_saved_photos") || "{}");
+            const photoKey = (profile?.nip || meta.nip || "").replace(/\s+/g, "") || session.user.id || profile?.username;
+            if (savedPhotos[photoKey]) {
+              userPhoto = savedPhotos[photoKey];
+            }
+          } catch {}
+
           const syncedUser = {
             id: session.user.id,
             email: session.user.email,
@@ -316,6 +344,7 @@ function App() {
             nip: profile?.nip || meta.nip || "-",
             unit: profile?.unit || meta.unit || "Unit Pelayanan RSJ Tampan",
             profesi: profile?.profesi || profile?.role || meta.profesi || meta.role || "Tenaga Medis",
+            foto: userPhoto,
           };
           setCurrentUser(syncedUser);
           sessionStorage.setItem("rsj_current_user", JSON.stringify(syncedUser));
@@ -334,7 +363,18 @@ function App() {
   // STATE SDM & KEPEGAWAIAN NAKES
   const [employees, setEmployees] = useState(() => {
     const saved = localStorage.getItem("rsj_employees");
-    return saved ? JSON.parse(saved) : initialEmployees;
+    let list = saved ? JSON.parse(saved) : initialEmployees;
+    try {
+      const savedPhotos = JSON.parse(localStorage.getItem("rsj_saved_photos") || "{}");
+      list = list.map((emp) => {
+        const key = (emp.nip || "").replace(/\s+/g, "") || emp.id || emp.username?.toLowerCase();
+        if (savedPhotos[key]) {
+          return { ...emp, foto: savedPhotos[key] };
+        }
+        return emp;
+      });
+    } catch {}
+    return list;
   });
 
   const [shiftRoster, setShiftRoster] = useState(() => {
@@ -371,17 +411,28 @@ function App() {
             const savedLocal = localStorage.getItem("rsj_employees");
             const localList = savedLocal ? JSON.parse(savedLocal) : prevLocal;
 
+            let savedPhotos = {};
+            try {
+              savedPhotos = JSON.parse(localStorage.getItem("rsj_saved_photos") || "{}");
+            } catch {}
+
             // Merge data remote dengan mempertahankan foto atau pembaruan lokal terbaru
             const merged = dataEmployees.map((remoteEmp) => {
               const matchedLocal = localList.find(
                 (l) => l.id === remoteEmp.id || (l.nip && l.nip === remoteEmp.nip)
               );
+              const photoKey = (remoteEmp.nip || "").replace(/\s+/g, "") || remoteEmp.id;
+              const persistentPhoto = savedPhotos[photoKey];
+
               if (matchedLocal) {
                 return {
                   ...remoteEmp,
                   ...matchedLocal,
-                  foto: matchedLocal.foto || remoteEmp.foto,
+                  foto: persistentPhoto || matchedLocal.foto || remoteEmp.foto,
                 };
+              }
+              if (persistentPhoto) {
+                return { ...remoteEmp, foto: persistentPhoto };
               }
               return remoteEmp;
             });
@@ -410,23 +461,23 @@ function App() {
     loadDataFromSupabase();
   }, [showToast]);
 
-  // SINKRONISASI FOTO & BIODATA ANTARA EMPLOYEES & CURRENTUSER (AGAR TETAP STAY SAAT REFRESH)
+  // SINKRONISASI FOTO PERSISTEN KE CURRENTUSER
   useEffect(() => {
-    if (currentUser && employees.length > 0) {
-      const matched = getEmployeeForUser(currentUser, employees);
-      if (matched && matched.foto && matched.foto !== currentUser.foto) {
+    if (currentUser) {
+      const persistentPhoto = getSavedUserPhoto(currentUser);
+      if (persistentPhoto && currentUser.foto !== persistentPhoto) {
         setCurrentUser((prev) => {
+          if (!prev) return prev;
           const updated = {
             ...prev,
-            foto: matched.foto,
+            foto: persistentPhoto,
           };
           sessionStorage.setItem("rsj_current_user", JSON.stringify(updated));
-          localStorage.removeItem("rsj_current_user");
           return updated;
         });
       }
     }
-  }, [employees, currentUser]);
+  }, [currentUser]);
 
   useEffect(() => {
     localStorage.setItem("rsj_employees", JSON.stringify(employees));
@@ -484,9 +535,30 @@ function App() {
   }, []);
 
   const handleUpdateEmployee = useCallback((updatedEmp) => {
+    // 0. Simpan foto ke cache persisten rsj_saved_photos
+    if (updatedEmp.foto) {
+      saveUserPhoto(updatedEmp.foto, currentUser, updatedEmp);
+    }
+
     // 1. Simpan ke master state employees & LocalStorage
     setEmployees((prev) => {
-      const updated = prev.map((emp) => (emp.id === updatedEmp.id ? updatedEmp : emp));
+      const cleanTargetNip = (updatedEmp.nip || "").replace(/\s+/g, "");
+      const cleanTargetNama = (updatedEmp.nama || "").toLowerCase().trim();
+      const idx = prev.findIndex(
+        (emp) =>
+          (updatedEmp.id && emp.id === updatedEmp.id) ||
+          (cleanTargetNip && emp.nip && emp.nip.replace(/\s+/g, "") === cleanTargetNip) ||
+          (cleanTargetNama && emp.nama && emp.nama.toLowerCase().trim() === cleanTargetNama)
+      );
+
+      let updated;
+      if (idx !== -1) {
+        updated = [...prev];
+        updated[idx] = { ...updated[idx], ...updatedEmp };
+      } else {
+        updated = [updatedEmp, ...prev];
+      }
+
       try {
         localStorage.setItem("rsj_employees", JSON.stringify(updated));
       } catch (e) {
@@ -495,7 +567,28 @@ function App() {
       return updated;
     });
 
-    // 2. Simpan juga langsung ke currentUser & LocalStorage agar sesi user aktif tidak ter-reset
+    // 2. Simpan juga ke master users agar saat logout & login kembali fotonya tetap terhubung
+    setUsers((prevUsers) => {
+      const updatedUsers = prevUsers.map((u) => {
+        const isMatch =
+          (updatedEmp.username && u.username?.toLowerCase() === updatedEmp.username.toLowerCase()) ||
+          (updatedEmp.nip && u.nip?.replace(/\s+/g, "") === updatedEmp.nip.replace(/\s+/g, "")) ||
+          (updatedEmp.email && u.email?.toLowerCase() === updatedEmp.email.toLowerCase()) ||
+          (updatedEmp.nama && u.nama?.toLowerCase().trim() === updatedEmp.nama.toLowerCase().trim());
+        if (isMatch) {
+          return { ...u, foto: updatedEmp.foto || u.foto };
+        }
+        return u;
+      });
+      try {
+        localStorage.setItem("rsj_users", JSON.stringify(updatedUsers));
+      } catch (e) {
+        console.warn("Gagal simpan rsj_users:", e);
+      }
+      return updatedUsers;
+    });
+
+    // 3. Simpan juga langsung ke currentUser & SessionStorage agar sesi user aktif tidak ter-reset
     setCurrentUser((prevUser) => {
       if (!prevUser) return prevUser;
       const isCurrent =
@@ -522,7 +615,7 @@ function App() {
       return prevUser;
     });
 
-    // 3. Sinkronkan pembaruan ke tabel 'employees' Supabase jika aktif
+    // 4. Sinkronkan pembaruan ke tabel 'employees' & 'profiles' Supabase jika aktif
     if (isSupabaseConfigured()) {
       updateDataSupabase("employees", updatedEmp, "id");
     }
@@ -800,6 +893,14 @@ function App() {
         );
 
         if (foundLocal) {
+          try {
+            const savedPhotos = JSON.parse(localStorage.getItem("rsj_saved_photos") || "{}");
+            const photoKey = (foundLocal.nip || "").replace(/\s+/g, "") || foundLocal.username?.toLowerCase();
+            if (savedPhotos[photoKey]) {
+              foundLocal.foto = savedPhotos[photoKey];
+            }
+          } catch {}
+
           setCurrentUser(foundLocal);
           sessionStorage.setItem("rsj_current_user", JSON.stringify(foundLocal));
           localStorage.removeItem("rsj_current_user");
@@ -828,6 +929,14 @@ function App() {
     );
 
     if (foundUser) {
+      try {
+        const savedPhotos = JSON.parse(localStorage.getItem("rsj_saved_photos") || "{}");
+        const photoKey = (foundUser.nip || "").replace(/\s+/g, "") || foundUser.username?.toLowerCase();
+        if (savedPhotos[photoKey]) {
+          foundUser.foto = savedPhotos[photoKey];
+        }
+      } catch {}
+
       setCurrentUser(foundUser);
       sessionStorage.setItem("rsj_current_user", JSON.stringify(foundUser));
       localStorage.removeItem("rsj_current_user");
@@ -910,6 +1019,37 @@ function App() {
     const updatedUsers = [...users.filter((u) => u.username !== cleanUsername), newUser];
     setUsers(updatedUsers);
     localStorage.setItem("rsj_users", JSON.stringify(updatedUsers));
+
+    // 3. Tambahkan ke master pegawai (employees) agar profil terhubung utuh
+    const newEmp = {
+      id: res.user?.id || `EMP-${Date.now().toString().slice(-4)}`,
+      nip: cleanNip || "19900101 202001 1 001",
+      nama: cleanNama,
+      gelarDepan: "",
+      gelarBelakang: "",
+      profesi: cleanRole,
+      kategori: cleanRole.toLowerCase().includes("dokter") ? "Medis" : "Keperawatan",
+      jabatan: cleanRole,
+      unitPenempatan: cleanUnit,
+      statusKepegawaian: "PNS",
+      golongan: "Penata Muda (III/a)",
+      pendidikan: "Profesi",
+      email: cleanEmail,
+      noHp: "0812-0000-0000",
+      alamat: "Pekanbaru, Riau",
+      tanggalBergabung: new Date().toISOString().split("T")[0],
+      sisaCuti: 12,
+      skpSkor: 92.0,
+      statusAktif: "Aktif",
+      foto: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=150&auto=format&fit=crop&q=80",
+    };
+    setEmployees((prev) => {
+      const updated = [newEmp, ...prev.filter((e) => e.nip !== cleanNip && e.id !== newEmp.id)];
+      try {
+        localStorage.setItem("rsj_employees", JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
 
     const successMsg = res.requiresEmailConfirmation
       ? "Pendaftaran akun berhasil! Silakan periksa email Anda untuk konfirmasi, lalu Login."

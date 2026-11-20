@@ -103,9 +103,39 @@ export async function updateDataSupabase(namaTabel = "employees", record = {}, m
   }
 
   try {
+    let payload = { ...record };
+    if (namaTabel === "employees") {
+      payload = {
+        id: record.id,
+        nip: record.nip,
+        nama: record.nama,
+        gelar_depan: record.gelarDepan !== undefined ? record.gelarDepan : record.gelar_depan,
+        gelar_belakang: record.gelarBelakang !== undefined ? record.gelarBelakang : record.gelar_belakang,
+        profesi: record.profesi,
+        kategori: record.kategori || "Tenaga Medis",
+        jabatan: record.jabatan || record.profesi,
+        unit_penempatan: record.unitPenempatan !== undefined ? record.unitPenempatan : record.unit_penempatan,
+        status_kepegawaian: record.statusKepegawaian !== undefined ? record.statusKepegawaian : record.status_kepegawaian,
+        golongan: record.golongan,
+        pendidikan: record.pendidikan,
+        email: record.email,
+        no_hp: record.noHp !== undefined ? record.noHp : record.no_hp,
+        alamat: record.alamat,
+        tanggal_bergabung: record.tanggalBergabung !== undefined ? record.tanggalBergabung : record.tanggal_bergabung,
+        sisa_cuti: record.sisaCuti !== undefined ? record.sisaCuti : record.sisa_cuti,
+        skp_skor: record.skpSkor !== undefined ? record.skpSkor : record.skp_skor,
+        foto: record.foto,
+        status_aktif: record.statusAktif !== undefined ? record.statusAktif : (record.status_aktif || "Aktif"),
+        str: record.str || {},
+        sip: record.sip || {},
+        updated_at: new Date().toISOString(),
+      };
+      Object.keys(payload).forEach((k) => payload[k] === undefined && delete payload[k]);
+    }
+
     const { data, error } = await supabase
       .from(namaTabel)
-      .update(record)
+      .update(payload)
       .eq(matchField, record[matchField])
       .select();
 
