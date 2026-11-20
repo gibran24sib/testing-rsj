@@ -151,6 +151,30 @@ export async function updateDataSupabase(namaTabel = "employees", record = {}, m
   }
 }
 
+// 5c. Fungsi Menghapus Data dari Tabel Supabase (Default: 'employees')
+export async function hapusDataSupabase(namaTabel = "employees", id, matchField = "id") {
+  if (!isSupabaseConfigured() || !id) {
+    return { success: true, localOnly: true };
+  }
+
+  try {
+    const { error } = await supabase
+      .from(namaTabel)
+      .delete()
+      .eq(matchField, id);
+
+    if (error) {
+      console.error(`Gagal menghapus data dari tabel "${namaTabel}":`, error.message);
+      return { success: false, error };
+    }
+
+    return { success: true };
+  } catch (err) {
+    console.error(`Koneksi Supabase hapus "${namaTabel}" error:`, err);
+    return { success: false, error: err };
+  }
+}
+
 // ============================================================================
 // 6. FUNGSI KHUSUS MANAJEMEN CUTI DENGAN VALIDASI ROLE & KEBIJAKAN RLS
 // ============================================================================
@@ -414,9 +438,17 @@ export async function registerUserSupabase({
     };
   } catch (err) {
     console.error("Registrasi Supabase exception:", err);
+    let msg = err.message || "Gagal menghubungkan ke server registrasi.";
+    if (
+      msg.toLowerCase().includes("failed to fetch") ||
+      msg.toLowerCase().includes("fetch failed") ||
+      msg.toLowerCase().includes("networkerror")
+    ) {
+      msg = "Gagal terhubung ke server Supabase (Failed to fetch). Pastikan koneksi internet aktif dan Project Supabase di dashboard tidak dalam status 'Paused'.";
+    }
     return {
       success: false,
-      error: new Error(err.message || "Gagal menghubungkan ke server registrasi."),
+      error: new Error(msg),
     };
   }
 }
@@ -478,6 +510,8 @@ export async function loginUserSupabase({ usernameOrEmail, password }) {
         friendlyMsg = "Email/Username atau Password tidak sesuai. Silakan periksa kembali.";
       } else if (authError.message.includes("Email not confirmed")) {
         friendlyMsg = "Email belum dikonfirmasi. Silakan periksa kotak masuk email Anda atau hubungi Subbag Kepegawaian.";
+      } else if (authError.message.toLowerCase().includes("failed to fetch") || authError.message.toLowerCase().includes("fetch failed")) {
+        friendlyMsg = "Gagal terhubung ke server Supabase (Failed to fetch). Pastikan koneksi internet aktif dan Project Supabase di dashboard tidak dalam status 'Paused'.";
       }
       return { success: false, error: new Error(friendlyMsg) };
     }
@@ -523,9 +557,17 @@ export async function loginUserSupabase({ usernameOrEmail, password }) {
     };
   } catch (err) {
     console.error("Login Supabase exception:", err);
+    let msg = err.message || "Terjadi kesalahan saat menghubungi server autentikasi.";
+    if (
+      msg.toLowerCase().includes("failed to fetch") ||
+      msg.toLowerCase().includes("fetch failed") ||
+      msg.toLowerCase().includes("networkerror")
+    ) {
+      msg = "Gagal terhubung ke server Supabase (Failed to fetch). Pastikan koneksi internet aktif dan Project Supabase di dashboard tidak dalam status 'Paused'.";
+    }
     return {
       success: false,
-      error: new Error(err.message || "Terjadi kesalahan saat menghubungi server autentikasi."),
+      error: new Error(msg),
     };
   }
 }

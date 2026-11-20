@@ -49,6 +49,7 @@ import {
   ambilDataSupabase,
   tambahDataSupabase,
   updateDataSupabase,
+  hapusDataSupabase,
   tambahCutiSupabase,
   updateStatusCutiSupabase,
   registerUserSupabase,
@@ -365,6 +366,12 @@ function App() {
     const saved = localStorage.getItem("rsj_employees");
     let list = saved ? JSON.parse(saved) : initialEmployees;
     try {
+      const deletedIds = JSON.parse(localStorage.getItem("rsj_deleted_emp_ids") || "[]");
+      if (Array.isArray(deletedIds) && deletedIds.length > 0) {
+        list = list.filter((emp) => !deletedIds.includes(emp.id));
+      }
+    } catch {}
+    try {
       const savedPhotos = JSON.parse(localStorage.getItem("rsj_saved_photos") || "{}");
       list = list.map((emp) => {
         const key = (emp.nip || "").replace(/\s+/g, "") || emp.id || emp.username?.toLowerCase();
@@ -401,7 +408,7 @@ function App() {
     }
   });
 
-  // PENGAMBILAN DATA DARI SUPABASE DENGAN MERGE CERDAS (MENCEGAH OVERWRITE FOTO LOKAL)
+  // PENGAMBILAN DATA DARI SUPABASE DENGAN MERGE CERDAS (MENCEGAH OVERWRITE FOTO LOKAL & MENCEGAH MUNCUL KEMBALINYA DATA YANG SUDAH DIHAPUS)
   useEffect(() => {
     async function loadDataFromSupabase() {
       if (isSupabaseConfigured()) {
@@ -416,9 +423,18 @@ function App() {
               savedPhotos = JSON.parse(localStorage.getItem("rsj_saved_photos") || "{}");
             } catch {}
 
+            let deletedIds = [];
+            try {
+              deletedIds = JSON.parse(localStorage.getItem("rsj_deleted_emp_ids") || "[]");
+            } catch {}
+
+            // Saring agar data yang pernah dihapus tidak dimasukkan kembali
+            const validRemote = dataEmployees.filter((r) => !deletedIds.includes(r.id));
+            const validLocal = (localList || []).filter((l) => !deletedIds.includes(l.id));
+
             // Merge data remote dengan mempertahankan foto atau pembaruan lokal terbaru
-            const merged = dataEmployees.map((remoteEmp) => {
-              const matchedLocal = localList.find(
+            const merged = validRemote.map((remoteEmp) => {
+              const matchedLocal = validLocal.find(
                 (l) => l.id === remoteEmp.id || (l.nip && l.nip === remoteEmp.nip)
               );
               const photoKey = (remoteEmp.nip || "").replace(/\s+/g, "") || remoteEmp.id;
@@ -437,7 +453,7 @@ function App() {
               return remoteEmp;
             });
 
-            localList.forEach((localEmp) => {
+            validLocal.forEach((localEmp) => {
               if (!merged.some((m) => m.id === localEmp.id)) {
                 merged.push(localEmp);
               }
@@ -520,6 +536,13 @@ function App() {
   }, []);
 
   const handleAddEmployee = useCallback((newEmp) => {
+    // Jika ID pernah dihapus sebelumnya, bersihkan dari blacklist deleted IDs
+    try {
+      const deletedIds = JSON.parse(localStorage.getItem("rsj_deleted_emp_ids") || "[]");
+      const filtered = deletedIds.filter((id) => id !== newEmp.id);
+      localStorage.setItem("rsj_deleted_emp_ids", JSON.stringify(filtered));
+    } catch {}
+
     setEmployees((prev) => {
       const updated = [newEmp, ...prev];
       try {
@@ -622,7 +645,29 @@ function App() {
   }, []);
 
   const handleDeleteEmployee = useCallback((empId) => {
-    setEmployees((prev) => prev.filter((emp) => emp.id !== empId));
+    // 1. Catat ke blacklist deleted IDs agar tidak pernah dipulihkan lagi saat sinkronisasi remote atau fallback
+    try {
+      const deletedIds = JSON.parse(localStorage.getItem("rsj_deleted_emp_ids") || "[]");
+      if (!deletedIds.includes(empId)) {
+        localStorage.setItem("rsj_deleted_emp_ids", JSON.stringify([...deletedIds, empId]));
+      }
+    } catch {}
+
+    // 2. Hapus dari state lokal dan perbarui LocalStorage seketika
+    setEmployees((prev) => {
+      const updated = prev.filter((emp) => emp.id !== empId);
+      try {
+        localStorage.setItem("rsj_employees", JSON.stringify(updated));
+      } catch (e) {
+        console.error("Gagal simpan delete employee ke LocalStorage:", e);
+      }
+      return updated;
+    });
+
+    // 3. Hapus secara permanen dari Supabase Cloud Database jika terhubung
+    if (isSupabaseConfigured()) {
+      hapusDataSupabase("employees", empId);
+    }
   }, []);
 
   const handleSubmitLeave = useCallback((newLeave) => {
