@@ -64,43 +64,86 @@ function App() {
   const [activePortalTab, setActivePortalTab] = useState(initialRoute.portalTab || "tenaga_medis");
   const [activePegawaiTab, setActivePegawaiTab] = useState(initialRoute.pegawaiTab || "profil");
 
-  const [currentUser, setCurrentUser] = useState(() => {
-    const savedUser = localStorage.getItem("rsj_current_user");
-    if (savedUser) {
+  // STATE TOAST NOTIFIKASI (dideklarasikan di awal agar tersedia untuk semua hook/efek)
+  const [toast, setToast] = useState(null);
+
+  const showToast = useCallback((title, message, type = "success") => {
+    setToast({ title, message, type });
+  }, []);
+
+  // STATE THEMA (DARK / LIGHT MODE)
+  const [darkMode, setDarkMode] = useState(() => {
+    try {
+      return localStorage.getItem("rsj_theme") === "dark";
+    } catch {
+      return false;
+    }
+  });
+
+  const toggleTheme = useCallback(() => {
+    setDarkMode((prev) => {
+      const newMode = !prev;
       try {
-        return JSON.parse(savedUser);
-      } catch (e) {
-        console.error("Gagal membaca session user:", e);
+        localStorage.setItem("rsj_theme", newMode ? "dark" : "light");
+      } catch {}
+      return newMode;
+    });
+  }, []);
+
+  // STATE COMMAND PALETTE (CTRL+K)
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+
+  // STATE MODAL KONFIRMASI KEMBALI KE PORTAL GUEST
+  const [isConfirmPortalOpen, setIsConfirmPortalOpen] = useState(false);
+
+  // STATE MODAL KONFIRMASI LOGOUT DARI ADMIN
+  const [isConfirmLogoutOpen, setIsConfirmLogoutOpen] = useState(false);
+
+  // STATE USER & SESI (SESSIONSTORAGE)
+  const [currentUser, setCurrentUser] = useState(() => {
+    // 1. Bersihkan sisa legacy localStorage agar tidak persisten saat browser ditutup
+    try {
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("rsj_current_user");
+        const keysToRemove = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && (key.startsWith("sb-") || key.includes("supabase.auth.token"))) {
+            keysToRemove.push(key);
+          }
+        }
+        keysToRemove.forEach((k) => localStorage.removeItem(k));
       }
+    } catch (e) {
+      console.warn("Storage cleanup error:", e);
     }
-    // Jika user mengakses rute /admin langsung dan belum login, pasang sesi demo admin
-    if (window.location.pathname.startsWith("/admin")) {
-      return {
-        nama: "Agus Pratondo, S.Sos",
-        role: "Kasubbag Kepegawaian & SDM",
-        username: "admin",
-        nip: "19830214 200803 1 001",
-        employeeId: "EMP-004",
-      };
-    }
-    // Jika user mengakses rute /cuti atau /pegawai langsung dan belum login, pasang sesi demo nakes perawat
-    if (window.location.pathname.startsWith("/cuti") || window.location.pathname.startsWith("/pegawai")) {
-      return {
-        nama: "Ns. Budi Setiawan, S.Kep",
-        role: "Perawat Pelaksana IGD Jiwa",
-        username: "budi",
-        nip: "19920817 201902 1 004",
-        employeeId: "EMP-006",
-      };
+
+    // 2. Ambil sesi user hanya dari sessionStorage (otomatis hilang saat browser diclose)
+    try {
+      if (typeof window !== "undefined") {
+        const savedUser = sessionStorage.getItem("rsj_current_user");
+        if (savedUser) {
+          return JSON.parse(savedUser);
+        }
+      }
+    } catch (e) {
+      console.error("Gagal membaca session user dari sessionStorage:", e);
     }
     return null;
   });
 
+  // Sinkronisasi Sesi User ke SessionStorage (bukan localStorage)
   useEffect(() => {
-    if (currentUser) {
-      localStorage.setItem("rsj_current_user", JSON.stringify(currentUser));
-    } else {
+    try {
+      if (currentUser) {
+        sessionStorage.setItem("rsj_current_user", JSON.stringify(currentUser));
+      } else {
+        sessionStorage.removeItem("rsj_current_user");
+      }
+      // Pastikan localStorage selalu bersih dari kredensial aktif
       localStorage.removeItem("rsj_current_user");
+    } catch (e) {
+      console.warn("Gagal sinkronisasi sessionStorage user:", e);
     }
   }, [currentUser]);
 
@@ -119,10 +162,22 @@ function App() {
     document.title = targetTitle;
   }, [currentView, activeTab, activePortalTab, activePegawaiTab]);
 
-  // SINKRONISASI BROWSER BACK / FORWARD (POPSTATE) -> STATE
+  // SINKRONISASI BROWSER BACK / FORWARD (POPSTATE) -> STATE & AUTO-LOGOUT DI PORTAL
   useEffect(() => {
-    const handlePopState = () => {
+    const handlePopState = async () => {
       const state = getStateFromPath(window.location.pathname);
+      // Jika user menekan tombol Back browser ke portal publik ('guest'), otomatis logout akun
+      if (state.view === "guest" && currentUser) {
+        try {
+          await logoutUserSupabase();
+        } catch (e) {}
+        setCurrentUser(null);
+        try {
+          sessionStorage.removeItem("rsj_current_user");
+          localStorage.removeItem("rsj_current_user");
+        } catch {}
+        showToast("Logout Otomatis", "Sesi profil Anda telah keluar secara otomatis karena kembali ke Portal Publik.", "info");
+      }
       setCurrentView(state.view);
       if (state.adminTab) setActiveTab(state.adminTab);
       if (state.portalTab) setActivePortalTab(state.portalTab);
@@ -132,12 +187,19 @@ function App() {
 
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
-  }, []);
+  }, [currentUser, showToast]);
 
-  // ROLE ACCESS GUARD UNTUK HALAMAN ADMIN
+  // ROLE & AUTH ACCESS GUARD UNTUK HALAMAN ADMIN & PEGAWAI
   useEffect(() => {
     if (currentView === "admin") {
-      if (currentUser && !isAdminOrHrd(currentUser)) {
+      if (!currentUser) {
+        setCurrentView("login");
+        showToast(
+          "Akses Terbatas",
+          "Silakan login dengan akun Administrator Kepegawaian untuk mengakses Panel Admin.",
+          "warning"
+        );
+      } else if (!isAdminOrHrd(currentUser)) {
         setCurrentView("pegawai");
         setActivePegawaiTab("profil");
         showToast(
@@ -146,37 +208,30 @@ function App() {
           "warning"
         );
       }
+    } else if (currentView === "pegawai" || currentView === "cuti_pegawai") {
+      if (!currentUser) {
+        setCurrentView("login");
+        showToast(
+          "Login Diperlukan",
+          "Silakan masuk ke akun SIM-SDM untuk mengakses Portal Mandiri Pegawai.",
+          "warning"
+        );
+      }
     }
-  }, [currentView, currentUser]);
+  }, [currentView, currentUser, showToast]);
 
-  // STATE THEMA (DARK / LIGHT MODE)
-  const [darkMode, setDarkMode] = useState(() => {
-    return localStorage.getItem("rsj_theme") === "dark";
-  });
-
-  const toggleTheme = useCallback(() => {
-    setDarkMode((prev) => {
-      const newMode = !prev;
-      localStorage.setItem("rsj_theme", newMode ? "dark" : "light");
-      return newMode;
-    });
-  }, []);
-
-  // STATE TOAST NOTIFIKASI
-  const [toast, setToast] = useState(null);
-
-  const showToast = useCallback((title, message, type = "success") => {
-    setToast({ title, message, type });
-  }, []);
-
-  // STATE COMMAND PALETTE (CTRL+K)
-  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
-
-  // STATE MODAL KONFIRMASI KEMBALI KE PORTAL GUEST
-  const [isConfirmPortalOpen, setIsConfirmPortalOpen] = useState(false);
-
-  // STATE MODAL KONFIRMASI LOGOUT DARI ADMIN
-  const [isConfirmLogoutOpen, setIsConfirmLogoutOpen] = useState(false);
+  // SINKRONISASI LOGOUT OTOMATIS SAAT BERADA DI HALAMAN PORTAL PUBLIK (GUEST)
+  useEffect(() => {
+    if (currentView === "guest" && currentUser) {
+      logoutUserSupabase().catch(() => {});
+      setCurrentUser(null);
+      try {
+        sessionStorage.removeItem("rsj_current_user");
+        localStorage.removeItem("rsj_current_user");
+      } catch {}
+      showToast("Logout Otomatis", "Sesi profil Anda telah keluar secara otomatis saat kembali ke Portal Publik.", "info");
+    }
+  }, [currentView, currentUser, showToast]);
 
   // KEYBOARD SHORTCUT LISTENER (CTRL + K)
   useEffect(() => {
@@ -236,7 +291,8 @@ function App() {
               profesi: profile?.profesi || profile?.role || meta.profesi || meta.role || "Tenaga Medis",
             };
             setCurrentUser(activeUser);
-            localStorage.setItem("rsj_current_user", JSON.stringify(activeUser));
+            sessionStorage.setItem("rsj_current_user", JSON.stringify(activeUser));
+            localStorage.removeItem("rsj_current_user");
           }
         } catch (e) {
           console.warn("Gagal inisialisasi sesi Supabase Auth:", e);
@@ -262,9 +318,11 @@ function App() {
             profesi: profile?.profesi || profile?.role || meta.profesi || meta.role || "Tenaga Medis",
           };
           setCurrentUser(syncedUser);
-          localStorage.setItem("rsj_current_user", JSON.stringify(syncedUser));
+          sessionStorage.setItem("rsj_current_user", JSON.stringify(syncedUser));
+          localStorage.removeItem("rsj_current_user");
         } else if (event === "SIGNED_OUT") {
           setCurrentUser(null);
+          sessionStorage.removeItem("rsj_current_user");
           localStorage.removeItem("rsj_current_user");
         }
       });
@@ -362,7 +420,8 @@ function App() {
             ...prev,
             foto: matched.foto,
           };
-          localStorage.setItem("rsj_current_user", JSON.stringify(updated));
+          sessionStorage.setItem("rsj_current_user", JSON.stringify(updated));
+          localStorage.removeItem("rsj_current_user");
           return updated;
         });
       }
@@ -453,9 +512,10 @@ function App() {
           foto: updatedEmp.foto || prevUser.foto,
         };
         try {
-          localStorage.setItem("rsj_current_user", JSON.stringify(newCurrentUser));
+          sessionStorage.setItem("rsj_current_user", JSON.stringify(newCurrentUser));
+          localStorage.removeItem("rsj_current_user");
         } catch (e) {
-          console.error("Gagal simpan current_user ke LocalStorage:", e);
+          console.error("Gagal simpan current_user ke SessionStorage:", e);
         }
         return newCurrentUser;
       }
@@ -622,19 +682,23 @@ function App() {
     );
   }, []);
 
-  // KONFIRMASI KEMBALI KE PORTAL UTAMA / GUEST
+  // KONFIRMASI KEMBALI KE PORTAL UTAMA / GUEST & LOGOUT
   const handleRequestBackToPortal = useCallback(() => {
-    if (currentView === "admin" || currentView === "pegawai") {
+    if (currentUser && (currentView === "admin" || currentView === "pegawai" || currentView === "cuti_pegawai")) {
       setIsConfirmPortalOpen(true);
     } else {
       setCurrentView("guest");
     }
-  }, [currentView]);
+  }, [currentView, currentUser]);
 
-  const handleConfirmBackToPortal = useCallback(() => {
+  const handleConfirmBackToPortal = useCallback(async () => {
     setIsConfirmPortalOpen(false);
+    await logoutUserSupabase();
+    setCurrentUser(null);
+    sessionStorage.removeItem("rsj_current_user");
+    localStorage.removeItem("rsj_current_user");
     setCurrentView("guest");
-    showToast("Portal Publik", "Anda telah kembali ke tampilan Portal Informasi SDM Publik.", "info");
+    showToast("Logout Otomatis", "Sesi profil Anda telah keluar secara otomatis dan kembali ke Portal Publik.", "info");
   }, [showToast]);
 
   // COMMAND PALETTE ACTIONS
@@ -642,35 +706,25 @@ function App() {
     (action) => {
       switch (action.type) {
         case "navigate_admin":
-          if (currentView !== "admin") {
+          if (currentUser && isAdminOrHrd(currentUser)) {
             setCurrentView("admin");
-            if (!currentUser || !isAdminOrHrd(currentUser)) {
-              setCurrentUser({
-                nama: "Agus Pratondo, S.Sos",
-                role: "Kasubbag Kepegawaian & SDM",
-                username: "admin",
-              });
-            }
+            setActiveTab(action.tab);
+          } else {
+            setCurrentView("login");
+            showToast("Login Diperlukan", "Silakan login sebagai Administrator Kepegawaian terlebih dahulu.", "warning");
           }
-          setActiveTab(action.tab);
           break;
         case "navigate_pegawai":
-          if (currentView !== "pegawai") {
+          if (currentUser) {
             setCurrentView("pegawai");
-            if (!currentUser) {
-              setCurrentUser({
-                nama: "Ns. Budi Setiawan, S.Kep",
-                role: "Perawat Pelaksana IGD Jiwa",
-                username: "budi",
-                nip: "19920817 201902 1 004",
-                employeeId: "EMP-006",
-              });
-            }
+            setActivePegawaiTab(action.tab);
+          } else {
+            setCurrentView("login");
+            showToast("Login Diperlukan", "Silakan login ke akun pegawai terlebih dahulu.", "warning");
           }
-          setActivePegawaiTab(action.tab);
           break;
         case "navigate_view":
-          if ((action.view === "guest") && (currentView === "admin" || currentView === "pegawai")) {
+          if (action.view === "guest" && (currentView === "admin" || currentView === "pegawai" || currentUser)) {
             setIsConfirmPortalOpen(true);
           } else {
             setCurrentView(action.view);
@@ -686,7 +740,7 @@ function App() {
           break;
       }
     },
-    [currentView, currentUser, toggleTheme]
+    [currentView, currentUser, toggleTheme, showToast]
   );
 
   // AUTH HANDLERS
@@ -713,7 +767,8 @@ function App() {
       if (res.success && res.user) {
         const loggedUser = res.user;
         setCurrentUser(loggedUser);
-        localStorage.setItem("rsj_current_user", JSON.stringify(loggedUser));
+        sessionStorage.setItem("rsj_current_user", JSON.stringify(loggedUser));
+        localStorage.removeItem("rsj_current_user");
 
         setAuthInput({
           nama: "",
@@ -746,7 +801,8 @@ function App() {
 
         if (foundLocal) {
           setCurrentUser(foundLocal);
-          localStorage.setItem("rsj_current_user", JSON.stringify(foundLocal));
+          sessionStorage.setItem("rsj_current_user", JSON.stringify(foundLocal));
+          localStorage.removeItem("rsj_current_user");
           if (isAdminOrHrd(foundLocal)) {
             setCurrentView("admin");
             setActiveTab("direktori");
@@ -754,7 +810,7 @@ function App() {
             setCurrentView("pegawai");
             setActivePegawaiTab("profil");
           }
-          showToast("Login Berhasil (Akun Demo)", `Selamat bertugas di SIM-SDM, ${foundLocal.nama}!`, "success");
+          showToast("Login Berhasil", `Selamat bertugas di SIM-SDM, ${foundLocal.nama}!`, "success");
           return;
         }
 
@@ -763,7 +819,7 @@ function App() {
       }
     }
 
-    // 2. Fallback untuk akun lokal / demo offline
+    // 2. Fallback untuk akun lokal
     const foundUser = users.find(
       (u) =>
         (u.username?.toLowerCase() === loginIdentifier.toLowerCase() ||
@@ -773,7 +829,8 @@ function App() {
 
     if (foundUser) {
       setCurrentUser(foundUser);
-      localStorage.setItem("rsj_current_user", JSON.stringify(foundUser));
+      sessionStorage.setItem("rsj_current_user", JSON.stringify(foundUser));
+      localStorage.removeItem("rsj_current_user");
 
       setAuthInput({
         nama: "",
@@ -795,7 +852,7 @@ function App() {
         showToast("Login Berhasil", `Selamat bertugas di Portal SIM-SDM, ${foundUser.nama}!`, "success");
       }
     } else {
-      setAuthError("Email/Username atau Password tidak sesuai. Silakan periksa kembali atau gunakan akun demo terdaftar.");
+      setAuthError("Email/Username atau Password tidak sesuai. Silakan periksa kembali.");
     }
   };
 
@@ -876,6 +933,7 @@ function App() {
     setIsConfirmLogoutOpen(false);
     await logoutUserSupabase();
     setCurrentUser(null);
+    sessionStorage.removeItem("rsj_current_user");
     localStorage.removeItem("rsj_current_user");
     setCurrentView("guest");
     showToast("Logout Berhasil", "Anda telah keluar dari sesi SIM-SDM dan kembali ke Portal Utama.", "info");
@@ -1009,6 +1067,7 @@ function App() {
               navBg={navBg}
               onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
               onOpenLogoutModal={handleRequestLogout}
+              onBackToPortal={handleRequestBackToPortal}
             />
 
             <BannerSub currentView={currentView} darkMode={darkMode} />
@@ -1074,6 +1133,7 @@ function App() {
         isOpen={isConfirmPortalOpen}
         onClose={() => setIsConfirmPortalOpen(false)}
         onConfirm={handleConfirmBackToPortal}
+        currentUser={currentUser}
         darkMode={darkMode}
       />
 

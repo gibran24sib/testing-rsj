@@ -4,6 +4,7 @@ export default function ConfirmPortalModal({
   isOpen,
   onClose,
   onConfirm,
+  currentUser,
   darkMode,
 }) {
   // Listen for Escape key to close modal & Enter key to confirm
@@ -39,7 +40,7 @@ export default function ConfirmPortalModal({
         left: 0,
         right: 0,
         bottom: 0,
-        backgroundColor: "rgba(0, 0, 0, 0.7)",
+        backgroundColor: "rgba(0, 0, 0, 0.72)",
         backdropFilter: "blur(8px)",
         WebkitBackdropFilter: "blur(8px)",
         zIndex: 1070,
@@ -53,11 +54,11 @@ export default function ConfirmPortalModal({
           backgroundColor: modalBg,
           color: modalText,
           width: "100%",
-          maxWidth: "460px",
+          maxWidth: "480px",
           border: `1px solid ${borderColor}`,
           overflow: "hidden",
           boxShadow: darkMode
-            ? "0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 24px rgba(16, 185, 129, 0.15)"
+            ? "0 25px 50px -12px rgba(0, 0, 0, 0.7), 0 0 24px rgba(239, 68, 68, 0.15)"
             : "0 25px 50px -12px rgba(15, 23, 42, 0.25)",
         }}
         onClick={(e) => e.stopPropagation()}
@@ -69,40 +70,45 @@ export default function ConfirmPortalModal({
             style={{
               width: "64px",
               height: "64px",
-              backgroundColor: darkMode ? "rgba(16, 185, 129, 0.15)" : "#ecfdf5",
-              color: "#10b981",
+              backgroundColor: darkMode ? "rgba(239, 68, 68, 0.15)" : "#fee2e2",
+              color: "#ef4444",
               fontSize: "1.8rem",
-              border: `2px solid ${darkMode ? "rgba(16, 185, 129, 0.3)" : "#a7f3d0"}`,
+              border: `2px solid ${darkMode ? "rgba(239, 68, 68, 0.3)" : "#fca5a5"}`,
             }}
           >
-            🏥
+            🚪
           </div>
 
           <h5 className="fw-bold mb-2" style={{ letterSpacing: "-0.02em" }}>
-            Kembali ke Portal Utama?
+            Kembali ke Portal & Logout Otomatis?
           </h5>
           <p
             className="small mb-3 px-2"
             style={{ color: textMuted, lineHeight: 1.55 }}
           >
-            Anda sedang berada di panel <strong>Admin SIM-SDM RSJ Tampan</strong>.
-            Apakah Anda yakin ingin beralih ke halaman <strong>Portal Informasi Publik</strong>?
+            Anda sedang aktif masuk sebagai{" "}
+            <strong className={darkMode ? "text-white" : "text-dark"}>
+              {currentUser?.nama || "Petugas SIM-SDM"}
+            </strong>{" "}
+            ({currentUser?.role || "Staf Kepegawaian"}).
           </p>
 
-          {/* INFO BADGE */}
+          {/* WARNING INFO BADGE */}
           <div
-            className="p-2 px-3 rounded-3 text-start d-flex align-items-center gap-2 mb-1"
+            className="p-3 rounded-3 text-start d-flex align-items-start gap-2 mb-1"
             style={{
-              backgroundColor: cardSubBg,
-              border: `1px solid ${borderColor}`,
-              fontSize: "0.78rem",
-              color: textMuted,
+              backgroundColor: darkMode ? "rgba(239, 68, 68, 0.12)" : "#fef2f2",
+              border: `1px solid ${darkMode ? "rgba(239, 68, 68, 0.25)" : "#fecaca"}`,
+              fontSize: "0.82rem",
+              color: darkMode ? "#fca5a5" : "#991b1b",
+              lineHeight: 1.5,
             }}
           >
-            <span className="fs-6">ℹ️</span>
-            <span>
-              Sesi login Anda tetap aman. Anda dapat masuk kembali ke mode admin kapan saja.
-            </span>
+            <span className="fs-5 mt-n1">⚠️</span>
+            <div>
+              <strong>Logout Otomatis:</strong> Kembali ke halaman Portal Informasi Publik akan{" "}
+              <strong>langsung mengeluarkan (logout)</strong> profil Anda demi menjaga kerahasiaan & keamanan data kepegawaian RSJ Tampan.
+            </div>
           </div>
         </div>
 
@@ -116,7 +122,7 @@ export default function ConfirmPortalModal({
         >
           <button
             type="button"
-            className="btn btn-sm px-4 py-2 rounded-3 fw-medium"
+            className="btn btn-sm px-4 py-2 rounded-3 fw-medium hover-lift"
             style={{
               backgroundColor: darkMode ? "#182033" : "#f1f5f9",
               color: darkMode ? "#cbd5e1" : "#475569",
@@ -128,14 +134,14 @@ export default function ConfirmPortalModal({
           </button>
           <button
             type="button"
-            className="btn btn-sm btn-success px-4 py-2 rounded-3 fw-semibold d-flex align-items-center gap-2 shadow-sm"
+            className="btn btn-sm btn-danger px-4 py-2 rounded-3 fw-semibold d-flex align-items-center gap-2 shadow-sm hover-lift"
             style={{
-              backgroundColor: "#10b981",
-              borderColor: "#10b981",
+              backgroundColor: "#ef4444",
+              borderColor: "#ef4444",
             }}
             onClick={onConfirm}
           >
-            <span>Ya, Kembali ke Portal</span>
+            <span>Ya, Logout & ke Portal</span>
             <span>➔</span>
           </button>
         </div>

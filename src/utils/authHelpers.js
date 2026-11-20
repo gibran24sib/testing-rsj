@@ -13,12 +13,14 @@ export function getActiveUser(user) {
     return user;
   }
   try {
-    const saved = localStorage.getItem("rsj_current_user");
-    if (saved) {
-      return JSON.parse(saved);
+    if (typeof window !== "undefined") {
+      const saved = window.sessionStorage.getItem("rsj_current_user");
+      if (saved) {
+        return JSON.parse(saved);
+      }
     }
   } catch (e) {
-    console.error("Gagal membaca session user dari LocalStorage:", e);
+    console.error("Gagal membaca session user dari SessionStorage:", e);
   }
   return null;
 }

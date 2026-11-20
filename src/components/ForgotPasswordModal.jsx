@@ -123,20 +123,6 @@ export default function ForgotPasswordModal({
                     onChange={(e) => setIdentifier(e.target.value)}
                   />
                 </div>
-
-                <div
-                  className="p-3 rounded-3 border"
-                  style={{
-                    backgroundColor: darkMode ? "#161e36" : "#f8fafc",
-                    borderColor: darkMode ? "#23304d" : "#e2e8f0",
-                    fontSize: "0.75rem",
-                  }}
-                >
-                  <div className="fw-semibold mb-1 text-primary">💡 Catatan Pengguna Akun Demo:</div>
-                  <div className="text-muted">
-                    Untuk kebutuhan demo dan pengujian, Anda dapat langsung login menggunakan akun <strong>admin</strong> (password: <strong>123</strong>) atau <strong>budi</strong> (password: <strong>123</strong>).
-                  </div>
-                </div>
               </div>
 
               {/* MODAL FOOTER */}

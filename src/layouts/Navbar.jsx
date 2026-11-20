@@ -10,6 +10,7 @@ export default function Navbar({
   toggleTheme,
   onOpenCommandPalette,
   onOpenLogoutModal,
+  onBackToPortal,
 }) {
   const isAdmin = isAdminOrHrd(currentUser);
 
@@ -31,7 +32,15 @@ export default function Navbar({
         <div
           className="d-flex align-items-center gap-2"
           style={{ cursor: "pointer" }}
-          onClick={() => setCurrentView("guest")}
+          onClick={() => {
+            if (currentUser && (currentView === "admin" || currentView === "pegawai")) {
+              if (onBackToPortal) {
+                onBackToPortal();
+                return;
+              }
+            }
+            setCurrentView("guest");
+          }}
         >
           <div
             className="rounded-3 d-flex align-items-center justify-content-center hover-lift overflow-hidden p-1"
@@ -120,7 +129,15 @@ export default function Navbar({
                   ? "btn-success active-glow"
                   : "btn-outline-secondary"
               }`}
-              onClick={() => setCurrentView("guest")}
+              onClick={() => {
+                if (currentUser && (currentView === "admin" || currentView === "pegawai")) {
+                  if (onBackToPortal) {
+                    onBackToPortal();
+                    return;
+                  }
+                }
+                setCurrentView("guest");
+              }}
             >
               Portal Publik
             </button>

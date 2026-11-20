@@ -26,16 +26,6 @@ export default function LoginPage({
     }
   };
 
-  // Quick fill handler for testing demo accounts
-  const handleQuickFill = (username, password) => {
-    setAuthInput((prev) => ({
-      ...prev,
-      username: username,
-      email: `${username}@rsjtampan.riau.go.id`,
-      password: password,
-    }));
-  };
-
   const inputClass = `form-control ${
     darkMode ? "bg-dark text-white border-secondary" : ""
   }`;
@@ -206,48 +196,6 @@ export default function LoginPage({
                 )}
               </button>
             </form>
-
-            {/* QUICK DEMO LOGIN BUTTONS */}
-            <div
-              className="p-3 rounded-3 border mb-3"
-              style={{
-                backgroundColor: darkMode ? "rgba(20, 25, 43, 0.7)" : "rgba(248, 250, 252, 0.8)",
-                borderColor: darkMode ? "#222c45" : "#e2e8f0",
-              }}
-            >
-              <small className="d-block fw-semibold mb-2" style={{ fontSize: "0.72rem", color: labelColor }}>
-                ⚡ AKUN DEMO SIAP PAKAI:
-              </small>
-              <div className="d-flex flex-column gap-1">
-                <button
-                  type="button"
-                  className="btn btn-sm btn-outline-secondary text-start py-1 px-2 d-flex align-items-center justify-content-between hover-lift"
-                  style={{ fontSize: "0.75rem" }}
-                  onClick={() => handleQuickFill("admin", "123")}
-                >
-                  <span>🛡️ <strong>admin</strong> (Kasubbag SDM / HRD)</span>
-                  <span className="badge bg-secondary-subtle text-secondary">Isi Form</span>
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-sm btn-outline-secondary text-start py-1 px-2 d-flex align-items-center justify-content-between hover-lift"
-                  style={{ fontSize: "0.75rem" }}
-                  onClick={() => handleQuickFill("budi", "123")}
-                >
-                  <span>🩺 <strong>budi</strong> (Perawat IGD Jiwa)</span>
-                  <span className="badge bg-secondary-subtle text-secondary">Isi Form</span>
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-sm btn-outline-secondary text-start py-1 px-2 d-flex align-items-center justify-content-between hover-lift"
-                  style={{ fontSize: "0.75rem" }}
-                  onClick={() => handleQuickFill("faisal", "123")}
-                >
-                  <span>👨‍⚕️ <strong>faisal</strong> (dr. Spesialis Jiwa)</span>
-                  <span className="badge bg-secondary-subtle text-secondary">Isi Form</span>
-                </button>
-              </div>
-            </div>
 
             <div className="text-center border-top border-opacity-10 pt-3">
               <span className="small text-muted">Belum terdaftar? </span>

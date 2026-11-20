@@ -28,10 +28,11 @@ if (NEXT_PUBLIC_SUPABASE_ANON_KEY.includes("service_role")) {
 export const SUPABASE_URL = NEXT_PUBLIC_SUPABASE_URL;
 export const SUPABASE_KEY = NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-// 2. Inisialisasi Klien Supabase dengan Anon Key
+// 2. Inisialisasi Klien Supabase dengan Anon Key (menggunakan sessionStorage agar otomatis logout saat browser ditutup)
 export const supabase = createClient(NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY, {
   auth: {
     persistSession: true,
+    storage: typeof window !== "undefined" ? window.sessionStorage : undefined,
     autoRefreshToken: true,
     detectSessionInUrl: true,
   },
@@ -403,7 +404,7 @@ export async function loginUserSupabase({ usernameOrEmail, password }) {
     return {
       success: false,
       localOnly: true,
-      error: new Error("Supabase URL / Key belum aktif. Gunakan akun demo lokal."),
+      error: new Error("Supabase URL / Key belum aktif. Menggunakan penyimpanan data lokal."),
     };
   }
 
@@ -525,9 +526,18 @@ export async function ambilProfilUserSupabase(userId) {
 }
 
 /**
- * Logout dari sesi Supabase Auth
+ * Logout dari sesi Supabase Auth & Bersihkan Sesi Browser
  */
 export async function logoutUserSupabase() {
+  if (typeof window !== "undefined") {
+    try {
+      window.sessionStorage.removeItem("rsj_current_user");
+      window.localStorage.removeItem("rsj_current_user");
+    } catch (e) {
+      console.warn("Storage cleanup error:", e);
+    }
+  }
+
   if (!isSupabaseConfigured()) return { success: true };
 
   try {
