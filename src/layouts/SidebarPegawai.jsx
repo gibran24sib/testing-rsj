@@ -7,14 +7,13 @@ export default function SidebarPegawai({
   darkMode,
   toggleTheme,
   handleLogout,
-  setCurrentView,
-  onBackToPortal,
+  setCurrentView: _setCurrentView,
   onOpenCommandPalette,
   dossierCount = 0,
 }) {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
-  const menuItems = [
+  const primaryMenuItems = [
     {
       id: "profil",
       label: "Data Diri & Profil",
@@ -25,25 +24,13 @@ export default function SidebarPegawai({
       id: "berkas",
       label: "E-Berkas & Dokumen",
       icon: "📁",
-      badge: dossierCount ? `${dossierCount} File` : "Upload DMS",
+      badge: dossierCount ? `${dossierCount} File` : "DMS",
     },
     {
       id: "cuti",
       label: "Pengajuan Cuti",
       icon: "🏖️",
       badge: "Mandiri",
-    },
-    {
-      id: "roster",
-      label: "Jadwal Shift Jaga",
-      icon: "📅",
-      badge: "Bangsal",
-    },
-    {
-      id: "presensi",
-      label: "E-Presensi Shift",
-      icon: "⏱️",
-      badge: "Live GPS",
     },
     {
       id: "legalitas",
@@ -59,7 +46,20 @@ export default function SidebarPegawai({
     },
   ];
 
-  const activeItemObj = menuItems.find((m) => m.id === activeTab) || menuItems[0];
+  const riwayatMenuItems = [
+    { id: "riwayat_profil", label: "Riwayat Ubah Profil", icon: "👤", badge: "BKN" },
+    { id: "riwayat_keluarga", label: "Riwayat Keluarga", icon: "👨‍👩‍👦", badge: "Tanggungan" },
+    { id: "riwayat_sertifikasi", label: "Riwayat Sertifikasi", icon: "🎖️", badge: "Kompetensi" },
+    { id: "riwayat_profesi", label: "Riwayat Profesi", icon: "🩺", badge: "SPK/RKK" },
+    { id: "riwayat_penghargaan", label: "Riwayat Penghargaan", icon: "🏆", badge: "Piagam" },
+    { id: "riwayat_organisasi", label: "Riwayat Organisasi", icon: "🏢", badge: "Profesi" },
+    { id: "riwayat_pendidikan", label: "Riwayat Pendidikan", icon: "🎓", badge: "Ijazah" },
+    { id: "riwayat_kinerja", label: "Riwayat Kinerja", icon: "📈", badge: "SKP" },
+    { id: "riwayat_kontrak", label: "Riwayat Kontrak PPPK", icon: "📄", badge: "SK" },
+  ];
+
+  const allItems = [...primaryMenuItems, ...riwayatMenuItems];
+  const activeItemObj = allItems.find((m) => m.id === activeTab) || primaryMenuItems[0];
 
   const handleSelectTab = (id) => {
     setActiveTab(id);
@@ -81,7 +81,7 @@ export default function SidebarPegawai({
       >
         <div
           className="d-flex align-items-center gap-2"
-          onClick={onBackToPortal ? onBackToPortal : () => setCurrentView("guest")}
+          onClick={() => setActiveTab("profil")}
           style={{ cursor: "pointer" }}
         >
           <div
@@ -176,8 +176,8 @@ export default function SidebarPegawai({
               backgroundColor: darkMode ? "rgba(17, 22, 36, 0.7)" : "rgba(248, 250, 252, 0.9)",
               border: darkMode ? "1px solid #1d253b" : "1px solid #e2e8f0",
             }}
-            onClick={onBackToPortal ? onBackToPortal : () => setCurrentView("guest")}
-            title="Kembali ke Portal Publik RSJ Tampan"
+            onClick={() => setActiveTab("profil")}
+            title="Portal Mandiri Pegawai (ESS) • RSJ Tampan"
           >
             <div className="d-flex align-items-center gap-3">
               <div
@@ -260,7 +260,7 @@ export default function SidebarPegawai({
             </kbd>
           </button>
 
-          {/* SECTION HEADER: MENU MANDIRI */}
+          {/* SECTION 1: LAYANAN UTAMA */}
           <div className="mb-2 px-2">
             <small
               className="text-uppercase fw-semibold"
@@ -270,13 +270,12 @@ export default function SidebarPegawai({
                 color: darkMode ? "#505769" : "#94a3b8",
               }}
             >
-              Layanan Mandiri Pegawai
+              Layanan Mandiri Utama
             </small>
           </div>
 
-          {/* LIST MENU ITEMS */}
-          <nav className="d-flex flex-column gap-1 mb-4">
-            {menuItems.map((item) => {
+          <nav className="d-flex flex-column gap-1 mb-3">
+            {primaryMenuItems.map((item) => {
               const isActive = activeTab === item.id;
               return (
                 <button
@@ -297,7 +296,7 @@ export default function SidebarPegawai({
                       ? "#94a3b8"
                       : "#475569",
                     fontWeight: isActive ? 600 : 500,
-                    fontSize: "0.83rem",
+                    fontSize: "0.82rem",
                     borderLeft: isActive ? "3px solid #10b981" : "3px solid transparent",
                   }}
                 >
@@ -312,6 +311,77 @@ export default function SidebarPegawai({
                       fontWeight: 500,
                       backgroundColor: isActive
                         ? "#10b981"
+                        : darkMode
+                        ? "#1e293b"
+                        : "#f1f5f9",
+                      color: isActive
+                        ? "#ffffff"
+                        : darkMode
+                        ? "#94a3b8"
+                        : "#64748b",
+                    }}
+                  >
+                    {item.badge}
+                  </span>
+                </button>
+              );
+            })}
+          </nav>
+
+          {/* SECTION 2: RIWAYAT KEPEGAWAIAN (MyASN / SIASN BKN) */}
+          <div className="mb-2 px-2 d-flex align-items-center justify-content-between">
+            <small
+              className="text-uppercase fw-semibold"
+              style={{
+                fontSize: "0.65rem",
+                letterSpacing: "0.8px",
+                color: darkMode ? "#38bdf8" : "#0284c7",
+              }}
+            >
+              🇮🇩 Riwayat Kepegawaian (MyASN)
+            </small>
+            <span className="badge rounded-pill bg-primary-subtle text-primary" style={{ fontSize: "0.55rem" }}>
+              BKN
+            </span>
+          </div>
+
+          <nav className="d-flex flex-column gap-1 mb-4">
+            {riwayatMenuItems.map((item) => {
+              const isActive = activeTab === item.id;
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => handleSelectTab(item.id)}
+                  className={`btn text-start d-flex align-items-center justify-content-between px-3 py-1.5 rounded-3 border-0 transition-all ${
+                    isActive ? "active-glow" : "hover-lift"
+                  }`}
+                  style={{
+                    backgroundColor: isActive
+                      ? darkMode
+                        ? "rgba(2, 132, 199, 0.2)"
+                        : "#e0f2fe"
+                      : "transparent",
+                    color: isActive
+                      ? "#0284c7"
+                      : darkMode
+                      ? "#cbd5e1"
+                      : "#475569",
+                    fontWeight: isActive ? 600 : 500,
+                    fontSize: "0.8rem",
+                    borderLeft: isActive ? "3px solid #0284c7" : "3px solid transparent",
+                  }}
+                >
+                  <div className="d-flex align-items-center gap-2">
+                    <span style={{ fontSize: "0.9rem" }}>{item.icon}</span>
+                    <span>{item.label}</span>
+                  </div>
+                  <span
+                    className="badge rounded-pill"
+                    style={{
+                      fontSize: "0.6rem",
+                      fontWeight: 500,
+                      backgroundColor: isActive
+                        ? "#0284c7"
                         : darkMode
                         ? "#1e293b"
                         : "#f1f5f9",

@@ -1,14 +1,13 @@
-import React from "react";
+import React, { useMemo } from "react";
 import SdmTab from "./SdmTab";
 
 export default function AdminPage({
   activeTab,
   setActiveTab,
-  employees,
-  shiftRoster,
-  leaveRequests,
-  trainings,
-  dossiersList,
+  employees = [],
+  leaveRequests = [],
+  trainings = [],
+  dossiersList = [],
   onSaveDossier,
   currentUser,
   setCurrentView,
@@ -24,7 +23,6 @@ export default function AdminPage({
   cardBg,
   tableTheme,
   onOpenCommandPalette,
-  onBackToPortal,
 }) {
   const getTabTitleInfo = () => {
     switch (activeTab) {
@@ -34,13 +32,6 @@ export default function AdminPage({
           subtitle: "Master data seluruh tenaga dokter spesialis Sp.KJ, psikolog klinis, ners jiwa, dan staf RSJ Tampan",
           badge: `${employees?.length || 0} Pegawai Aktif`,
           badgeClass: "badge-soft-success",
-        };
-      case "roster":
-        return {
-          title: "Roster Shift Jaga Bangsal Jiwa 24 Jam",
-          subtitle: "Penjadwalan dinas 24/7 di bangsal Kampar, Siak, Rokan NAPZA, dan IGD Jiwa",
-          badge: "4 Bangsal 24/7",
-          badgeClass: "badge-soft-primary",
         };
       case "abk_wisn":
         return {
@@ -55,13 +46,6 @@ export default function AdminPage({
           subtitle: "Surat Penugasan Klinis dan Rincian Kewenangan Klinis perawat jiwa standar KARS",
           badge: "KARS Akreditasi",
           badgeClass: "badge-soft-purple",
-        };
-      case "presensi":
-        return {
-          title: "E-Presensi & Log Kehadiran Shift",
-          subtitle: "Monitoring presensi digital berbasis geolocation GPS shift pagi, sore, dan malam",
-          badge: "Live GPS",
-          badgeClass: "badge-soft-warning",
         };
       case "dossier":
         return {
@@ -110,11 +94,29 @@ export default function AdminPage({
 
   const tabInfo = getTabTitleInfo();
 
+  // Metrics untuk Executive Bar
+  const pendingLeaves = useMemo(() => {
+    return leaveRequests.filter((l) => l.status === "Menunggu Persetujuan");
+  }, [leaveRequests]);
+
+  const expiringLicenses = useMemo(() => {
+    return employees.filter(
+      (emp) =>
+        emp.str?.status === "Expired" ||
+        emp.str?.status === "Mendekati Expired" ||
+        emp.sip?.status === "Expired" ||
+        emp.sip?.status === "Mendekati Expired"
+    );
+  }, [employees]);
+
+  const medisCount = useMemo(() => employees.filter((e) => e.kategori === "Medis").length, [employees]);
+  const nersCount = useMemo(() => employees.filter((e) => e.kategori === "Keperawatan").length, [employees]);
+
   return (
     <div className="py-2 animate-fade-in">
       {/* INTEGRATED MODERN GLASS PAGE HEADER */}
       <div
-        className={`d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4 p-3 rounded-4 ${
+        className={`d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3 p-3 rounded-4 ${
           darkMode ? "glass-panel-dark" : "glass-panel"
         }`}
         style={{
@@ -128,7 +130,7 @@ export default function AdminPage({
             </h4>
             {tabInfo.badge && (
               <span
-                className={`badge rounded-pill px-2 py-1 ${tabInfo.badgeClass || "badge-soft-success"}`}
+                className={`badge rounded-pill px-2.5 py-1 ${tabInfo.badgeClass || "badge-soft-success"}`}
                 style={{ fontSize: "0.68rem" }}
               >
                 {tabInfo.badge}
@@ -144,19 +146,9 @@ export default function AdminPage({
         </div>
 
         {/* QUICK ACTION BUTTONS */}
-        <div className="d-flex align-items-center gap-2">
-          {onBackToPortal && (
-            <button
-              className="btn btn-sm btn-outline-success d-flex align-items-center gap-1 px-3 py-1 rounded-3 hover-lift"
-              onClick={onBackToPortal}
-              title="Kembali ke Portal Publik RSJ Tampan"
-            >
-              <span>🏥</span>
-              <span className="d-none d-sm-inline">Portal Publik</span>
-            </button>
-          )}
+        <div className="d-flex align-items-center gap-2 flex-wrap">
           <button
-            className="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1 px-3 py-1 rounded-3 hover-lift"
+            className="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1.5 px-3 py-1.5 rounded-3 hover-lift shadow-sm"
             onClick={onOpenCommandPalette}
             title="Cari fitur SDM (Ctrl+K)"
           >
@@ -166,12 +158,77 @@ export default function AdminPage({
         </div>
       </div>
 
+      {/* EXECUTIVE LIVE METRIC STRIP (TIDAK POLOS) */}
+      <div
+        className="p-3 rounded-4 mb-4 d-flex flex-wrap align-items-center justify-content-between gap-3 shadow-sm"
+        style={{
+          backgroundColor: darkMode ? "#0c111e" : "#f1f5f9",
+          border: darkMode ? "1px solid #1a2236" : "1px solid #e2e8f0",
+        }}
+      >
+        <div className="d-flex align-items-center gap-3 flex-wrap">
+          <div className="d-flex align-items-center gap-2">
+            <span
+              style={{
+                width: "9px",
+                height: "9px",
+                borderRadius: "50%",
+                backgroundColor: "#10b981",
+                display: "inline-block",
+                boxShadow: "0 0 8px rgba(16, 185, 129, 0.7)",
+              }}
+            />
+            <span className="small fw-semibold" style={{ fontSize: "0.78rem" }}>
+              Database SDM: Online (Supabase Sync)
+            </span>
+          </div>
+
+          <span className="text-muted d-none d-md-inline">&bull;</span>
+
+          <span className="small text-muted" style={{ fontSize: "0.78rem" }}>
+            Total SDM: <strong className="text-dark-subtle">{employees.length} Pegawai</strong> ({medisCount} Dokter / {nersCount} Ners Jiwa)
+          </span>
+
+          <span className="text-muted d-none d-md-inline">&bull;</span>
+
+          <span className="small text-muted" style={{ fontSize: "0.78rem" }}>
+            Akreditasi: <strong className="text-success">KARS Paripurna ⭐⭐⭐⭐⭐</strong>
+          </span>
+        </div>
+
+        {/* ACTION SHORTCUTS */}
+        <div className="d-flex align-items-center gap-2">
+          {pendingLeaves.length > 0 && (
+            <button
+              type="button"
+              className="btn btn-xs btn-warning text-dark fw-bold px-2.5 py-1 rounded-pill d-flex align-items-center gap-1 hover-lift"
+              style={{ fontSize: "0.72rem" }}
+              onClick={() => setActiveTab("cuti")}
+            >
+              <span>🏖️</span>
+              <span>{pendingLeaves.length} Cuti Menunggu</span>
+            </button>
+          )}
+
+          {expiringLicenses.length > 0 && (
+            <button
+              type="button"
+              className="btn btn-xs btn-danger text-white fw-bold px-2.5 py-1 rounded-pill d-flex align-items-center gap-1 hover-lift"
+              style={{ fontSize: "0.72rem" }}
+              onClick={() => setActiveTab("legalitas")}
+            >
+              <span>⚠️</span>
+              <span>{expiringLicenses.length} STR/SIP Expiring</span>
+            </button>
+          )}
+        </div>
+      </div>
+
       {/* RENDER SDM TAB */}
       <SdmTab
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         employees={employees}
-        shiftRoster={shiftRoster}
         leaveRequests={leaveRequests}
         trainings={trainings}
         dossiersList={dossiersList}
@@ -187,6 +244,8 @@ export default function AdminPage({
         onRenewStrSip={onRenewStrSip}
         darkMode={darkMode}
         showToast={showToast}
+        cardBg={cardBg}
+        tableTheme={tableTheme}
       />
     </div>
   );

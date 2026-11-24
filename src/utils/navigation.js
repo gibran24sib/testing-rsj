@@ -6,10 +6,8 @@
 // Tab Modul Admin
 export const ADMIN_TAB_ROUTES = {
   direktori: "/admin/direktori",
-  roster: "/admin/roster",
   abk_wisn: "/admin/abk-wisn",
   kredensialing: "/admin/kredensialing",
-  presensi: "/admin/presensi",
   dossier: "/admin/dossier",
   legalitas: "/admin/legalitas",
   cuti: "/admin/cuti",
@@ -17,39 +15,31 @@ export const ADMIN_TAB_ROUTES = {
   analitik: "/admin/analitik",
 };
 
-// Tab Portal Mandiri Pegawai (Employee Self-Service / ESS)
+// Tab Portal Mandiri Pegawai (Employee Self-Service / ESS & MyASN BKN)
 export const PEGAWAI_TAB_ROUTES = {
   profil: "/pegawai/profil",
   berkas: "/pegawai/berkas",
   cuti: "/pegawai/cuti",
-  roster: "/pegawai/roster",
-  presensi: "/pegawai/presensi",
   legalitas: "/pegawai/legalitas",
   diklat: "/pegawai/diklat",
-};
-
-// Tab Portal Publik
-export const PORTAL_TAB_ROUTES = {
-  tenaga_medis: "/portal/tenaga-medis",
-  rekrutmen: "/portal/rekrutmen",
-  diklat: "/portal/diklat",
-  layanan_sdm: "/portal/layanan",
+  riwayat_profil: "/pegawai/riwayat-profil",
+  riwayat_keluarga: "/pegawai/riwayat-keluarga",
+  riwayat_sertifikasi: "/pegawai/riwayat-sertifikasi",
+  riwayat_profesi: "/pegawai/riwayat-profesi",
+  riwayat_penghargaan: "/pegawai/riwayat-penghargaan",
+  riwayat_organisasi: "/pegawai/riwayat-organisasi",
+  riwayat_pendidikan: "/pegawai/riwayat-pendidikan",
+  riwayat_kinerja: "/pegawai/riwayat-kinerja",
+  riwayat_kontrak: "/pegawai/riwayat-kontrak",
 };
 
 // Judul Halaman Dokumen
 export const PAGE_TITLES = {
   login: "Masuk SIM-SDM • RSJ Tampan Riau",
   register: "Registrasi Petugas SIM-SDM • RSJ Tampan",
-  portal_tenaga_medis: "Portal Informasi Tenaga Medis • RSJ Tampan",
-  portal_rekrutmen: "Informasi Rekrutmen & Formasi Nakes • RSJ Tampan",
-  portal_diklat: "Program Diklat & Kredensialing Jiwa • RSJ Tampan",
-  portal_layanan_sdm: "Layanan Kepegawaian & Ketenagaan • RSJ Tampan",
-  portal_default: "Portal SDM & Kepegawaian • RSJ Tampan Riau",
   admin_direktori: "Direktori Pegawai & Nakes • SIM-SDM RSJ Tampan",
-  admin_roster: "Roster Shift 24/7 Bangsal Jiwa • SIM-SDM RSJ Tampan",
   admin_abk_wisn: "Analisis Beban Kerja (WISN) • SIM-SDM RSJ Tampan",
   admin_kredensialing: "Jenjang Karir & SPK/RKK • SIM-SDM RSJ Tampan",
-  admin_presensi: "E-Presensi Shift Geolocation • SIM-SDM RSJ Tampan",
   admin_dossier: "E-Berkas Digital Kepegawaian • SIM-SDM RSJ Tampan",
   admin_legalitas: "Audit Legalitas STR & SIP • SIM-SDM RSJ Tampan",
   admin_cuti: "Approval & Manajemen Cuti HRD • SIM-SDM RSJ Tampan",
@@ -58,10 +48,17 @@ export const PAGE_TITLES = {
   pegawai_profil: "Data Diri & Profil Saya • Portal Pegawai RSJ Tampan",
   pegawai_berkas: "E-Berkas & Dokumen Mandiri • Portal Pegawai RSJ Tampan",
   pegawai_cuti: "Pengajuan & Riwayat Cuti Mandiri • Portal Pegawai RSJ Tampan",
-  pegawai_roster: "Jadwal Shift Bangsal Saya • Portal Pegawai RSJ Tampan",
-  pegawai_presensi: "E-Presensi Shift Geolocation • Portal Pegawai RSJ Tampan",
   pegawai_legalitas: "Legalitas STR & SIP Saya • Portal Pegawai RSJ Tampan",
   pegawai_diklat: "Sertifikat & Pelatihan Saya • Portal Pegawai RSJ Tampan",
+  pegawai_riwayat_profil: "Riwayat Ubah Profil • MyASN RSJ Tampan",
+  pegawai_riwayat_keluarga: "Riwayat Keluarga & Tanggungan • MyASN RSJ Tampan",
+  pegawai_riwayat_sertifikasi: "Riwayat Sertifikasi Nakes • MyASN RSJ Tampan",
+  pegawai_riwayat_profesi: "Riwayat Profesi & Jenjang Karir • MyASN RSJ Tampan",
+  pegawai_riwayat_penghargaan: "Riwayat Penghargaan & Tanda Jasa • MyASN RSJ Tampan",
+  pegawai_riwayat_organisasi: "Riwayat Organisasi Profesi • MyASN RSJ Tampan",
+  pegawai_riwayat_pendidikan: "Riwayat Pendidikan Formal • MyASN RSJ Tampan",
+  pegawai_riwayat_kinerja: "Riwayat Kinerja & SKP Tahunan • MyASN RSJ Tampan",
+  pegawai_riwayat_kontrak: "Riwayat Kontrak PPPK & SK • MyASN RSJ Tampan",
   pegawai_default: "Portal Mandiri Pegawai (ESS) • SIM-SDM RSJ Tampan",
 };
 
@@ -71,7 +68,7 @@ export const PAGE_TITLES = {
 export function getPathForState(
   view,
   adminTab = "direktori",
-  portalTab = "tenaga_medis",
+  _portalTab = null,
   pegawaiTab = "profil"
 ) {
   if (view === "admin") {
@@ -86,13 +83,7 @@ export function getPathForState(
   if (view === "register") {
     return "/register";
   }
-  if (view === "guest") {
-    if (portalTab && portalTab !== "tenaga_medis") {
-      return PORTAL_TAB_ROUTES[portalTab] || `/portal/${portalTab.replace("_", "-")}`;
-    }
-    return "/portal";
-  }
-  return "/";
+  return "/login";
 }
 
 /**
@@ -101,7 +92,7 @@ export function getPathForState(
 export function getTitleForState(
   view,
   adminTab = "direktori",
-  portalTab = "tenaga_medis",
+  _portalTab = null,
   pegawaiTab = "profil"
 ) {
   if (view === "admin") {
@@ -116,16 +107,21 @@ export function getTitleForState(
   if (view === "register") {
     return PAGE_TITLES.register;
   }
-  if (view === "guest") {
-    return PAGE_TITLES[`portal_${portalTab}`] || PAGE_TITLES.portal_default;
-  }
-  return "RSJ Tampan Pekanbaru • SIM-SDM Terpadu";
+  return PAGE_TITLES.login;
 }
 
 /**
- * Membaca URL path saat ini dan mengembalikannya dalam bentuk state aplikasi
+ * Mengurai pathname URL saat ini menjadi objek state aplikasi
  */
-export function getStateFromPath(pathname = window.location.pathname) {
+export function getStateFromPath(pathname) {
+  if (!pathname || typeof pathname !== "string") {
+    return {
+      view: "login",
+      adminTab: "direktori",
+      pegawaiTab: "profil",
+    };
+  }
+
   const cleanPath = pathname.toLowerCase().replace(/\/+$/, "") || "/";
 
   // 1. RUTE AUTH
@@ -133,7 +129,6 @@ export function getStateFromPath(pathname = window.location.pathname) {
     return {
       view: "login",
       adminTab: "direktori",
-      portalTab: "tenaga_medis",
       pegawaiTab: "profil",
     };
   }
@@ -141,7 +136,6 @@ export function getStateFromPath(pathname = window.location.pathname) {
     return {
       view: "register",
       adminTab: "direktori",
-      portalTab: "tenaga_medis",
       pegawaiTab: "profil",
     };
   }
@@ -165,10 +159,6 @@ export function getStateFromPath(pathname = window.location.pathname) {
         tab = "berkas";
       } else if (sub === "cuti" || sub === "izin" || sub === "pengajuan") {
         tab = "cuti";
-      } else if (sub === "roster" || sub === "shift" || sub === "jadwal") {
-        tab = "roster";
-      } else if (sub === "presensi" || sub === "absensi" || sub === "gps") {
-        tab = "presensi";
       } else if (sub === "legalitas" || sub === "str" || sub === "sip") {
         tab = "legalitas";
       } else if (sub === "diklat" || sub === "pelatihan" || sub === "sertifikat") {
@@ -181,7 +171,6 @@ export function getStateFromPath(pathname = window.location.pathname) {
     return {
       view: "pegawai",
       adminTab: "direktori",
-      portalTab: "tenaga_medis",
       pegawaiTab: tab,
     };
   }
@@ -195,12 +184,8 @@ export function getStateFromPath(pathname = window.location.pathname) {
       const sub = parts[1].replace("-", "_");
       if (sub === "wisn" || sub === "abk_wisn" || sub === "abk") {
         tab = "abk_wisn";
-      } else if (sub === "roster" || sub === "shift" || sub === "jadwal") {
-        tab = "roster";
       } else if (sub === "kredensialing" || sub === "spk" || sub === "karir") {
         tab = "kredensialing";
-      } else if (sub === "presensi" || sub === "absensi" || sub === "gps") {
-        tab = "presensi";
       } else if (sub === "dossier" || sub === "berkas" || sub === "arsip") {
         tab = "dossier";
       } else if (sub === "legalitas" || sub === "str" || sub === "sip") {
@@ -221,42 +206,14 @@ export function getStateFromPath(pathname = window.location.pathname) {
     return {
       view: "admin",
       adminTab: tab,
-      portalTab: "tenaga_medis",
       pegawaiTab: "profil",
     };
   }
 
-  // 4. RUTE PORTAL PUBLIK
-  if (cleanPath.startsWith("/portal") || cleanPath === "/") {
-    const parts = cleanPath.split("/").filter(Boolean);
-    let portalTab = "tenaga_medis";
-
-    if (parts[1]) {
-      const sub = parts[1].replace("-", "_");
-      if (sub === "rekrutmen" || sub === "karir" || sub === "lowongan") {
-        portalTab = "rekrutmen";
-      } else if (sub === "diklat" || sub === "pelatihan" || sub === "workshop") {
-        portalTab = "diklat";
-      } else if (sub === "layanan" || sub === "layanan_sdm" || sub === "panduan") {
-        portalTab = "layanan_sdm";
-      } else {
-        portalTab = "tenaga_medis";
-      }
-    }
-
-    return {
-      view: "guest",
-      adminTab: "direktori",
-      portalTab: portalTab,
-      pegawaiTab: "profil",
-    };
-  }
-
-  // Default fallback
+  // Default fallback (langsung ke login)
   return {
-    view: "guest",
+    view: "login",
     adminTab: "direktori",
-    portalTab: "tenaga_medis",
     pegawaiTab: "profil",
   };
 }

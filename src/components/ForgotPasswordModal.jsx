@@ -55,7 +55,20 @@ export default function ForgotPasswordModal({
             style={{ borderColor: darkMode ? "#1f293d" : "#e2e8f0" }}
           >
             <div className="d-flex align-items-center gap-2">
-              <span className="fs-5">🔐</span>
+              <div
+                className="d-flex align-items-center justify-content-center rounded-circle"
+                style={{
+                  width: "32px",
+                  height: "32px",
+                  backgroundColor: darkMode ? "rgba(99, 102, 241, 0.15)" : "rgba(99, 102, 241, 0.1)",
+                  color: "#6366f1",
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+              </div>
               <div>
                 <h6 className="modal-title fw-bold mb-0" style={{ fontSize: "1rem" }}>
                   Bantuan Akses & Reset Password
@@ -78,9 +91,12 @@ export default function ForgotPasswordModal({
             <div className="modal-body p-4 text-center animate-fade-in">
               <div
                 className="d-inline-flex align-items-center justify-content-center p-3 rounded-circle mb-3"
-                style={{ backgroundColor: "rgba(16, 185, 129, 0.15)", color: "#10b981", width: "64px", height: "64px" }}
+                style={{ backgroundColor: "rgba(16, 185, 129, 0.15)", color: "#10b981", width: "56px", height: "56px" }}
               >
-                <span className="fs-2">📩</span>
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                  <polyline points="22,6 12,13 2,6"></polyline>
+                </svg>
               </div>
               <h6 className="fw-bold mb-2">Permintaan Reset Password Terkirim!</h6>
               <p className="small text-muted mb-3">
@@ -148,7 +164,13 @@ export default function ForgotPasswordModal({
                       <span>Memproses...</span>
                     </>
                   ) : (
-                    <span>Kirim Tautan Reset &rarr;</span>
+                    <>
+                      <span>Kirim Tautan Reset</span>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <polyline points="12 5 19 12 12 19"></polyline>
+                      </svg>
+                    </>
                   )}
                 </button>
               </div>

@@ -9,7 +9,6 @@ export default function Sidebar({
   toggleTheme,
   handleLogout,
   setCurrentView,
-  onBackToPortal,
   onOpenCommandPalette,
   employeeCount = 0,
 }) {
@@ -24,12 +23,6 @@ export default function Sidebar({
       badge: `${employeeCount || 12} Nakes`,
     },
     {
-      id: "roster",
-      label: "Roster Shift 24/7",
-      icon: "📅",
-      badge: "Duty Shift",
-    },
-    {
       id: "abk_wisn",
       label: "Beban Kerja (WISN)",
       icon: "🧮",
@@ -40,12 +33,6 @@ export default function Sidebar({
       label: "Jenjang Karir & SPK",
       icon: "🎖️",
       badge: "KARS",
-    },
-    {
-      id: "presensi",
-      label: "E-Presensi Shift",
-      icon: "⏱️",
-      badge: "Live GPS",
     },
     {
       id: "dossier",
@@ -101,7 +88,7 @@ export default function Sidebar({
       >
         <div
           className="d-flex align-items-center gap-2"
-          onClick={onBackToPortal ? onBackToPortal : () => setCurrentView("guest")}
+          onClick={() => setActiveTab("direktori")}
           style={{ cursor: "pointer" }}
         >
           <div
@@ -196,8 +183,8 @@ export default function Sidebar({
               backgroundColor: darkMode ? "rgba(17, 22, 36, 0.7)" : "rgba(248, 250, 252, 0.9)",
               border: darkMode ? "1px solid #1d253b" : "1px solid #e2e8f0",
             }}
-            onClick={onBackToPortal ? onBackToPortal : () => setCurrentView("guest")}
-            title="Kembali ke Portal Publik"
+            onClick={() => setActiveTab("direktori")}
+            title="Panel Admin SDM • RSJ Tampan"
           >
             <div className="d-flex align-items-center gap-3">
               <div

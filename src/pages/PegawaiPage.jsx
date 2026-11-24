@@ -3,17 +3,15 @@ import { getEmployeeForUser } from "../utils/authHelpers";
 import { compressImage, getSavedUserPhoto, saveUserPhoto } from "../utils/imageHelpers";
 import SdmLeaveLetterModal from "../components/SdmLeaveLetterModal";
 import SdmIdCardModal from "../components/SdmIdCardModal";
-import SdmShiftSwapModal from "../components/SdmShiftSwapModal";
 import SdmCertificateModal from "../components/SdmCertificateModal";
-import SdmLiveCameraPresensiModal from "../components/SdmLiveCameraPresensiModal";
 import SdmDocumentPreviewModal from "../components/SdmDocumentPreviewModal";
+import MyAsnRiwayatSection from "../components/MyAsnRiwayatSection";
 
 export default function PegawaiPage({
   activeTab = "profil",
   setActiveTab,
   currentUser,
   employees = [],
-  shiftRoster = [],
   leaveRequests = [],
   trainings = [],
   dossiersList = [],
@@ -23,7 +21,6 @@ export default function PegawaiPage({
   darkMode,
   showToast,
   onOpenCommandPalette,
-  onBackToPortal,
 }) {
   // Hubungkan user saat ini dengan data master pegawai
   const matchedEmp = useMemo(() => {
@@ -247,64 +244,8 @@ export default function PegawaiPage({
   const [isLeaveLetterOpen, setIsLeaveLetterOpen] = useState(false);
   const [selectedLeaveForLetter, setSelectedLeaveForLetter] = useState(null);
   const [isIdCardOpen, setIsIdCardOpen] = useState(false);
-  const [isShiftSwapOpen, setIsShiftSwapOpen] = useState(false);
   const [isCertModalOpen, setIsCertModalOpen] = useState(false);
   const [selectedTrainingForCert, setSelectedTrainingForCert] = useState(null);
-  const [isLiveCameraOpen, setIsLiveCameraOpen] = useState(false);
-  const [cameraPresensiType, setCameraPresensiType] = useState("Masuk");
-  const [selectedPhotoPreview, setSelectedPhotoPreview] = useState(null);
-
-  // PRESENSI MANDIRI STATE
-  const [currentTimeStr, setCurrentTimeStr] = useState("");
-  const [gpsStatus, setGpsStatus] = useState("Mendeteksi Lokasi GPS...");
-  const [isPresensiDoneToday, setIsPresensiDoneToday] = useState(false);
-  const [myAttendanceLogs, setMyAttendanceLogs] = useState([
-    {
-      id: "LOG-001",
-      tanggal: new Date().toISOString().split("T")[0],
-      shift: "Pagi (07:30 - 14:30 WIB)",
-      jamMasuk: "07:22 WIB",
-      jamPulang: "14:35 WIB",
-      status: "Hadir Tepat Waktu",
-      lokasi: "Radius 15m RSJ Tampan (Valid)",
-      metode: "Kamera Langsung & GPS Live",
-      fotoPresensi: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=200&auto=format&fit=crop&q=80",
-    },
-    {
-      id: "LOG-002",
-      tanggal: "2026-09-24",
-      shift: "Pagi (07:30 - 14:30 WIB)",
-      jamMasuk: "07:18 WIB",
-      jamPulang: "14:30 WIB",
-      status: "Hadir Tepat Waktu",
-      lokasi: "Radius 18m RSJ Tampan (Valid)",
-      metode: "Kamera Langsung & GPS Live",
-      fotoPresensi: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=200&auto=format&fit=crop&q=80",
-    },
-  ]);
-
-  useEffect(() => {
-    const updateTime = () => {
-      const now = new Date();
-      setCurrentTimeStr(
-        now.toLocaleTimeString("id-ID", {
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit",
-        }) + " WIB"
-      );
-    };
-    updateTime();
-    const interval = setInterval(updateTime, 1000);
-    return () => clearInterval(interval);
-  }, []);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setGpsStatus("Dalam Radius RSJ Tampan (18 Meter) • Sinyal Akurat");
-    }, 800);
-    return () => clearTimeout(timer);
-  }, []);
 
   // Filter Riwayat Cuti HANYA milik pegawai login
   const myLeaveRequests = useMemo(() => {
@@ -612,24 +553,6 @@ export default function PegawaiPage({
   };
 
   // =========================================================================
-  // HANDLERS: PRESENSI MANDIRI VIA KAMERA DEVICE LANGSUNG
-  // =========================================================================
-  const handleOpenLiveCamera = (jenis = "Masuk") => {
-    setCameraPresensiType(jenis);
-    setIsLiveCameraOpen(true);
-  };
-
-  const handleConfirmLiveAttendance = (attendanceRecord, tipe) => {
-    setMyAttendanceLogs((prev) => [attendanceRecord, ...prev]);
-    setIsPresensiDoneToday(true);
-    showToast?.(
-      "Presensi Berhasil",
-      `Presensi ${tipe} dinas atas nama ${employeeName} dengan Swafoto Kamera Device & GPS Live berhasil direkam!`,
-      "success"
-    );
-  };
-
-  // =========================================================================
   // HANDLERS: RENEW STR / SIP
   // =========================================================================
   const handleSaveLicenseData = (e) => {
@@ -727,16 +650,6 @@ export default function PegawaiPage({
               <span>📤</span>
               <span>Upload Berkas</span>
             </button>
-            {onBackToPortal && (
-              <button
-                className="btn btn-sm btn-outline-secondary d-flex align-items-center gap-1 px-3 py-2 rounded-3 hover-lift"
-                onClick={onBackToPortal}
-                title="Kembali ke Portal Publik"
-              >
-                <span>🏥</span>
-                <span className="d-none d-sm-inline">Portal Publik</span>
-              </button>
-            )}
           </div>
         </div>
 
@@ -1124,17 +1037,29 @@ export default function PegawaiPage({
                     <div className="col-sm-4">
                       <button
                         className="btn btn-outline-primary w-100 p-3 rounded-3 text-start hover-lift"
-                        onClick={() => setActiveTab("presensi")}
+                        onClick={() => setActiveTab("riwayat_sertifikasi")}
                       >
-                        <div className="fs-5 mb-1">⏱️</div>
-                        <div className="fw-bold small">E-Presensi</div>
-                        <small className="text-muted" style={{ fontSize: "0.68rem" }}>Check-in shift dinas</small>
+                        <div className="fs-5 mb-1">🎖️</div>
+                        <div className="fw-bold small">Sertifikasi & SKP</div>
+                        <small className="text-muted" style={{ fontSize: "0.68rem" }}>Kompetensi & KARS</small>
                       </button>
                     </div>
                   </div>
                 </div>
               </div>
             )}
+          </div>
+
+          {/* MYASN RIWAYAT KEPEGAWAIAN LAUNCHER (SESUAI GAMBAR SCREENSHOT USER) */}
+          <div className="col-12 mt-4">
+            <MyAsnRiwayatSection
+              selectedTab={activeTab}
+              onSelectTab={setActiveTab}
+              darkMode={darkMode}
+              cardBg={cardBg}
+              cardBorder={cardBorder}
+              showToast={showToast}
+            />
           </div>
         </div>
       )}
@@ -1734,245 +1659,7 @@ export default function PegawaiPage({
       )}
 
       {/* ========================================================================= */}
-      {/* TAB 4: JADWAL SHIFT BANGSAL SAYA                                          */}
-      {/* ========================================================================= */}
-      {activeTab === "roster" && (
-        <div className="d-flex flex-column gap-4 animate-fade-in">
-          <div
-            className={`p-4 rounded-4 shadow-sm ${
-              darkMode ? "glass-panel-dark" : "glass-panel"
-            }`}
-            style={{ backgroundColor: cardBg, border: `1px solid ${cardBorder}` }}
-          >
-            <div className="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
-              <div>
-                <h5 className="fw-bold mb-1">📅 Roster & Jadwal Shift Jaga 24/7</h5>
-                <p className="small text-muted mb-0">
-                  Jadwal dinas Anda di {employeeUnit} (Shift Pagi: 07:30 - 14:30 | Sore: 14:30 - 21:00 | Malam: 21:00 - 07:30 WIB).
-                </p>
-              </div>
-              <button
-                className="btn btn-outline-primary d-flex align-items-center gap-1 hover-lift"
-                onClick={() => setIsShiftSwapOpen(true)}
-              >
-                <span>🔄</span>
-                <span>Ajukan Tukar Shift</span>
-              </button>
-            </div>
-
-            {/* ROSTER TABLE SAMPLE */}
-            <div className="table-responsive rounded-3 border" style={{ borderColor: cardBorder }}>
-              <table className={`table table-hover mb-0 ${darkMode ? "table-dark" : "table-light"}`}>
-                <thead style={{ backgroundColor: tableHeaderBg }}>
-                  <tr>
-                    <th>Hari & Tanggal</th>
-                    <th>Shift Dinas</th>
-                    <th>Jam Jaga</th>
-                    <th>Bangsal / Ruangan</th>
-                    <th>Rekan Shift</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td><strong>Hari Ini (25 Sep 2026)</strong></td>
-                    <td><span className="badge bg-success">Pagi</span></td>
-                    <td>07:30 - 14:30 WIB</td>
-                    <td>{employeeUnit}</td>
-                    <td>Ns. Siti Rahmawati & Ns. Nurul Hidayah</td>
-                    <td><span className="badge bg-success-subtle text-success">Bertugas</span></td>
-                  </tr>
-                  <tr>
-                    <td>Sabtu, 26 Sep 2026</td>
-                    <td><span className="badge bg-warning text-dark">Sore</span></td>
-                    <td>14:30 - 21:00 WIB</td>
-                    <td>{employeeUnit}</td>
-                    <td>Dedi Kurniawan, S.Kep</td>
-                    <td><span className="badge bg-secondary-subtle text-secondary">Terjadwal</span></td>
-                  </tr>
-                  <tr>
-                    <td>Minggu, 27 Sep 2026</td>
-                    <td><span className="badge bg-primary">Malam</span></td>
-                    <td>21:00 - 07:30 WIB</td>
-                    <td>{employeeUnit}</td>
-                    <td>Rahmat Hidayat (Keamanan)</td>
-                    <td><span className="badge bg-secondary-subtle text-secondary">Terjadwal</span></td>
-                  </tr>
-                  <tr>
-                    <td>Senin, 28 Sep 2026</td>
-                    <td><span className="badge bg-secondary">Off / Libur Shift</span></td>
-                    <td>-</td>
-                    <td>-</td>
-                    <td>-</td>
-                    <td><span className="badge bg-info text-dark">Libur Pasca Malam</span></td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ========================================================================= */}
-      {/* TAB 5: E-PRESENSI SHIFT GEOLOCATION                                       */}
-      {/* ========================================================================= */}
-      {activeTab === "presensi" && (
-        <div className="row g-4 animate-fade-in">
-          {/* PANEL CHECK-IN LIVE VIA KAMERA */}
-          <div className="col-lg-5">
-            <div
-              className={`p-4 rounded-4 shadow-sm text-center ${
-                darkMode ? "glass-panel-dark" : "glass-panel"
-              }`}
-              style={{ backgroundColor: cardBg, border: `1px solid ${cardBorder}` }}
-            >
-              <div className="badge bg-success px-3 py-2 fs-6 rounded-pill mb-3">
-                ⏱️ LIVE WIB REALTIME
-              </div>
-              <h2 className="fw-bold mb-1" style={{ letterSpacing: "-0.03em" }}>
-                {currentTimeStr || "07:30:00 WIB"}
-              </h2>
-              <small className="text-muted d-block mb-3">
-                {new Date().toLocaleDateString("id-ID", {
-                  weekday: "long",
-                  day: "numeric",
-                  month: "long",
-                  year: "numeric",
-                })}
-              </small>
-
-              {/* GPS RADIUS BADGE */}
-              <div className="p-3 rounded-3 bg-success-subtle text-success small border border-success-subtle mb-3 text-start">
-                <div className="fw-bold d-flex align-items-center gap-1">
-                  <span>📍</span>
-                  <span>Verifikasi Lokasi & Geofencing GPS:</span>
-                </div>
-                <div className="mt-1">{gpsStatus}</div>
-                <small className="text-muted d-block mt-1" style={{ fontSize: "0.72rem" }}>
-                  Radius valid RSJ Tampan: Max 50 Meter
-                </small>
-              </div>
-
-              {/* INFO KAMERA LANGSUNG */}
-              <div
-                className="p-2 rounded-3 mb-4 text-center border"
-                style={{
-                  backgroundColor: darkMode ? "#182035" : "#f1f5f9",
-                  borderColor: cardBorder,
-                  fontSize: "0.75rem",
-                }}
-              >
-                <span>📷 Dilengkapi <strong>Swafoto Wajah Langsung (Webcam/Device Camera)</strong> + Watermark Resmi Geolocation</span>
-              </div>
-
-              <div className="d-flex gap-2">
-                <button
-                  type="button"
-                  className="btn btn-success w-100 py-3 fw-bold rounded-3 shadow-sm hover-lift d-flex flex-column align-items-center justify-content-center gap-1"
-                  onClick={() => handleOpenLiveCamera("Masuk")}
-                >
-                  <span className="fs-3">📷</span>
-                  <span className="fs-6">Presensi Masuk Shift</span>
-                  <small style={{ fontSize: "0.68rem", opacity: 0.9 }}>Buka Kamera Device</small>
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-outline-danger w-100 py-3 fw-bold rounded-3 shadow-sm hover-lift d-flex flex-column align-items-center justify-content-center gap-1"
-                  onClick={() => handleOpenLiveCamera("Pulang")}
-                >
-                  <span className="fs-3">🚪</span>
-                  <span className="fs-6">Presensi Pulang Shift</span>
-                  <small style={{ fontSize: "0.68rem", opacity: 0.9 }}>Buka Kamera Device</small>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* LOG KEHADIRAN PRIBADI DENGAN THUMBNAIL FOTO */}
-          <div className="col-lg-7">
-            <div
-              className={`p-4 rounded-4 shadow-sm h-100 ${
-                darkMode ? "glass-panel-dark" : "glass-panel"
-              }`}
-              style={{ backgroundColor: cardBg, border: `1px solid ${cardBorder}` }}
-            >
-              <div className="d-flex align-items-center justify-content-between mb-3">
-                <h6 className="fw-bold mb-0 d-flex align-items-center gap-2">
-                  <span>⏱️</span>
-                  <span>Log Presensi Shift Terkini Saya ({myAttendanceLogs.length})</span>
-                </h6>
-                <span className="badge badge-soft-success">Real-time Cloud Log</span>
-              </div>
-
-              <div className="d-flex flex-column gap-2">
-                {myAttendanceLogs.map((log) => (
-                  <div
-                    key={log.id}
-                    className="p-3 rounded-3 border d-flex align-items-center justify-content-between hover-lift gap-3"
-                    style={{
-                      backgroundColor: darkMode ? "#151b2d" : "#f8fafc",
-                      borderColor: cardBorder,
-                    }}
-                  >
-                    <div className="d-flex align-items-center gap-3 overflow-hidden">
-                      {/* FOTO PRESENSI THUMBNAIL */}
-                      {log.fotoPresensi ? (
-                        <div
-                          className="position-relative cursor-pointer flex-shrink-0"
-                          onClick={() => setSelectedPhotoPreview(log)}
-                          title="Klik untuk memperbesar foto presensi"
-                        >
-                          <img
-                            src={log.fotoPresensi}
-                            alt="Foto Presensi"
-                            className="rounded-3 border border-2 border-success shadow-sm"
-                            style={{ width: "52px", height: "52px", objectFit: "cover" }}
-                          />
-                          <span
-                            className="position-absolute bottom-0 end-0 bg-dark text-white rounded-circle p-0 d-flex align-items-center justify-content-center"
-                            style={{ width: "16px", height: "16px", fontSize: "0.55rem" }}
-                          >
-                            🔍
-                          </span>
-                        </div>
-                      ) : (
-                        <div
-                          className="rounded-3 bg-secondary d-flex align-items-center justify-content-center text-white flex-shrink-0"
-                          style={{ width: "52px", height: "52px", fontSize: "1.2rem" }}
-                        >
-                          📷
-                        </div>
-                      )}
-
-                      <div className="overflow-hidden">
-                        <strong className="d-block text-truncate" style={{ fontSize: "0.88rem" }}>
-                          {log.shift}
-                        </strong>
-                        <small className="text-muted d-block" style={{ fontSize: "0.72rem" }}>
-                          📅 {log.tanggal} &bull; 📍 {log.lokasi || log.lokasiGps || "RSJ Tampan"}
-                        </small>
-                        <small className="text-success fw-semibold" style={{ fontSize: "0.7rem" }}>
-                          Metode: {log.metode || "Kamera Langsung & GPS"}
-                        </small>
-                      </div>
-                    </div>
-
-                    <div className="text-end flex-shrink-0">
-                      <span className="badge bg-success mb-1 d-block">{log.status || log.statusKehadiran}</span>
-                      <small className="text-muted d-block" style={{ fontSize: "0.72rem" }}>
-                        In: {log.jamMasuk} | Out: {log.jamPulang}
-                      </small>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ========================================================================= */}
-      {/* TAB 6: LEGALITAS STR & SIP SAYA                                           */}
+      {/* TAB 4: LEGALITAS STR & SIP SAYA                                           */}
       {/* ========================================================================= */}
       {activeTab === "legalitas" && (
         <div className="row g-4 animate-fade-in">
@@ -2161,6 +1848,22 @@ export default function PegawaiPage({
       )}
 
       {/* ========================================================================= */}
+      {/* TAB 6: RIWAYAT KEPEGAWAIAN (MyASN / SIASN BKN)                            */}
+      {/* ========================================================================= */}
+      {activeTab?.startsWith("riwayat_") && (
+        <div className="animate-fade-in">
+          <MyAsnRiwayatSection
+            selectedTab={activeTab}
+            onSelectTab={setActiveTab}
+            darkMode={darkMode}
+            cardBg={cardBg}
+            cardBorder={cardBorder}
+            showToast={showToast}
+          />
+        </div>
+      )}
+
+      {/* ========================================================================= */}
       {/* MODALS UNTUK FITUR PEGAWAI                                                */}
       {/* ========================================================================= */}
       <SdmLeaveLetterModal
@@ -2184,16 +1887,6 @@ export default function PegawaiPage({
         darkMode={darkMode}
       />
 
-      <SdmShiftSwapModal
-        isOpen={isShiftSwapOpen}
-        onClose={() => setIsShiftSwapOpen(false)}
-        employees={employees}
-        onSubmitSwap={(swap) => {
-          showToast?.("Pengajuan Terkirim", "Permohonan tukar shift telah diajukan ke Kepala Ruangan.", "success");
-        }}
-        darkMode={darkMode}
-      />
-
       <SdmCertificateModal
         isOpen={isCertModalOpen}
         onClose={() => setIsCertModalOpen(false)}
@@ -2201,78 +1894,6 @@ export default function PegawaiPage({
         employeeName={employeeName}
         darkMode={darkMode}
       />
-
-      {/* MODAL KAMERA LANGSUNG DEVICE DENGAN GPS WATERMARK */}
-      <SdmLiveCameraPresensiModal
-        isOpen={isLiveCameraOpen}
-        onClose={() => setIsLiveCameraOpen(false)}
-        employeeName={employeeName}
-        employeeUnit={employeeUnit}
-        employeeProfesi={employeeProfesi}
-        employeeId={employeeId}
-        shift="Pagi (07:30 - 14:30 WIB)"
-        tipe={cameraPresensiType}
-        onConfirmAttendance={handleConfirmLiveAttendance}
-        darkMode={darkMode}
-      />
-
-      {/* MODAL PREVIEW FOTO PRESENSI LENGKAP */}
-      {selectedPhotoPreview && (
-        <div
-          className="modal-backdrop-custom d-flex align-items-center justify-content-center animate-fade-in"
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: "rgba(0, 0, 0, 0.85)",
-            backdropFilter: "blur(8px)",
-            zIndex: 1100,
-            padding: "1rem",
-          }}
-          onClick={() => setSelectedPhotoPreview(null)}
-        >
-          <div
-            className="rounded-4 overflow-hidden shadow-2xl animate-scale-up"
-            style={{
-              maxWidth: "600px",
-              width: "100%",
-              backgroundColor: darkMode ? "#0c101a" : "#ffffff",
-              border: `1px solid ${cardBorder}`,
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="d-flex align-items-center justify-content-between p-3 border-bottom" style={{ borderColor: cardBorder }}>
-              <div className="d-flex align-items-center gap-2">
-                <span>📸</span>
-                <strong>Bukti Swafoto Presensi &bull; {selectedPhotoPreview.shift}</strong>
-              </div>
-              <button
-                type="button"
-                className="btn-close"
-                style={{ filter: darkMode ? "invert(1)" : "none" }}
-                onClick={() => setSelectedPhotoPreview(null)}
-              />
-            </div>
-            <div className="p-3 text-center bg-black">
-              <img
-                src={selectedPhotoPreview.fotoPresensi}
-                alt="Bukti Swafoto Presensi"
-                className="img-fluid rounded-3 shadow"
-                style={{ maxHeight: "70vh", objectFit: "contain" }}
-              />
-            </div>
-            <div className="p-3 small border-top d-flex justify-content-between align-items-center" style={{ borderColor: cardBorder }}>
-              <div>
-                <span className="text-muted">Tanggal & Jam: </span>
-                <strong>{selectedPhotoPreview.tanggal} &bull; {selectedPhotoPreview.jamMasuk}</strong>
-              </div>
-              <span className="badge bg-success">{selectedPhotoPreview.status || selectedPhotoPreview.statusKehadiran}</span>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* MODAL PREVIEW DOKUMEN DIGITAL (IJAZAH, SK, STR, SERTIFIKAT, DLL) */}
       <SdmDocumentPreviewModal

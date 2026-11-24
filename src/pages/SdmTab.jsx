@@ -3,19 +3,15 @@ import SdmEmployeeModal from "../components/SdmEmployeeModal";
 import SdmLeaveModal from "../components/SdmLeaveModal";
 import SdmAbkWisnModal from "../components/SdmAbkWisnModal";
 import SdmSpkModal from "../components/SdmSpkModal";
-import SdmPresensiModal from "../components/SdmPresensiModal";
 import SdmDossierModal from "../components/SdmDossierModal";
 import SdmIdCardModal from "../components/SdmIdCardModal";
-import SdmShiftSwapModal from "../components/SdmShiftSwapModal";
 import SdmLeaveLetterModal from "../components/SdmLeaveLetterModal";
 import SdmCertificateModal from "../components/SdmCertificateModal";
 
 import {
   initialWisnData,
   initialCredentials,
-  initialAttendanceLogs,
   initialDossiers,
-  initialAttendanceRecap,
 } from "../data/sdmData";
 
 import { isAdminOrHrd, canApproveLeave, getActiveUser } from "../utils/authHelpers";
@@ -25,7 +21,6 @@ export default function SdmTab({
   activeTab = "direktori",
   setActiveTab,
   employees = [],
-  shiftRoster = [],
   leaveRequests = [],
   trainings = [],
   dossiersList: propDossiersList,
@@ -56,8 +51,6 @@ export default function SdmTab({
   // DATA STATES FOR CAT 2 & 4
   const [wisnList] = useState(initialWisnData);
   const [credentialsList] = useState(initialCredentials);
-  const [attendanceLogs, setAttendanceLogs] = useState(initialAttendanceLogs);
-  const [attendanceRecap] = useState(initialAttendanceRecap);
   const [internalDossiersList, setInternalDossiersList] = useState(() => {
     try {
       const saved = localStorage.getItem("rsj_dossiers");
@@ -83,43 +76,12 @@ export default function SdmTab({
   const [isSpkModalOpen, setIsSpkModalOpen] = useState(false);
   const [selectedCredential, setSelectedCredential] = useState(null);
 
-  const [isPresensiModalOpen, setIsPresensiModalOpen] = useState(false);
-
   const [isDossierModalOpen, setIsDossierModalOpen] = useState(false);
   const [selectedDossier, setSelectedDossier] = useState(null);
 
   // ID CARD MODAL STATE
   const [isIdCardModalOpen, setIsIdCardModalOpen] = useState(false);
   const [selectedIdCardEmployee, setSelectedIdCardEmployee] = useState(null);
-
-  // SHIFT SWAP MODAL & LIST STATE
-  const [isShiftSwapModalOpen, setIsShiftSwapModalOpen] = useState(false);
-  const [swapRequestsList, setSwapRequestsList] = useState([
-    {
-      id: "SWAP-001",
-      applicantName: "Ns. Budi Setiawan, S.Kep",
-      partnerName: "Ns. Nurul Hidayah, S.Kep",
-      ward: "IGD Jiwa & Krisis 24 Jam",
-      date: "2026-09-18",
-      applicantShift: "Pagi (07:30 - 14:00)",
-      partnerShift: "Malam (20:30 - 07:30)",
-      reason: "Mengikuti Pelatihan Refreshment De-eskalasi Agresi",
-      status: "Disetujui Karu",
-      tanggalPengajuan: "2026-09-14",
-    },
-    {
-      id: "SWAP-002",
-      applicantName: "Dedi Kurniawan, S.Kep",
-      partnerName: "Ns. Siti Rahmawati, Sp.Kep.J",
-      ward: "Bangsal Kampar (Akut Pria)",
-      date: "2026-09-20",
-      applicantShift: "Sore (14:00 - 20:30)",
-      partnerShift: "Pagi (07:30 - 14:00)",
-      reason: "Pendampingan Pasien Rujukan ECT Jiwa",
-      status: "Menunggu Persetujuan Karu",
-      tanggalPengajuan: "2026-09-14",
-    },
-  ]);
 
   // LEAVE LETTER MODAL STATE
   const [isLeaveLetterModalOpen, setIsLeaveLetterModalOpen] = useState(false);
@@ -160,9 +122,6 @@ export default function SdmTab({
   const [filterCategory, setFilterCategory] = useState("semua");
   const [filterUnit, setFilterUnit] = useState("semua");
   const [filterStatus, setFilterStatus] = useState("semua");
-
-  // ROSTER FILTER
-  const [rosterWardFilter, setRosterWardFilter] = useState("semua");
 
   // FILTERED EMPLOYEES
   const filteredEmployees = useMemo(() => {
@@ -300,24 +259,10 @@ export default function SdmTab({
     showToast?.("Arsip Diperbarui", `Dokumen digital untuk ${updatedDossier.nama} berhasil disimpan.`, "success");
   };
 
-  const handleAddAttendance = (newLog) => {
-    setAttendanceLogs((prev) => [newLog, ...prev]);
-    showToast?.("Presensi Tercatat", `Presensi ${newLog.shift} atas nama ${newLog.nama} berhasil direkam.`, "success");
-  };
-
   // HANDLERS MODAL BARU
   const handleOpenIdCard = (emp) => {
     setSelectedIdCardEmployee(emp);
     setIsIdCardModalOpen(true);
-  };
-
-  const handleOpenShiftSwap = () => {
-    setIsShiftSwapModalOpen(true);
-  };
-
-  const handleSubmitSwap = (newSwap) => {
-    setSwapRequestsList((prev) => [newSwap, ...prev]);
-    showToast?.("Tukar Shift Diajukan", `Permohonan pertukaran dinas telah dikirim ke Kepala Ruangan.`, "success");
   };
 
   const handleOpenLeaveLetter = (leave) => {
@@ -477,16 +422,16 @@ export default function SdmTab({
 
         <div className="col-12 col-sm-6 col-xl-3">
           <div
-            onClick={() => handleTabChange("presensi")}
+            onClick={() => handleTabChange("cuti")}
             className={`p-3 rounded-4 h-100 d-flex align-items-center gap-3 shadow-sm stat-card-modern hover-lift ${
               darkMode ? "glass-panel-dark" : "glass-panel"
             }`}
             style={{
               backgroundColor: cardBg,
-              border: `1px solid ${subTab === "presensi" ? "#f59e0b" : cardBorder}`,
+              border: `1px solid ${subTab === "cuti" ? "#f59e0b" : cardBorder}`,
               cursor: "pointer",
             }}
-            title="Klik untuk membuka E-Presensi Shift"
+            title="Klik untuk membuka Pengajuan & Approval Cuti"
           >
             <div
               className="icon-gradient-box"
@@ -496,22 +441,22 @@ export default function SdmTab({
                 boxShadow: "0 4px 12px rgba(245, 158, 11, 0.15)",
               }}
             >
-              ⏱️
+              🏖️
             </div>
             <div className="flex-grow-1 overflow-hidden">
               <div className="d-flex align-items-center justify-content-between">
                 <span className="small fw-semibold d-block text-truncate" style={{ color: textMuted }}>
-                  Presensi Shift Hari Ini
+                  Pengajuan Cuti Pegawai
                 </span>
                 <span className="badge rounded-pill badge-soft-warning" style={{ fontSize: "0.62rem" }}>
-                  Live GPS
+                  HRD Approval
                 </span>
               </div>
               <h4 className="fw-bold mb-0 text-truncate" style={{ letterSpacing: "-0.02em" }}>
-                {attendanceLogs.length} <span className="fs-6 fw-normal text-muted">Clock-In</span>
+                {stats.pendingLeaves} <span className="fs-6 fw-normal text-muted">Menunggu</span>
               </h4>
               <small className="text-warning fw-semibold d-block text-truncate" style={{ fontSize: "0.72rem" }}>
-                Presensi Digital Geolocation
+                Perlu Verifikasi Kasubbag
               </small>
             </div>
           </div>
@@ -531,10 +476,8 @@ export default function SdmTab({
         <div className="d-flex flex-wrap align-items-center gap-2">
           {[
             { id: "direktori", label: "Direktori Pegawai", icon: "👥" },
-            { id: "roster", label: "Roster Shift 24/7", icon: "📅" },
             { id: "abk_wisn", label: "Analisis Beban Kerja (WISN)", icon: "🧮", badge: "Kemenkes" },
             { id: "kredensialing", label: "Jenjang Karir & SPK/RKK", icon: "🎖️", badge: "KARS" },
-            { id: "presensi", label: "E-Presensi Shift", icon: "⏱️", badge: "Live" },
             { id: "dossier", label: "E-Berkas Digital Dossier", icon: "📁" },
             { id: "legalitas", label: "Legalitas STR & SIP", icon: "📜", alert: expiringLicenses.length },
             { id: "cuti", label: "Pengajuan Cuti", icon: "🏖️", alert: stats.pendingLeaves },
@@ -604,15 +547,6 @@ export default function SdmTab({
               )}
             </>
           )}
-          {subTab === "roster" && (
-            <button
-              type="button"
-              onClick={handleOpenShiftSwap}
-              className="btn btn-primary btn-sm d-flex align-items-center gap-1 rounded-3 px-3 fw-semibold shadow-sm"
-            >
-              <span>🔄</span> Permohonan Tukar Shift
-            </button>
-          )}
           {subTab === "abk_wisn" && (
             <button
               type="button"
@@ -623,15 +557,6 @@ export default function SdmTab({
               className="btn btn-danger btn-sm d-flex align-items-center gap-1 rounded-3 px-3 fw-semibold shadow-sm"
             >
               <span>🧮</span> Kalkulator Simulasi WISN
-            </button>
-          )}
-          {subTab === "presensi" && (
-            <button
-              type="button"
-              onClick={() => setIsPresensiModalOpen(true)}
-              className="btn btn-success btn-sm d-flex align-items-center gap-1 rounded-3 px-3 fw-semibold shadow-sm"
-            >
-              <span>📸</span> Clock-In / Clock-Out Shift
             </button>
           )}
           {subTab === "cuti" && (
@@ -831,153 +756,6 @@ export default function SdmTab({
                 ))}
               </tbody>
             </table>
-          </div>
-        </div>
-      )}
-
-      {/* =================================================================== */}
-      {/* TAB: E-PRESENSI SHIFT DIGITAL 24/7                                  */}
-      {/* =================================================================== */}
-      {subTab === "presensi" && (
-        <div
-          className="rounded-4 p-4 shadow-sm"
-          style={{ backgroundColor: cardBg, border: `1px solid ${cardBorder}` }}
-        >
-          <div className="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
-            <div>
-              <h5 className="fw-bold mb-1">⏱️ E-Presensi Shift & Clock-In/Out Geolocation RSJ</h5>
-              <p className="small mb-0" style={{ color: textMuted }}>
-                Pencatatan kehadiran dinas shift 24 jam dengan verifikasi GPS Geofencing radius RSJ Tampan & Swafoto
-              </p>
-            </div>
-            <button
-              type="button"
-              className="btn btn-success btn-sm d-flex align-items-center gap-2 px-3 py-2 fw-semibold shadow-sm"
-              onClick={() => setIsPresensiModalOpen(true)}
-            >
-              <span>📸</span> Clock-In / Clock-Out Shift
-            </button>
-          </div>
-
-          <div className="table-responsive rounded-3 border" style={{ borderColor: cardBorder }}>
-            <table className={`table ${darkMode ? "table-dark" : "table-light"} table-hover align-middle mb-0`} style={{ fontSize: "0.86rem" }}>
-              <thead style={{ backgroundColor: tableHeaderBg, color: darkMode ? "#cbd5e1" : "#475569" }}>
-                <tr>
-                  <th className="py-3 px-3">Pegawai / Foto</th>
-                  <th className="py-3">Shift & Bangsal Tugas</th>
-                  <th className="py-3">Waktu Masuk & Pulang</th>
-                  <th className="py-3">Status Kehadiran</th>
-                  <th className="py-3">Verifikasi GPS Geofence</th>
-                  <th className="py-3 text-center">Metode</th>
-                </tr>
-              </thead>
-              <tbody>
-                {attendanceLogs.map((att) => (
-                  <tr key={att.id} style={{ borderBottomColor: cardBorder }}>
-                    <td className="px-3 py-3">
-                      <div className="d-flex align-items-center gap-2">
-                        <img
-                          src={att.fotoPresensi}
-                          alt={att.nama}
-                          className="rounded-circle"
-                          style={{ width: "36px", height: "36px", objectFit: "cover" }}
-                        />
-                        <div>
-                          <div className="fw-bold" style={{ color: darkMode ? "#f8fafc" : "#0f172a" }}>{att.nama}</div>
-                          <small style={{ color: darkMode ? "#94a3b8" : "#64748b" }}>{att.profesi}</small>
-                        </div>
-                      </div>
-                    </td>
-                    <td>
-                      <div className="fw-semibold">{att.shift}</div>
-                      <small className="text-muted">{att.unit}</small>
-                    </td>
-                    <td>
-                      <div>
-                        <strong>In:</strong> {att.jamMasuk} &bull; <strong>Out:</strong> {att.jamPulang}
-                      </div>
-                      <small className="text-muted">Tgl: {att.tanggal}</small>
-                    </td>
-                    <td>
-                      <span
-                        className={`badge rounded-pill px-2 py-1 ${
-                          att.statusKehadiran.includes("Terlambat")
-                            ? "bg-warning text-dark"
-                            : "bg-success"
-                        }`}
-                      >
-                        {att.statusKehadiran}
-                      </span>
-                    </td>
-                    <td>
-                      <small className="font-monospace text-success d-block">{att.lokasiGps}</small>
-                    </td>
-                    <td className="text-center">
-                      <span className="badge bg-secondary-subtle text-secondary" style={{ fontSize: "0.7rem" }}>
-                        {att.metode}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {/* REKAPITULASI DISIPLIN & LEMBUR BULANAN */}
-          <div className="mt-4 pt-3 border-top" style={{ borderColor: cardBorder }}>
-            <div className="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
-              <div>
-                <h6 className="fw-bold mb-1">📊 Rekapitulasi Disiplin Presensi & Akumulasi Lembur Shift Bulanan</h6>
-                <small className="text-muted">Dasar perhitungan pembayaran TPP (Tambahan Penghasilan Pegawai) dan Insentif Shift Jiwa</small>
-              </div>
-              <span className="badge bg-success-subtle text-success">Periode: September 2026</span>
-            </div>
-
-            <div className="table-responsive rounded-3 border" style={{ borderColor: cardBorder }}>
-              <table className={`table ${darkMode ? "table-dark" : "table-light"} table-sm align-middle mb-0`} style={{ fontSize: "0.82rem" }}>
-                <thead style={{ backgroundColor: tableHeaderBg, color: darkMode ? "#cbd5e1" : "#475569" }}>
-                  <tr>
-                    <th className="py-2 px-3">Nama Petugas / Unit</th>
-                    <th className="py-2 text-center">Shift Wajib</th>
-                    <th className="py-2 text-center">Tepat Waktu</th>
-                    <th className="py-2 text-center">Terlambat</th>
-                    <th className="py-2 text-center">Jam Lembur</th>
-                    <th className="py-2 text-center">Tingkat Disiplin</th>
-                    <th className="py-2 text-center">Grade Kinerja</th>
-                    <th className="py-2 text-end px-3">Status TPP / Insentif</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {attendanceRecap.map((rcp) => (
-                    <tr key={rcp.id} style={{ borderBottomColor: cardBorder }}>
-                      <td className="px-3 py-2">
-                        <div className="fw-semibold">{rcp.nama}</div>
-                        <small className="text-muted">{rcp.unit}</small>
-                      </td>
-                      <td className="text-center">{rcp.totalShiftWajib} Shift</td>
-                      <td className="text-center text-success fw-bold">{rcp.hadirTepatWaktu}</td>
-                      <td className="text-center">
-                        {rcp.terlambatKali > 0 ? (
-                          <span className="text-danger fw-semibold">{rcp.terlambatKali}x ({rcp.totalMenitTerlambat}m)</span>
-                        ) : (
-                          <span className="text-success">0</span>
-                        )}
-                      </td>
-                      <td className="text-center fw-semibold text-primary">+{rcp.jamLembur} Jam</td>
-                      <td className="text-center">
-                        <span className="badge bg-primary-subtle text-primary">{rcp.persentaseDisiplin}%</span>
-                      </td>
-                      <td className="text-center">
-                        <span className="badge bg-success-subtle text-success">{rcp.gradeKinerja}</span>
-                      </td>
-                      <td className="text-end px-3">
-                        <span className="badge bg-success">{rcp.statusTPP}</span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
           </div>
         </div>
       )}
@@ -1344,181 +1122,6 @@ export default function SdmTab({
                 )}
               </tbody>
             </table>
-          </div>
-        </div>
-      )}
-
-      {/* TAB: ROSTER SHIFT 24/7 */}
-      {subTab === "roster" && (
-        <div
-          className="rounded-4 p-4 shadow-sm"
-          style={{ backgroundColor: cardBg, border: `1px solid ${cardBorder}` }}
-        >
-          <div className="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
-            <div>
-              <h5 className="fw-bold mb-1">📅 Jadwal Shift & Duty Roster Bangsal Jiwa 24 Jam</h5>
-              <p className="small mb-0" style={{ color: textMuted }}>
-                Distribusi perawat pelaksana, ketua tim (Katim), dokter spesialis on-call, dan petugas respon krisis bangsal
-              </p>
-            </div>
-            <div className="d-flex align-items-center gap-2 flex-wrap">
-              <button
-                type="button"
-                onClick={handleOpenShiftSwap}
-                className="btn btn-primary btn-sm d-flex align-items-center gap-1 fw-semibold shadow-sm px-3"
-              >
-                <span>🔄</span> Permohonan Tukar Shift
-              </button>
-              <button
-                type="button"
-                onClick={() => window.print()}
-                className="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1 px-3"
-                title="Cetak Jadwal Shift Format Resmi Rumah Sakit"
-              >
-                <span>🖨️</span> Cetak Roster
-              </button>
-              <select
-                className="form-select form-select-sm"
-                value={rosterWardFilter}
-                onChange={(e) => setRosterWardFilter(e.target.value)}
-                style={{
-                  backgroundColor: darkMode ? "#181f33" : "#f8fafc",
-                  color: darkMode ? "#ffffff" : "#0f172a",
-                  borderColor: darkMode ? "#283452" : "#cbd5e1",
-                  width: "200px",
-                }}
-              >
-                <option value="semua">Semua Bangsal & IGD</option>
-                <option value="Kampar">Bangsal Kampar (Akut Pria)</option>
-                <option value="Siak">Bangsal Siak (Wanita)</option>
-                <option value="IGD Jiwa">IGD Jiwa & Krisis</option>
-                <option value="Rokan">Bangsal Rokan (NAPZA)</option>
-              </select>
-            </div>
-          </div>
-
-          {/* ACTIVE SHIFT SWAP NOTICES */}
-          {swapRequestsList.length > 0 && (
-            <div
-              className="p-3 rounded-3 mb-4 border"
-              style={{
-                backgroundColor: darkMode ? "#141b2e" : "#f0fdf4",
-                borderColor: darkMode ? "#223254" : "#bbf7d0",
-              }}
-            >
-              <div className="d-flex justify-content-between align-items-center mb-2">
-                <span className="small fw-bold text-success d-flex align-items-center gap-1">
-                  <span>🔄</span> Permohonan Tukar Dinas Bangsal (Terbaru):
-                </span>
-                <span className="badge bg-success-subtle text-success">{swapRequestsList.length} Permohonan</span>
-              </div>
-              <div className="row g-2">
-                {swapRequestsList.map((sw) => (
-                  <div key={sw.id} className="col-12 col-md-6">
-                    <div
-                      className="p-2 rounded-2 border bg-body"
-                      style={{ fontSize: "0.78rem" }}
-                    >
-                      <div className="d-flex justify-content-between align-items-center mb-1">
-                        <strong>{sw.applicantName} ↔ {sw.partnerName}</strong>
-                        <span className={`badge ${sw.status.includes("Disetujui") ? "bg-success" : "bg-warning text-dark"}`} style={{ fontSize: "0.65rem" }}>
-                          {sw.status}
-                        </span>
-                      </div>
-                      <div className="text-muted">
-                        📅 Tgl: {sw.date} &bull; {sw.ward} &bull; {sw.applicantShift} ditukar ke {sw.partnerShift}
-                      </div>
-                      <small className="text-muted fst-italic">"{sw.reason}"</small>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* ROSTER CARDS */}
-          <div className="row g-4">
-            {shiftRoster
-              .filter((r) => rosterWardFilter === "semua" || r.bangsal.includes(rosterWardFilter))
-              .map((roster) => (
-                <div key={roster.id} className="col-12 col-lg-6">
-                  <div
-                    className="p-3 rounded-3 h-100 border transition-all"
-                    style={{
-                      backgroundColor: darkMode ? "#141a29" : "#f8fafc",
-                      borderColor: darkMode ? "#1f273d" : "#e2e8f0",
-                    }}
-                  >
-                    <div className="d-flex align-items-center justify-content-between border-bottom pb-2 mb-3">
-                      <div>
-                        <span className="badge bg-success mb-1">{roster.bangsal}</span>
-                        <div className="small fw-semibold text-muted">
-                          {roster.hari}, {roster.tanggal}
-                        </div>
-                      </div>
-                      <span className="badge bg-primary rounded-pill px-3 py-1">{roster.status}</span>
-                    </div>
-
-                    <div className="d-flex flex-column gap-2 mb-3" style={{ fontSize: "0.85rem" }}>
-                      {/* SHIFT PAGI */}
-                      <div
-                        className="p-2 rounded-2"
-                        style={{ backgroundColor: darkMode ? "#1a2238" : "#ecfdf5", borderLeft: "4px solid #10b981" }}
-                      >
-                        <div className="d-flex justify-content-between align-items-center fw-bold text-success mb-1">
-                          <span>🌅 Shift Pagi (07.30 - 14.30 WIB)</span>
-                          <span className="badge bg-success-subtle text-success">{roster.shiftPagi.length} Petugas</span>
-                        </div>
-                        <ul className="mb-0 ps-3">
-                          {roster.shiftPagi.map((p, idx) => (
-                            <li key={idx}>{p}</li>
-                          ))}
-                        </ul>
-                      </div>
-
-                      {/* SHIFT SORE */}
-                      <div
-                        className="p-2 rounded-2"
-                        style={{ backgroundColor: darkMode ? "#1a2238" : "#eff6ff", borderLeft: "4px solid #3b82f6" }}
-                      >
-                        <div className="d-flex justify-content-between align-items-center fw-bold text-primary mb-1">
-                          <span>☀️ Shift Sore (14.30 - 21.00 WIB)</span>
-                          <span className="badge bg-primary-subtle text-primary">{roster.shiftSore.length} Petugas</span>
-                        </div>
-                        <ul className="mb-0 ps-3">
-                          {roster.shiftSore.map((p, idx) => (
-                            <li key={idx}>{p}</li>
-                          ))}
-                        </ul>
-                      </div>
-
-                      {/* SHIFT MALAM */}
-                      <div
-                        className="p-2 rounded-2"
-                        style={{ backgroundColor: darkMode ? "#1a2238" : "#faf5ff", borderLeft: "4px solid #8b5cf6" }}
-                      >
-                        <div className="d-flex justify-content-between align-items-center fw-bold text-purple mb-1">
-                          <span>🌙 Shift Malam (21.00 - 07.30 WIB)</span>
-                          <span className="badge bg-purple-subtle text-purple">{roster.shiftMalam.length} Petugas</span>
-                        </div>
-                        <ul className="mb-0 ps-3">
-                          {roster.shiftMalam.map((p, idx) => (
-                            <li key={idx}>{p}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    </div>
-
-                    <div
-                      className="p-2 rounded-2 d-flex align-items-center justify-content-between"
-                      style={{ backgroundColor: darkMode ? "#1d253b" : "#f1f5f9", fontSize: "0.82rem" }}
-                    >
-                      <span className="fw-semibold text-muted">🩺 Dokter Spesialis Jaga (On-Call):</span>
-                      <strong className="text-success">{roster.dokterJagaOnCall}</strong>
-                    </div>
-                  </div>
-                </div>
-              ))}
           </div>
         </div>
       )}
@@ -2238,14 +1841,6 @@ export default function SdmTab({
         darkMode={darkMode}
       />
 
-      <SdmPresensiModal
-        isOpen={isPresensiModalOpen}
-        onClose={() => setIsPresensiModalOpen(false)}
-        employees={employees}
-        onSubmitAttendance={handleAddAttendance}
-        darkMode={darkMode}
-      />
-
       <SdmDossierModal
         isOpen={isDossierModalOpen}
         onClose={() => setIsDossierModalOpen(false)}
@@ -2259,14 +1854,6 @@ export default function SdmTab({
         isOpen={isIdCardModalOpen}
         onClose={() => setIsIdCardModalOpen(false)}
         employee={selectedIdCardEmployee}
-        darkMode={darkMode}
-      />
-
-      <SdmShiftSwapModal
-        isOpen={isShiftSwapModalOpen}
-        onClose={() => setIsShiftSwapModalOpen(false)}
-        employees={employees}
-        onSubmitSwap={handleSubmitSwap}
         darkMode={darkMode}
       />
 

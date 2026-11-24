@@ -59,54 +59,87 @@ export default function RegisterPage({
   const labelColor = darkMode ? "#cbd5e1" : "#475569";
 
   return (
-    <div className="container py-5 animate-fade-in">
-      <div className="row justify-content-center">
-        <div className="col-md-7 col-lg-6">
+    <div style={{ maxWidth: "660px", width: "100%" }} className="animate-fade-in my-3">
+      <div
+        className="p-4 p-md-5 rounded-4 shadow-sm"
+        style={{
+          backgroundColor: darkMode ? "#0f1524" : "#ffffff",
+          border: darkMode ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid rgba(226, 232, 240, 0.9)",
+          boxShadow: darkMode
+            ? "0 20px 40px rgba(0, 0, 0, 0.4)"
+            : "0 10px 30px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.02)",
+        }}
+      >
+        <div className="text-center mb-4">
           <div
-            className={`p-4 shadow-sm rounded-4 ${cardBg}`}
+            className="d-inline-flex p-2 rounded-3 mb-2 align-items-center justify-content-center"
             style={{
-              border: darkMode ? "1px solid #1c2236" : "1px solid #e2e8f0",
+              width: "56px",
+              height: "56px",
+              backgroundColor: darkMode ? "rgba(255, 255, 255, 0.06)" : "rgba(16, 185, 129, 0.08)",
+              border: darkMode ? "1px solid rgba(255, 255, 255, 0.1)" : "1px solid rgba(16, 185, 129, 0.2)",
             }}
           >
-            <div className="text-center mb-4">
-              <div
-                className="d-inline-flex p-2 rounded-4 mb-2 align-items-center justify-content-center"
-                style={{
-                  width: "68px",
-                  height: "68px",
-                  backgroundColor: darkMode ? "rgba(255, 255, 255, 0.08)" : "rgba(16, 185, 129, 0.12)",
-                  boxShadow: "0 6px 20px rgba(16, 185, 129, 0.2)",
-                  border: darkMode ? "1px solid rgba(255,255,255,0.12)" : "1px solid rgba(16,185,129,0.2)",
-                }}
-              >
-                <img
-                  src="/logo-rsj.png"
-                  alt="Logo RSJ Tampan"
-                  style={{ width: "100%", height: "100%", objectFit: "contain" }}
-                  onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.src = "https://rsjiwatampan.riau.go.id/landing/images/Logo.png";
-                  }}
-                />
-              </div>
-              <h4 className="fw-bold mb-1">Registrasi Petugas SIM-SDM</h4>
-              <small className="opacity-75">
-                Pendaftaran Akun Terintegrasi Supabase Auth & Profil Tenaga Medis
-              </small>
-            </div>
+            <img
+              src="/logo-rsj.png"
+              alt="Logo RSJ Tampan"
+              style={{ width: "100%", height: "100%", objectFit: "contain" }}
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = "https://rsjiwatampan.riau.go.id/landing/images/Logo.png";
+              }}
+            />
+          </div>
+          <h4 className="fw-bold mb-1" style={{ letterSpacing: "-0.02em" }}>
+            Registrasi Petugas SIM-SDM
+          </h4>
+          <div className="small fw-semibold text-success mb-1">
+            RSJ Tampan Provinsi Riau
+          </div>
+          <small className="opacity-75 d-block" style={{ fontSize: "0.8rem" }}>
+            Pendaftaran Akun Terintegrasi Database Profil Tenaga Kesehatan & SDM
+          </small>
+        </div>
 
-            {authError && (
-              <div className="alert alert-danger py-2 small mb-3 rounded-3 d-flex align-items-center gap-2">
-                <span>⚠️</span>
-                <div>{authError}</div>
-              </div>
-            )}
-            {authSuccess && (
-              <div className="alert alert-success py-2 small mb-3 rounded-3 d-flex align-items-center gap-2">
-                <span>✅</span>
-                <div>{authSuccess}</div>
-              </div>
-            )}
+        {authError && (
+          <div className="alert alert-danger py-2 px-3 small mb-3 rounded-3 d-flex align-items-center gap-2 border-danger-subtle">
+            <svg
+              width="17"
+              height="17"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="text-danger flex-shrink-0"
+            >
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <div>{authError}</div>
+          </div>
+        )}
+        {authSuccess && (
+          <div className="alert alert-success py-2 px-3 small mb-3 rounded-3 d-flex align-items-center gap-2 border-success-subtle">
+            <svg
+              width="17"
+              height="17"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="text-success flex-shrink-0"
+            >
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+            <div>{authSuccess}</div>
+          </div>
+        )}
 
             <form onSubmit={onSubmit}>
               <div className="row g-3">
@@ -248,11 +281,22 @@ export default function RegisterPage({
                     />
                     <button
                       type="button"
-                      className={`btn btn-outline-secondary ${darkMode ? "border-secondary text-white" : ""}`}
+                      className={`btn btn-outline-secondary ${darkMode ? "border-secondary text-secondary" : "border-light-subtle text-muted"}`}
                       onClick={() => setShowPassword(!showPassword)}
                       title={showPassword ? "Sembunyikan password" : "Tampilkan password"}
+                      aria-label="Toggle password visibility"
                     >
-                      {showPassword ? "👁️" : "👁️‍🗨️"}
+                      {showPassword ? (
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                          <line x1="1" y1="1" x2="23" y2="23"></line>
+                        </svg>
+                      ) : (
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                          <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                      )}
                     </button>
                   </div>
 
@@ -283,12 +327,15 @@ export default function RegisterPage({
                 {isSubmitting ? (
                   <>
                     <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                    <span>Mendaftarkan ke Supabase...</span>
+                    <span>Mendaftarkan ke Database...</span>
                   </>
                 ) : (
                   <>
-                    <span>📝</span>
-                    <span>Daftarkan Akun Petugas &rarr;</span>
+                    <span>Daftarkan Akun Petugas</span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="5" y1="12" x2="19" y2="12"></line>
+                      <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
                   </>
                 )}
               </button>
@@ -297,22 +344,14 @@ export default function RegisterPage({
             <div className="text-center border-top border-opacity-10 pt-3">
               <span className="small text-muted">Sudah punya akun? </span>
               <button
+                type="button"
                 className="btn btn-link btn-sm p-0 fw-semibold text-decoration-none text-primary"
                 onClick={() => setCurrentView("login")}
               >
                 Masuk ke SIM-SDM
               </button>
-              <span className="opacity-50 mx-2">•</span>
-              <button
-                className="btn btn-link btn-sm p-0 text-muted text-decoration-none"
-                onClick={() => setCurrentView("guest")}
-              >
-                Kembali ke Beranda
-              </button>
             </div>
           </div>
         </div>
-      </div>
-    </div>
-  );
+      );
 }

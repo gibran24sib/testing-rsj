@@ -9,7 +9,6 @@ import BannerSub from "./layouts/BannerSub";
 import Footer from "./layouts/Footer";
 
 // Pages
-import GuestPage from "./pages/GuestPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import AdminPage from "./pages/AdminPage";
@@ -18,7 +17,6 @@ import PegawaiPage from "./pages/PegawaiPage";
 // Modals / Components
 import CommandPalette from "./components/CommandPalette";
 import ToastNotification from "./components/ToastNotification";
-import ConfirmPortalModal from "./components/ConfirmPortalModal";
 import ConfirmLogoutModal from "./components/ConfirmLogoutModal";
 
 // Navigation & URL Routing
@@ -36,7 +34,6 @@ import { getSavedUserPhoto, saveUserPhoto } from "./utils/imageHelpers";
 import { initialUsers } from "./data/initialData";
 import {
   initialEmployees,
-  initialShiftRoster,
   initialLeaveRequests,
   initialTrainings,
   initialDossiers,
@@ -61,9 +58,8 @@ import {
 function App() {
   // INISIALISASI STATE BERDASARKAN URL BROWSER (HTML5 History API)
   const initialRoute = getStateFromPath(window.location.pathname);
-  const [currentView, setCurrentView] = useState(initialRoute.view);
+  const [currentView, setCurrentView] = useState(initialRoute.view || "login");
   const [activeTab, setActiveTab] = useState(initialRoute.adminTab || "direktori");
-  const [activePortalTab, setActivePortalTab] = useState(initialRoute.portalTab || "tenaga_medis");
   const [activePegawaiTab, setActivePegawaiTab] = useState(initialRoute.pegawaiTab || "profil");
 
   // STATE TOAST NOTIFIKASI (dideklarasikan di awal agar tersedia untuk semua hook/efek)
@@ -94,9 +90,6 @@ function App() {
 
   // STATE COMMAND PALETTE (CTRL+K)
   const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
-
-  // STATE MODAL KONFIRMASI KEMBALI KE PORTAL GUEST
-  const [isConfirmPortalOpen, setIsConfirmPortalOpen] = useState(false);
 
   // STATE MODAL KONFIRMASI LOGOUT DARI ADMIN
   const [isConfirmLogoutOpen, setIsConfirmLogoutOpen] = useState(false);
@@ -159,45 +152,32 @@ function App() {
 
   // SINKRONISASI OTOMATIS: STATE -> URL BROWSER & DOCUMENT TITLE
   useEffect(() => {
-    const targetPath = getPathForState(currentView, activeTab, activePortalTab, activePegawaiTab);
-    const targetTitle = getTitleForState(currentView, activeTab, activePortalTab, activePegawaiTab);
+    const targetPath = getPathForState(currentView, activeTab, null, activePegawaiTab);
+    const targetTitle = getTitleForState(currentView, activeTab, null, activePegawaiTab);
 
     if (window.location.pathname !== targetPath) {
       window.history.pushState(
-        { view: currentView, adminTab: activeTab, portalTab: activePortalTab, pegawaiTab: activePegawaiTab },
+        { view: currentView, adminTab: activeTab, pegawaiTab: activePegawaiTab },
         "",
         targetPath
       );
     }
     document.title = targetTitle;
-  }, [currentView, activeTab, activePortalTab, activePegawaiTab]);
+  }, [currentView, activeTab, activePegawaiTab]);
 
-  // SINKRONISASI BROWSER BACK / FORWARD (POPSTATE) -> STATE & AUTO-LOGOUT DI PORTAL
+  // SINKRONISASI BROWSER BACK / FORWARD (POPSTATE) -> STATE
   useEffect(() => {
-    const handlePopState = async () => {
+    const handlePopState = () => {
       const state = getStateFromPath(window.location.pathname);
-      // Jika user menekan tombol Back browser ke portal publik ('guest'), otomatis logout akun
-      if (state.view === "guest" && currentUser) {
-        try {
-          await logoutUserSupabase();
-        } catch (e) {}
-        setCurrentUser(null);
-        try {
-          sessionStorage.removeItem("rsj_current_user");
-          localStorage.removeItem("rsj_current_user");
-        } catch {}
-        showToast("Logout Otomatis", "Sesi profil Anda telah keluar secara otomatis karena kembali ke Portal Publik.", "info");
-      }
       setCurrentView(state.view);
       if (state.adminTab) setActiveTab(state.adminTab);
-      if (state.portalTab) setActivePortalTab(state.portalTab);
       if (state.pegawaiTab) setActivePegawaiTab(state.pegawaiTab);
-      document.title = getTitleForState(state.view, state.adminTab, state.portalTab, state.pegawaiTab);
+      document.title = getTitleForState(state.view, state.adminTab, null, state.pegawaiTab);
     };
 
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
-  }, [currentUser, showToast]);
+  }, []);
 
   // ROLE & AUTH ACCESS GUARD UNTUK HALAMAN ADMIN & PEGAWAI
   useEffect(() => {
@@ -227,19 +207,6 @@ function App() {
           "warning"
         );
       }
-    }
-  }, [currentView, currentUser, showToast]);
-
-  // SINKRONISASI LOGOUT OTOMATIS SAAT BERADA DI HALAMAN PORTAL PUBLIK (GUEST)
-  useEffect(() => {
-    if (currentView === "guest" && currentUser) {
-      logoutUserSupabase().catch(() => {});
-      setCurrentUser(null);
-      try {
-        sessionStorage.removeItem("rsj_current_user");
-        localStorage.removeItem("rsj_current_user");
-      } catch {}
-      showToast("Logout Otomatis", "Sesi profil Anda telah keluar secara otomatis saat kembali ke Portal Publik.", "info");
     }
   }, [currentView, currentUser, showToast]);
 
@@ -384,11 +351,6 @@ function App() {
     return list;
   });
 
-  const [shiftRoster, setShiftRoster] = useState(() => {
-    const saved = localStorage.getItem("rsj_roster");
-    return saved ? JSON.parse(saved) : initialShiftRoster;
-  });
-
   const [leaveRequests, setLeaveRequests] = useState(() => {
     const saved = localStorage.getItem("rsj_leaves");
     return saved ? JSON.parse(saved) : initialLeaveRequests;
@@ -498,10 +460,6 @@ function App() {
   useEffect(() => {
     localStorage.setItem("rsj_employees", JSON.stringify(employees));
   }, [employees]);
-
-  useEffect(() => {
-    localStorage.setItem("rsj_roster", JSON.stringify(shiftRoster));
-  }, [shiftRoster]);
 
   useEffect(() => {
     localStorage.setItem("rsj_leaves", JSON.stringify(leaveRequests));
@@ -820,25 +778,6 @@ function App() {
     );
   }, []);
 
-  // KONFIRMASI KEMBALI KE PORTAL UTAMA / GUEST & LOGOUT
-  const handleRequestBackToPortal = useCallback(() => {
-    if (currentUser && (currentView === "admin" || currentView === "pegawai" || currentView === "cuti_pegawai")) {
-      setIsConfirmPortalOpen(true);
-    } else {
-      setCurrentView("guest");
-    }
-  }, [currentView, currentUser]);
-
-  const handleConfirmBackToPortal = useCallback(async () => {
-    setIsConfirmPortalOpen(false);
-    await logoutUserSupabase();
-    setCurrentUser(null);
-    sessionStorage.removeItem("rsj_current_user");
-    localStorage.removeItem("rsj_current_user");
-    setCurrentView("guest");
-    showToast("Logout Otomatis", "Sesi profil Anda telah keluar secara otomatis dan kembali ke Portal Publik.", "info");
-  }, [showToast]);
-
   // COMMAND PALETTE ACTIONS
   const handleCommandAction = useCallback(
     (action) => {
@@ -862,9 +801,7 @@ function App() {
           }
           break;
         case "navigate_view":
-          if (action.view === "guest" && (currentView === "admin" || currentView === "pegawai" || currentUser)) {
-            setIsConfirmPortalOpen(true);
-          } else {
+          if (action.view === "login" || action.view === "register") {
             setCurrentView(action.view);
           }
           break;
@@ -878,7 +815,7 @@ function App() {
           break;
       }
     },
-    [currentView, currentUser, toggleTheme, showToast]
+    [currentUser, toggleTheme, showToast]
   );
 
   // AUTH HANDLERS
@@ -1120,8 +1057,8 @@ function App() {
     setCurrentUser(null);
     sessionStorage.removeItem("rsj_current_user");
     localStorage.removeItem("rsj_current_user");
-    setCurrentView("guest");
-    showToast("Logout Berhasil", "Anda telah keluar dari sesi SIM-SDM dan kembali ke Portal Utama.", "info");
+    setCurrentView("login");
+    showToast("Logout Berhasil", "Anda telah keluar dari sesi SIM-SDM.", "info");
   }, [showToast]);
 
   // THEME CLASSES
@@ -1155,7 +1092,6 @@ function App() {
             toggleTheme={toggleTheme}
             handleLogout={handleRequestLogout}
             setCurrentView={setCurrentView}
-            onBackToPortal={handleRequestBackToPortal}
             employeeCount={employees.length}
             onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
           />
@@ -1167,7 +1103,6 @@ function App() {
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}
                 employees={employees}
-                shiftRoster={shiftRoster}
                 leaveRequests={leaveRequests}
                 trainings={trainings}
                 dossiersList={dossiersList}
@@ -1186,7 +1121,6 @@ function App() {
                 cardBg={cardBg}
                 tableTheme={tableTheme}
                 onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
-                onBackToPortal={handleRequestBackToPortal}
               />
             </div>
             <Footer isAdmin={true} darkMode={darkMode} />
@@ -1206,7 +1140,6 @@ function App() {
             toggleTheme={toggleTheme}
             handleLogout={handleRequestLogout}
             setCurrentView={setCurrentView}
-            onBackToPortal={handleRequestBackToPortal}
             onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
             dossierCount={
               dossiersList.find((d) => d.employeeId === (currentUser?.employeeId || currentUser?.id))?.dokumen?.length || 0
@@ -1221,7 +1154,6 @@ function App() {
                 setActiveTab={setActivePegawaiTab}
                 currentUser={currentUser}
                 employees={employees}
-                shiftRoster={shiftRoster}
                 leaveRequests={leaveRequests}
                 trainings={trainings}
                 dossiersList={dossiersList}
@@ -1231,7 +1163,6 @@ function App() {
                 darkMode={darkMode}
                 showToast={showToast}
                 onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
-                onBackToPortal={handleRequestBackToPortal}
               />
             </div>
             <Footer isAdmin={false} darkMode={darkMode} />
@@ -1239,35 +1170,58 @@ function App() {
         </div>
       ) : (
         /* ======================================================== */
-        /* 3. GUEST / PUBLIC VIEW                                  */
+        /* 3. AUTH / LOGIN & REGISTER VIEW (TERPUSAT DI TENGAH)     */
         /* ======================================================== */
-        <div className="w-100 min-vh-100 d-flex flex-column justify-content-between">
-          <div>
-            <Navbar
-              currentView={currentView}
-              setCurrentView={setCurrentView}
-              currentUser={currentUser}
-              darkMode={darkMode}
-              toggleTheme={toggleTheme}
-              navBg={navBg}
-              onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
-              onOpenLogoutModal={handleRequestLogout}
-              onBackToPortal={handleRequestBackToPortal}
-            />
+        <div className="w-100 min-vh-100 d-flex flex-column justify-content-center align-items-center position-relative p-3">
+          {/* Subtle Theme Toggle di Pojok Kanan Atas */}
+          <div className="position-absolute top-0 end-0 p-3 p-md-4" style={{ zIndex: 10 }}>
+            <button
+              type="button"
+              className="btn btn-sm rounded-circle d-flex align-items-center justify-content-center shadow-sm"
+              style={{
+                width: "40px",
+                height: "40px",
+                backgroundColor: darkMode ? "#1a2234" : "#ffffff",
+                border: darkMode ? "1px solid rgba(255, 255, 255, 0.12)" : "1px solid rgba(226, 232, 240, 0.9)",
+                color: darkMode ? "#f1f5f9" : "#334155",
+              }}
+              onClick={toggleTheme}
+              title={darkMode ? "Ganti ke Mode Terang" : "Ganti ke Mode Gelap"}
+              aria-label="Toggle theme"
+            >
+              {darkMode ? (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="5"></circle>
+                  <line x1="12" y1="1" x2="12" y2="3"></line>
+                  <line x1="12" y1="21" x2="12" y2="23"></line>
+                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                  <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                  <line x1="1" y1="12" x2="3" y2="12"></line>
+                  <line x1="21" y1="12" x2="23" y2="12"></line>
+                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                  <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                </svg>
+              ) : (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                </svg>
+              )}
+            </button>
+          </div>
 
-            <BannerSub currentView={currentView} darkMode={darkMode} />
-
-            {currentView === "guest" && (
-              <GuestPage
+          <div className="w-100 my-auto d-flex justify-content-center">
+            {currentView === "register" ? (
+              <RegisterPage
+                authInput={authInput}
+                setAuthInput={setAuthInput}
+                authError={authError}
+                authSuccess={authSuccess}
+                handleRegister={handleRegister}
                 setCurrentView={setCurrentView}
-                activePortalTab={activePortalTab}
-                setActivePortalTab={setActivePortalTab}
                 darkMode={darkMode}
                 cardBg={cardBg}
               />
-            )}
-
-            {currentView === "login" && (
+            ) : (
               <LoginPage
                 authInput={authInput}
                 setAuthInput={setAuthInput}
@@ -1279,22 +1233,11 @@ function App() {
                 cardBg={cardBg}
               />
             )}
-
-            {currentView === "register" && (
-              <RegisterPage
-                authInput={authInput}
-                setAuthInput={setAuthInput}
-                authError={authError}
-                authSuccess={authSuccess}
-                handleRegister={handleRegister}
-                setCurrentView={setCurrentView}
-                darkMode={darkMode}
-                cardBg={cardBg}
-              />
-            )}
           </div>
 
-          <Footer darkMode={darkMode} />
+          <div className="text-center mt-3 small opacity-50" style={{ fontSize: "0.76rem" }}>
+            <span>© {new Date().getFullYear()} RSJ Tampan Provinsi Riau • Sistem Informasi Manajemen SDM</span>
+          </div>
         </div>
       )}
 
@@ -1310,15 +1253,6 @@ function App() {
       <ToastNotification
         toast={toast}
         onClose={() => setToast(null)}
-        darkMode={darkMode}
-      />
-
-      {/* MODAL KONFIRMASI KEMBALI KE PORTAL PUBLIK */}
-      <ConfirmPortalModal
-        isOpen={isConfirmPortalOpen}
-        onClose={() => setIsConfirmPortalOpen(false)}
-        onConfirm={handleConfirmBackToPortal}
-        currentUser={currentUser}
         darkMode={darkMode}
       />
 

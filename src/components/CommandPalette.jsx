@@ -41,20 +41,6 @@ export default function CommandPalette({
       action: () => onSelectAction({ type: "navigate_pegawai", tab: "cuti" }),
     },
     {
-      id: "pegawai_roster",
-      label: "Jadwal Shift Jaga Bangsal Saya",
-      category: "Layanan Mandiri Pegawai",
-      icon: "📅",
-      action: () => onSelectAction({ type: "navigate_pegawai", tab: "roster" }),
-    },
-    {
-      id: "pegawai_presensi",
-      label: "E-Presensi Shift Geolocation Pegawai",
-      category: "Layanan Mandiri Pegawai",
-      icon: "⏱️",
-      action: () => onSelectAction({ type: "navigate_pegawai", tab: "presensi" }),
-    },
-    {
       id: "pegawai_legalitas",
       label: "Masa Berlaku STR & SIP Izin Praktik Saya",
       category: "Layanan Mandiri Pegawai",
@@ -67,6 +53,71 @@ export default function CommandPalette({
       category: "Layanan Mandiri Pegawai",
       icon: "🎓",
       action: () => onSelectAction({ type: "navigate_pegawai", tab: "diklat" }),
+    },
+
+    // RIWAYAT KEPEGAWAIAN (MyASN / SIASN BKN)
+    {
+      id: "pegawai_riwayat_profil",
+      label: "Riwayat Ubah Profil & Log Biodata BKN",
+      category: "Riwayat Kepegawaian (MyASN)",
+      icon: "👤",
+      action: () => onSelectAction({ type: "navigate_pegawai", tab: "riwayat_profil" }),
+    },
+    {
+      id: "pegawai_riwayat_keluarga",
+      label: "Riwayat Keluarga & Tanggungan BPJS",
+      category: "Riwayat Kepegawaian (MyASN)",
+      icon: "👨‍👩‍👦",
+      action: () => onSelectAction({ type: "navigate_pegawai", tab: "riwayat_keluarga" }),
+    },
+    {
+      id: "pegawai_riwayat_sertifikasi",
+      label: "Riwayat Sertifikasi Kompetensi & SKP",
+      category: "Riwayat Kepegawaian (MyASN)",
+      icon: "🎖️",
+      action: () => onSelectAction({ type: "navigate_pegawai", tab: "riwayat_sertifikasi" }),
+    },
+    {
+      id: "pegawai_riwayat_profesi",
+      label: "Riwayat Profesi & Jenjang Karir PK I-IV",
+      category: "Riwayat Kepegawaian (MyASN)",
+      icon: "🩺",
+      action: () => onSelectAction({ type: "navigate_pegawai", tab: "riwayat_profesi" }),
+    },
+    {
+      id: "pegawai_riwayat_penghargaan",
+      label: "Riwayat Penghargaan, Satyalancana & Piagam",
+      category: "Riwayat Kepegawaian (MyASN)",
+      icon: "🏆",
+      action: () => onSelectAction({ type: "navigate_pegawai", tab: "riwayat_penghargaan" }),
+    },
+    {
+      id: "pegawai_riwayat_organisasi",
+      label: "Riwayat Organisasi Profesi (PPNI, IDI, KORPRI)",
+      category: "Riwayat Kepegawaian (MyASN)",
+      icon: "🏢",
+      action: () => onSelectAction({ type: "navigate_pegawai", tab: "riwayat_organisasi" }),
+    },
+    {
+      id: "pegawai_riwayat_pendidikan",
+      label: "Riwayat Pendidikan Formal (D3, S1, Profesi Ners)",
+      category: "Riwayat Kepegawaian (MyASN)",
+      icon: "🎓",
+      action: () => onSelectAction({ type: "navigate_pegawai", tab: "riwayat_pendidikan" }),
+    },
+    {
+      id: "pegawai_riwayat_kinerja",
+      label: "Riwayat Kinerja & Evaluasi SKP Tahunan",
+      category: "Riwayat Kepegawaian (MyASN)",
+      icon: "📈",
+      action: () => onSelectAction({ type: "navigate_pegawai", tab: "riwayat_kinerja" }),
+    },
+    {
+      id: "pegawai_riwayat_kontrak",
+      label: "Riwayat Kontrak PPPK & SK Pengangkatan PNS",
+      category: "Riwayat Kepegawaian (MyASN)",
+      icon: "📄",
+      action: () => onSelectAction({ type: "navigate_pegawai", tab: "riwayat_kontrak" }),
     },
 
     // PANEL ADMIN KEPEGAWAIAN
@@ -83,13 +134,6 @@ export default function CommandPalette({
       category: "Panel Admin SDM",
       icon: "📋",
       action: () => onSelectAction({ type: "navigate_admin", tab: "cuti" }),
-    },
-    {
-      id: "admin_roster",
-      label: "Roster Shift Jaga 24/7 Seluruh Bangsal (Admin)",
-      category: "Panel Admin SDM",
-      icon: "📅",
-      action: () => onSelectAction({ type: "navigate_admin", tab: "roster" }),
     },
     {
       id: "admin_abk_wisn",
@@ -120,14 +164,7 @@ export default function CommandPalette({
       action: () => onSelectAction({ type: "navigate_admin", tab: "analitik" }),
     },
 
-    // PORTAL & UTILITY
-    {
-      id: "portal_publik",
-      label: "Lihat Portal Informasi SDM Publik",
-      category: "Navigasi Umum",
-      icon: "🏥",
-      action: () => onSelectAction({ type: "navigate_view", view: "guest" }),
-    },
+    // UTILITY
     {
       id: "toggle_theme",
       label: "Ganti Tema Tampilan (Dark / Light Mode)",
@@ -192,7 +229,7 @@ export default function CommandPalette({
               color: darkMode ? "#ffffff" : "#0f172a",
               fontSize: "1rem",
             }}
-            placeholder="Ketik modul, aksi, atau fitur (contoh: berkas, cuti, roster)..."
+            placeholder="Ketik modul, aksi, atau fitur (contoh: berkas, cuti, direktori)..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />

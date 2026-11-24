@@ -10,7 +10,6 @@ export default function Navbar({
   toggleTheme,
   onOpenCommandPalette,
   onOpenLogoutModal,
-  onBackToPortal,
 }) {
   const isAdmin = isAdminOrHrd(currentUser);
 
@@ -33,13 +32,11 @@ export default function Navbar({
           className="d-flex align-items-center gap-2"
           style={{ cursor: "pointer" }}
           onClick={() => {
-            if (currentUser && (currentView === "admin" || currentView === "pegawai")) {
-              if (onBackToPortal) {
-                onBackToPortal();
-                return;
-              }
+            if (currentUser) {
+              setCurrentView(isAdmin ? "admin" : "pegawai");
+            } else {
+              setCurrentView("login");
             }
-            setCurrentView("guest");
           }}
         >
           <div
@@ -123,25 +120,6 @@ export default function Navbar({
 
           {/* NAVIGATION ACTION PILLS */}
           <div className="d-flex gap-1 flex-wrap">
-            <button
-              className={`btn btn-sm rounded-pill px-3 fw-medium hover-lift ${
-                currentView === "guest"
-                  ? "btn-success active-glow"
-                  : "btn-outline-secondary"
-              }`}
-              onClick={() => {
-                if (currentUser && (currentView === "admin" || currentView === "pegawai")) {
-                  if (onBackToPortal) {
-                    onBackToPortal();
-                    return;
-                  }
-                }
-                setCurrentView("guest");
-              }}
-            >
-              Portal Publik
-            </button>
-
             {currentUser ? (
               <>
                 {isAdmin ? (
